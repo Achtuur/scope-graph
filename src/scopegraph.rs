@@ -100,13 +100,13 @@ where
     /// * Scope: Starting scope
     /// * path_regex: Regular expression to match the path
     /// * data_name: Name of the data to return
-    pub fn query<DF>(&self, scope: Scope, path_regex: &Regex, data_equiv: DF) -> Vec<QueryResult<Data>>
+    pub fn query<DF>(&self, scope: Scope, path_regex: &Regex, data_wellformedness: DF) -> Vec<QueryResult<Data>>
     where
         DF: Fn(&Data) -> bool
     {
         let scope = self.scopes.get(&scope)
         .expect("Attempting to query non-existant scope");
-        self.query_internal(scope, String::new(), path_regex, &data_equiv)
+        self.query_internal(scope, String::new(), path_regex, &data_wellformedness)
     }
 
     fn query_internal<DF>(&self, current_scope: &ScopeData<Lbl, Data>, path: String, path_regex: &Regex, data_equiv: &DF) -> Vec<QueryResult<Data>>
