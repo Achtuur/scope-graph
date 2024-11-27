@@ -1,7 +1,13 @@
-[package]
-name = "scope-graph"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+resolver = "2"
+members = [
+    "sclang", # lil test language
+    "scope-graph", # scope graph resolver
+    "sg-parse", # parse using scope graph
+]
 
-[dependencies]
+[workspace.dependencies]
+
 regex = "1.11.1"
+scopegraphs= "0.3.3"
+winnow = "0.6.20"

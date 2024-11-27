@@ -48,7 +48,7 @@ fn main() {
     graph.add_edge(scope2, scope1, Label::Parent);
 
     graph.add_decl(scope1, Label::Declaration, Data::var("x", "bool"));
-    graph.add_decl(scope2, Label::Declaration, Data::var("y", "bool"));
+    graph.add_decl(scope2, Label::Declaration, Data::var("x", "bool"));
 
     println!("graph: {0:?}", graph);
 
