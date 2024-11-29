@@ -5,3 +5,6 @@ edition = "2021"
 
 [dependencies]
 winnow = { workspace = true }
+
+[dev-dependencies]
+winnow = {workspace = true, features = ["debug"]}
