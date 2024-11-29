@@ -85,8 +85,10 @@ mod tests {
     #[test]
     fn test_multiple_let() {
         let input = "let x = 1;
-        let y = 2;
-        x".parse::<SclangExpression>();
+        let y = 1 + 2;
+        let z = x + y;
+        let z2 = 1;
+        z + z2".parse::<SclangExpression>();
         match input {
             Ok(s) => println!("s: {0:?}", s),
             Err(e) => {

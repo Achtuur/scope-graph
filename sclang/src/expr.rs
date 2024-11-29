@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use winnow::{combinator::{self, alt, cut_err, delimited, eof, fail, not, opt, terminated}, error::{StrContext, StrContextValue}, stream::AsChar, token::{any, take_until, take_while}, PResult, Parser};
+use winnow::{combinator::{self, alt, cut_err, delimited, eof, fail, not, opt, preceded, terminated}, error::{StrContext, StrContextValue}, stream::AsChar, token::{any, take_until, take_while}, PResult, Parser};
 use winnow::ascii::*;
 use winnow::combinator::seq;
 
@@ -60,21 +60,27 @@ impl SclangExpression {
 
 impl SclangExpression {
     pub fn parse(input: &mut &str) -> PResult<Self> {
-        delimited(multispace0, Self::parse_expr, multispace0).parse_next(input)
+        delimited(multispace0, Self::parse_expr, eof).parse_next(input)
     }
 
-    pub fn parse_expr(input: &mut &str) -> PResult<Self> {
-        println!("[body] input: {0:?}", input);
-        alt((
+    fn parse_expr(input: &mut &str) -> PResult<Self> {
+        preceded(multispace0,alt((
+            Self::parse_add,
             Self::parse_let,
-            // Self::parse_add,
+            Self::parse_atom,
+            fail
+                .context(StrContext::Label("expression"))
+        )))
+        .parse_next(input)
+    }
+
+    fn parse_atom(input: &mut &str) -> PResult<Self> {
+        preceded(multispace0,alt((
             Self::parse_variable,
             Self::parse_literal,
             Self::parse_boolean,
-            fail
-                .context(StrContext::Label("Invalid expression"))
-        ))
-        .map(|expr| expr)
+            fail.context(StrContext::Label("atom"))
+        )))
         .parse_next(input)
     }
 
@@ -120,7 +126,7 @@ impl SclangExpression {
 
     fn parse_let(input: &mut &str) -> PResult<Self> {
         seq!{Self::Let {
-            _: ("let", space1),
+            _: (multispace0, "let", space1),
             name: Self::parse_variable.map(|e| e.as_var().unwrap().to_string()),
             _: (space0, "=", space0),
             body: cut_err(
@@ -130,14 +136,14 @@ impl SclangExpression {
             )
             .and_then(
                 cut_err(
-                    Self::parse.map(Box::new)
+                    Self::parse_expr.map(Box::new)
                     .context(StrContext::Label("body expression"))
                     .context(StrContext::Expected(StrContextValue::Description("expression")))
                 )
             ),
             // body: Self::parse.map(Box::new),
             _: cut_err((space0, ';', space0)),
-            tail: Self::parse.map(Box::new)
+            tail: Self::parse_expr.map(Box::new)
                 .context(StrContext::Label("tail expression"))
                 .context(StrContext::Expected(StrContextValue::Description("expression"))),
         }}
@@ -147,11 +153,11 @@ impl SclangExpression {
 
     fn parse_add(input: &mut &str) -> PResult<Self> {
         (
-            Self::parse_expr,
-            space0, "+", space0,
-            Self::parse_expr,
+            Self::parse_atom.map(Box::new),
+            multispace0, "+", multispace0,
+            Self::parse_atom.map(Box::new),
         )
         .parse_next(input)
-        .map(|(lhs, _, _, _, rhs)| SclangExpression::Add(Box::new(lhs), Box::new(rhs)))
+        .map(|(lhs, _, _, _, rhs)| SclangExpression::Add(lhs, rhs))
     }
 }
