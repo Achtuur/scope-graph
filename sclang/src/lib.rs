@@ -1,10 +1,14 @@
-pub mod expr;
+mod expr;
+mod types;
+
+
+
 pub use expr::SclangExpression;
+pub use types::SclangType;
 
 #[cfg(test)]
 mod tests {
     use expr::RESERVED_KEYWORDS;
-    use winnow::PResult;
 
     use super::*;
 
@@ -41,11 +45,11 @@ mod tests {
     #[test]
     fn test_var() {
         let x = SclangExpression::parse(&mut "x").unwrap();
-        assert_eq!(x, SclangExpression::Variable("x".to_string()));
+        assert_eq!(x, SclangExpression::Var("x".to_string()));
         let y = SclangExpression::parse(&mut "x123").unwrap();
-        assert_eq!(y, SclangExpression::Variable("x123".to_string()));
+        assert_eq!(y, SclangExpression::Var("x123".to_string()));
         let underscore = SclangExpression::parse(&mut "some_variable").unwrap();
-        assert_eq!(underscore, SclangExpression::Variable("some_variable".to_string()));
+        assert_eq!(underscore, SclangExpression::Var("some_variable".to_string()));
 
         let wrong = SclangExpression::parse(&mut "1x");
         assert!(wrong.is_err());
@@ -53,7 +57,7 @@ mod tests {
         for mut r in RESERVED_KEYWORDS.into_iter(){
             // make sure that the keyword is not parsed as a variable
             if let Ok(expr) = SclangExpression::parse(&mut r) {
-                assert!(!matches!(expr, SclangExpression::Variable(_)))
+                assert!(!matches!(expr, SclangExpression::Var(_)))
             }
         }
     }
@@ -74,26 +78,54 @@ mod tests {
     fn test_add() {
         let input = "1 + 2";
         let x = input.parse::<SclangExpression>();
-        match x {
+        match &x {
             Ok(s) => println!("s: {0:?}", s),
             Err(e) => {
                 println!("e: {}", e)
             },
         }
+        assert!(x.is_ok());
+    }
+
+    #[test]
+    fn test_fun() {
+        let input = "fun(x: num) { x + 1 }";
+        let x = input.parse::<SclangExpression>();
+        match &x {
+            Ok(s) => println!("s: {0:?}", s),
+            Err(e) => {
+                println!("e: {}", e)
+            },
+        }
+        assert!(x.is_ok());
+    }
+
+    #[test]
+    fn test_call() {
+        let input = "add(1)";
+        let x = input.parse::<SclangExpression>();
+        match &x {
+            Ok(s) => println!("s: {0:?}", s),
+            Err(e) => {
+                println!("e: {}", e)
+            },
+        }
+        assert!(x.is_ok());
     }
 
     #[test]
     fn test_multiple_let() {
-        let input = "let x = 1;
-        let y = 1 + 2;
-        let z = x + y;
+        let input = "let x = fun(x: number) { x + 1 };
+        let y = x(1) + 2;
+        let z = x(y) + y;
         let z2 = 1;
         z + z2".parse::<SclangExpression>();
-        match input {
+        match &input {
             Ok(s) => println!("s: {0:?}", s),
             Err(e) => {
                 println!("e: {}", e)
             },
         }
+        assert!(input.is_ok());
     }
 }

@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use sclang::SclangType;
 use scopegraphs::{label_order, query_regex, resolve::Resolve, Scope};
 
 use crate::StlcLabel;
@@ -57,6 +58,30 @@ impl StlcType {
 }
 
 impl StlcType {
+    pub fn from_syntax_type(s_t: &SclangType, sg: &StlcGraph<'_>, prev_scope: Scope) -> Self {
+        match s_t {
+            SclangType::Num => StlcType::Num,
+            SclangType::Bool => StlcType::Bool,
+            SclangType::Fun(t1, t2) => {
+                let t1 = Self::from_syntax_type(t1, sg, prev_scope);
+                let t2 = Self::from_syntax_type(t2, sg, prev_scope);
+                StlcType::Fun(Box::new(t1), Box::new(t2))
+            }
+            SclangType::Record(fields) => {
+                // create a scope n that declares the record parameters
+                let record_scope = sg.add_scope_default();
+                // declare fields
+                for (name, expr) in fields {
+                    let field_type = Self::from_syntax_type(expr, sg, prev_scope);
+                    let field_data = StlcData::Variable(name.to_string(), field_type);
+                    sg.add_decl(record_scope, StlcLabel::Declaration, field_data)
+                        .unwrap();
+                }
+                StlcType::Record(record_scope.0)
+            }
+        }
+    }
+
     pub fn is_subtype_of(&self, other: &Self, sg: &StlcGraph<'_>) -> bool {
         match (self, other) {
             // trivial
