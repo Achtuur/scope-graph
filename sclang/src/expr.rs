@@ -1,6 +1,6 @@
-use std::str::FromStr;
+use std::{io::Read, path::{Path, PathBuf}, str::FromStr};
 
-use winnow::{combinator::{alt, cut_err, delimited, eof, fail, not, opt, preceded, terminated}, error::{StrContext, StrContextValue}, stream::AsChar, token::{any, take_until, take_while}, PResult, Parser};
+use winnow::{combinator::{alt, cut_err, delimited, eof, fail, not, opt, preceded, repeat, separated, separated_pair, terminated}, error::{StrContext, StrContextValue}, stream::AsChar, token::{any, take_until, take_while}, PResult, Parser};
 use winnow::ascii::*;
 use winnow::combinator::seq;
 
@@ -14,7 +14,7 @@ pub(crate) const RESERVED_KEYWORDS: [&str; 10] = [
     "return",
     "break",
     "continue",
-    "fn",
+    "fun",
     "true",
     "false",
 ];
@@ -80,15 +80,15 @@ impl FromStr for SclangExpression {
 
 // utility
 impl SclangExpression {
-    pub fn parse(input: &mut &str) -> PResult<Self> {
-        delimited(multispace0, Self::parse_expr, eof).parse_next(input)
+    pub fn from_file(path: impl AsRef<Path>) -> PResult<Self> {
+        let mut contents = String::new();
+        std::fs::File::open(path.as_ref()).unwrap()
+        .read_to_string(&mut contents).unwrap();
+        Self::parse(&mut contents.as_str())
     }
 
-    fn as_var(&self) -> Option<&str> {
-        match self {
-            SclangExpression::Var(v) => Some(v),
-            _ => None,
-        }
+    pub fn parse(input: &mut &str) -> PResult<Self> {
+        delimited(multispace0, Self::parse_expr, eof).parse_next(input)
     }
 }
 
@@ -101,6 +101,8 @@ impl SclangExpression {
             Self::parse_let,
             Self::parse_fun,
             Self::parse_call,
+            Self::parse_record_access,
+            Self::parse_record_decl,
             Self::parse_atom,
             fail
                 .context(StrContext::Label("expression"))
@@ -114,19 +116,16 @@ impl SclangExpression {
             name: Self::parse_variable.map(|e| e),
             _: (space0, '=', space0),
             body: cut_err(
-                take_until(1.., ';'))
-                .context(StrContext::Label("missing semicolon"))
-                .context(StrContext::Expected(StrContextValue::CharLiteral(';'))
-            )
-            .and_then(
-                cut_err(
-                    Self::parse_expr.map(Box::new)
+                Self::parse_expr.map(Box::new)
                     .context(StrContext::Label("body expression"))
                     .context(StrContext::Expected(StrContextValue::Description("expression")))
-                )
             ),
             // body: Self::parse.map(Box::new),
-            _: cut_err((space0, ';', space0)),
+            _: cut_err(
+                (space0, ';', space0)
+                .context(StrContext::Label("missing semicolon"))
+                .context(StrContext::Expected(StrContextValue::CharLiteral(';')))
+            ),
             tail: Self::parse_expr.map(Box::new)
                 .context(StrContext::Label("tail expression"))
                 .context(StrContext::Expected(StrContextValue::Description("expression"))),
@@ -172,7 +171,7 @@ impl SclangExpression {
 impl SclangExpression {
     fn parse_atom(input: &mut &str) -> PResult<Self> {
         preceded(multispace0,alt((
-            Self::parse_variable.map(|s| SclangExpression::Var(s)),
+            Self::parse_variable.map(SclangExpression::Var),
             Self::parse_literal,
             Self::parse_boolean,
             fail.context(StrContext::Label("atom"))
@@ -181,11 +180,11 @@ impl SclangExpression {
     }
 
     fn parse_literal(input: &mut &str) -> PResult<Self> {
-        delimited(
-            not(alpha1),
-            digit1,
-            not(alpha1),
-        )
+        // delimited(
+            // not(alpha1),
+            digit1
+            // not(alpha1),
+        // )
         .try_map(|n: &str| n.parse::<i32>())
         .context(StrContext::Label("literal"))
         .context(StrContext::Expected(StrContextValue::Description("number")))
@@ -207,7 +206,6 @@ impl SclangExpression {
     }
 
     pub(crate) fn parse_variable(input: &mut &str) -> PResult<String> {
-        println!("[var] input: {0:?}", input);
         not(Self::parse_reserved_keyword).parse_next(input)?;
         (
             alpha1, // start part, must be 1 or more letters
@@ -218,6 +216,47 @@ impl SclangExpression {
         .parse_next(input)
         // concat the two parts
         .map(|(s, e)| format!("{}{}", s, e))
+    }
+
+    fn parse_record_decl(input: &mut &str) -> PResult<Self> {
+        delimited(
+            ("{", multispace0),
+            repeat(1.., Self::parse_record_field).fold(
+                Vec::new,
+            |mut acc, (name, ty)| {
+                acc.push((name, ty));
+                acc
+            }),
+            ("}", multispace0),
+        )
+        .context(StrContext::Label("record"))
+        .map(SclangExpression::Record)
+        .parse_next(input)
+    }
+
+    fn parse_record_field(input: &mut &str) -> PResult<(String, Self)> {
+        seq!(
+            SclangExpression::parse_variable,
+            _: (space0, "=", space0),
+            Self::parse_expr,
+            _: opt((space0, ",", space0))
+        )
+        .context(StrContext::Label("record field"))
+        .parse_next(input)
+    }
+
+    fn parse_record_access(input: &mut &str) -> PResult<Self> {
+        separated_pair(
+            Self::parse_atom,
+            '.',
+            Self::parse_variable,
+        )
+        .map(|(record, field)| SclangExpression::RecordAccess {
+            record: Box::new(record),
+            field,
+        })
+        .context(StrContext::Label("record access"))
+        .parse_next(input)
     }
 }
 

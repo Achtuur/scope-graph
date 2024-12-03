@@ -1,0 +1,49 @@
+---
+title: output
+---
+flowchart LR
+    scope_0(("0"))
+    scope_1(("1"))
+    scope_2(("2"))
+    scope_3["x: num"]
+    scope_4["y: bool"]
+    scope_5["r: REC(2)"]
+    scope_6(("6"))
+    scope_7["a: num"]
+    scope_8(("8"))
+    scope_9["b: num"]
+    scope_10(("10"))
+    scope_11["c: num"]
+    scope_12(("12"))
+    scope_13["d: num"]
+    scope_14(("14"))
+    scope_15(("15"))
+    scope_16(("16"))
+    scope_17["x: num"]
+    scope_18["y: bool"]
+    scope_19["r: REC(16)"]
+    scope_20(("20"))
+    scope_21["p: num"]
+    scope_22["f: (REC(16) -> num)"]
+scope_1 ==>|"Parent"| scope_0
+scope_1 ==>|"Declaration"| scope_5
+scope_2 ==>|"Declaration"| scope_4
+scope_2 ==>|"Declaration"| scope_3
+scope_6 ==>|"Parent"| scope_1
+scope_6 ==>|"Declaration"| scope_7
+scope_8 ==>|"Parent"| scope_6
+scope_8 ==>|"Declaration"| scope_9
+scope_10 ==>|"Parent"| scope_8
+scope_10 ==>|"Declaration"| scope_11
+scope_12 ==>|"Parent"| scope_10
+scope_12 ==>|"Declaration"| scope_13
+scope_14 ==>|"Parent"| scope_12
+scope_14 ==>|"Declaration"| scope_22
+scope_15 ==>|"Parent"| scope_12
+scope_15 ==>|"Declaration"| scope_19
+scope_16 ==>|"Declaration"| scope_17
+scope_16 ==>|"Declaration"| scope_18
+scope_20 ==>|"Parent"| scope_15
+scope_20 ==>|"Declaration"| scope_21
+scope_5 ==>|"(Rec)"| scope_2
+scope_19 ==>|"(Rec)"| scope_16

@@ -1,5 +1,9 @@
 mod stlc;
 
+use std::path::PathBuf;
+use std::str::FromStr;
+
+use sclang::SclangExpression;
 use scopegraphs::render::{EdgeStyle, EdgeTo};
 use scopegraphs::{completeness::ImplicitClose, render::RenderSettings, Scope, Storage};
 use stlc::*;
@@ -45,7 +49,10 @@ fn main() {
     let storage = Storage::new();
     let sg = StlcGraph::new(&storage, ImplicitClose::default());
     let s0 = sg.add_scope_default();
-    Expression::example_program_subtyping().expr_type(&sg, s0);
+
+    let path = PathBuf::from_str("examples/record.sclang").unwrap();
+    let expr = SclangExpression::from_file(path).unwrap();
+    SgExpression::new(&expr).expr_type(&sg, s0);
 
     sg.render_to("output.mmd", RenderSettings::default())
         .unwrap();

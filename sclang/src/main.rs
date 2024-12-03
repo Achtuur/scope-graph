@@ -1,4 +1,4 @@
-use sclang::expr::SclangExpression;
+use sclang::SclangExpression;
 pub fn main() {
     let mut input = "falses";
     let output = SclangExpression::parse(&mut input);

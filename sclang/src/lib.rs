@@ -8,6 +8,8 @@ pub use types::SclangType;
 
 #[cfg(test)]
 mod tests {
+    use std::{path::PathBuf, str::FromStr};
+
     use expr::RESERVED_KEYWORDS;
 
     use super::*;
@@ -89,7 +91,7 @@ mod tests {
 
     #[test]
     fn test_fun() {
-        let input = "fun(x: num) { x + 1 }";
+        let input = "let f = fun(x: num) { let z = x; true }; f(1)";
         let x = input.parse::<SclangExpression>();
         match &x {
             Ok(s) => println!("s: {0:?}", s),
@@ -127,5 +129,44 @@ mod tests {
             },
         }
         assert!(input.is_ok());
+    }
+
+    #[test]
+    fn test_record() {
+        let input = "{x = 3, y=2, z=2}".parse::<SclangExpression>();
+        match &input {
+            Ok(s) => println!("s: {0:?}", s),
+            Err(e) => {
+                println!("e: {}", e)
+            },
+        }
+        // assert!(input.is_ok());
+    }
+
+    #[test]
+    fn test_record_access() {
+        let input = "y.x".parse::<SclangExpression>();
+        match &input {
+            Ok(s) => println!("s: {0:?}", s),
+            Err(e) => {
+                println!("e: {}", e)
+            },
+        }
+        assert!(input.is_ok());
+    }
+
+    #[test]
+    fn test_from_file() {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("../examples/record.sclang");
+        println!("path: {0:?}", path);
+        let r = SclangExpression::from_file(path);
+        match &r {
+            Ok(s) => println!("s: {0:?}", s),
+            Err(e) => {
+                println!("e: {}", e)
+            },
+        }
+        println!("r: {0:?}", r);
     }
 }

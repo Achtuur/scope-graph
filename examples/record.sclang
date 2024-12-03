@@ -1,0 +1,10 @@
+let r = {x = 3, y = false};
+let a = r.x;
+let b = r.x;
+let c = a + b;
+let d = c + a;
+let f = fun(r: {x: num, y: bool}) {
+    let p = r.x;
+    p + p
+};
+f(r)
