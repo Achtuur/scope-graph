@@ -11,20 +11,18 @@ flowchart LR
     scope_6(("6"))
     scope_7["a: num"]
     scope_8(("8"))
-    scope_9["b: num"]
+    scope_9(("9"))
     scope_10(("10"))
-    scope_11["c: num"]
-    scope_12(("12"))
-    scope_13["d: num"]
+    scope_11["z: num"]
+    scope_12["x: bool"]
+    scope_13["q: REC(9)"]
     scope_14(("14"))
-    scope_15(("15"))
+    scope_15["b: bool"]
     scope_16(("16"))
-    scope_17["x: num"]
-    scope_18["y: bool"]
-    scope_19["r: REC(16)"]
-    scope_20(("20"))
-    scope_21["p: num"]
-    scope_22["f: (REC(16) -> num)"]
+    scope_17(("17"))
+    scope_18(("18"))
+    scope_19["z: num"]
+    scope_20["p: num"]
 scope_1 ==>|"Parent"| scope_0
 scope_1 ==>|"Declaration"| scope_5
 scope_2 ==>|"Declaration"| scope_4
@@ -32,18 +30,18 @@ scope_2 ==>|"Declaration"| scope_3
 scope_6 ==>|"Parent"| scope_1
 scope_6 ==>|"Declaration"| scope_7
 scope_8 ==>|"Parent"| scope_6
-scope_8 ==>|"Declaration"| scope_9
-scope_10 ==>|"Parent"| scope_8
+scope_8 ==>|"Declaration"| scope_13
+scope_9 ==>|"Record"| scope_10
+scope_9 ==>|"Extension"| scope_2
 scope_10 ==>|"Declaration"| scope_11
-scope_12 ==>|"Parent"| scope_10
-scope_12 ==>|"Declaration"| scope_13
-scope_14 ==>|"Parent"| scope_12
-scope_14 ==>|"Declaration"| scope_22
-scope_15 ==>|"Parent"| scope_12
-scope_15 ==>|"Declaration"| scope_19
-scope_16 ==>|"Declaration"| scope_17
-scope_16 ==>|"Declaration"| scope_18
-scope_20 ==>|"Parent"| scope_15
-scope_20 ==>|"Declaration"| scope_21
+scope_10 ==>|"Declaration"| scope_12
+scope_14 ==>|"Parent"| scope_8
+scope_14 ==>|"Declaration"| scope_15
+scope_16 ==>|"Parent"| scope_14
+scope_16 ==>|"Declaration"| scope_20
+scope_17 ==>|"Parent"| scope_14
+scope_17 ==>|"Record"| scope_9
+scope_18 ==>|"Parent"| scope_17
+scope_18 ==>|"Declaration"| scope_19
 scope_5 ==>|"(Rec)"| scope_2
-scope_19 ==>|"(Rec)"| scope_16
+scope_13 ==>|"(Rec)"| scope_9

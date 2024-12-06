@@ -26,5 +26,41 @@ every `a` here should be an `e`, but im currently not smart enough to fix that.
 * function application: `a(a)`
 * record: `{(x = e,)*}`
 * record access: `a.x`
-* extension: `a extends a`
+* extension: `a extends x`
 * with: `with a do a`
+
+```
+
+x -> id
+b -> true | false
+n -> num {0, 1, 2, ..}
+
+a -> x | b | n
+
+e -> term e'
+
+term -> let x = e; e
+    | fun(x : t) { e }
+    | {(x = e,)*}
+    | with e do e
+    | a
+
+
+e' -> (e) e'
+    | + e' e'
+    | .x e'
+    | extends e e'
+    | eof
+
+
+
+
+```
+
+
+#### parse tower
+
+1. extension
+2. function application
+3. record access
+4.

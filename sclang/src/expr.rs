@@ -1,6 +1,6 @@
 use std::{io::Read, path::{Path, PathBuf}, str::FromStr};
 
-use winnow::{combinator::{alt, cut_err, delimited, eof, fail, not, opt, preceded, repeat, separated, separated_pair, terminated}, error::{StrContext, StrContextValue}, stream::AsChar, token::{any, take_until, take_while}, PResult, Parser};
+use winnow::{combinator::{alt, cut_err, delimited, eof, fail, not, opt, preceded, repeat, separated, separated_pair, terminated}, error::{ParserError, StrContext, StrContextValue}, stream::{AsChar, Stream}, token::{any, take_until, take_while}, PResult, Parser};
 use winnow::ascii::*;
 use winnow::combinator::seq;
 
@@ -80,36 +80,94 @@ impl FromStr for SclangExpression {
 
 // utility
 impl SclangExpression {
-    pub fn from_file(path: impl AsRef<Path>) -> PResult<Self> {
+    pub fn from_file(path: impl AsRef<Path>) -> Result<Self, String> {
         let mut contents = String::new();
         std::fs::File::open(path.as_ref()).unwrap()
         .read_to_string(&mut contents).unwrap();
-        Self::parse(&mut contents.as_str())
+        Self::from_str(contents.as_str())
     }
 
-    pub fn parse(input: &mut &str) -> PResult<Self> {
+    pub(crate) fn parse(input: &mut &str) -> PResult<Self> {
         delimited(multispace0, Self::parse_expr, eof).parse_next(input)
     }
 }
-
 
 // Expression parsing
 impl SclangExpression {
     fn parse_expr(input: &mut &str) -> PResult<Self> {
         preceded(multispace0,alt((
-            Self::parse_add,
-            Self::parse_let,
-            Self::parse_fun,
-            Self::parse_call,
-            Self::parse_record_access,
-            Self::parse_record_decl,
-            Self::parse_atom,
-            fail
-                .context(StrContext::Label("expression"))
+            Self::parse_expr_ext,
+            Self::parse_term,
         )))
         .parse_next(input)
     }
 
+    fn parse_term(input: &mut &str) -> PResult<Self> {
+        preceded(multispace0, alt((
+            Self::parse_let,
+            Self::parse_fun,
+            Self::parse_record_decl,
+            Self::parse_with,
+            Self::parse_atom,
+            fail
+                .context(StrContext::Label("term"))
+        )))
+        .parse_next(input)
+    }
+
+    fn parse_expr_ext(input: &mut &str) -> PResult<Self> {
+        preceded(multispace0, alt((
+            Self::parse_add,
+            Self::parse_record_access,
+            Self::parse_call,
+            Self::parse_extension,
+        )))
+        .parse_next(input)
+    }
+
+    fn parse_add(input: &mut &str) -> PResult<Self> {
+        seq!{Self::Add (
+            Self::parse_term.map(Box::new),
+            _: (multispace0, "+", multispace0),
+            Self::parse_expr.map(Box::new),
+        )}
+        .parse_next(input)
+    }
+
+
+    fn parse_call(input: &mut &str) -> PResult<Self> {
+        seq!{Self::Call {
+            fun: Self::parse_term.map(Box::new),
+            _: (space0, '(', space0),
+            arg: Self::parse_expr.map(Box::new),
+            _: (space0, ')'),
+        }}
+        .parse_next(input)
+    }
+
+    fn parse_record_access(input: &mut &str) -> PResult<Self> {
+        seq!{Self::RecordAccess{
+            record: Self::parse_term.map(Box::new),
+            _: '.',
+            field: Self::parse_variable,
+        }}
+        .context(StrContext::Label("record access"))
+        .parse_next(input)
+    }
+
+    fn parse_extension(input: &mut &str) -> PResult<Self> {
+        seq!{Self::Extension {
+            extension: Self::parse_record_decl.map(Box::new),
+            _: (space1, "extends", space1),
+            parent: Self::parse_expr.map(Box::new),
+        }}
+        .context(StrContext::Label("extension"))
+        .parse_next(input)
+    }
+}
+
+// terms
+impl SclangExpression {
     fn parse_let(input: &mut &str) -> PResult<Self> {
         seq!{Self::Let {
             _: ("let", space1),
@@ -133,35 +191,24 @@ impl SclangExpression {
         .parse_next(input)
     }
 
-    fn parse_add(input: &mut &str) -> PResult<Self> {
-        (
-            Self::parse_atom.map(Box::new),
-            multispace0, "+", multispace0,
-            Self::parse_atom.map(Box::new),
-        )
-        .parse_next(input)
-        .map(|(lhs, _, _, _, rhs)| SclangExpression::Add(lhs, rhs))
-    }
-
     fn parse_fun(input: &mut &str) -> PResult<Self> {
         seq!{Self::Func {
             _: ("fun", space0, '(', space0),
             param: Self::parse_variable,
             _: (space0, ':', space0),
             p_type: SclangType::parse,
-            _: (space0, ')', space0, '{', multispace0),
-            body: Self::parse_expr.map(Box::new),
-            _: (multispace0, '}'),
+            _: (space0, ')'),
+            body: in_curly_braces(Self::parse_expr.map(Box::new)),
         }}
         .parse_next(input)
     }
 
-    fn parse_call(input: &mut &str) -> PResult<Self> {
-        seq!{Self::Call {
-            fun: Self::parse_atom.map(Box::new),
-            _: (space0, '(', space0),
-            arg: Self::parse_atom.map(Box::new),
-            _: (space0, ')'),
+    fn parse_with(input: &mut &str) -> PResult<Self> {
+        seq!{Self::With {
+            _: ("with", space1),
+            record: Self::parse_expr.map(Box::new),
+            _: (space1, "do", space1),
+            body: in_curly_braces(Self::parse_expr.map(Box::new)),
         }}
         .parse_next(input)
     }
@@ -219,15 +266,13 @@ impl SclangExpression {
     }
 
     fn parse_record_decl(input: &mut &str) -> PResult<Self> {
-        delimited(
-            ("{", multispace0),
+        in_curly_braces(
             repeat(1.., Self::parse_record_field).fold(
                 Vec::new,
             |mut acc, (name, ty)| {
                 acc.push((name, ty));
                 acc
-            }),
-            ("}", multispace0),
+            })
         )
         .context(StrContext::Label("record"))
         .map(SclangExpression::Record)
@@ -244,19 +289,18 @@ impl SclangExpression {
         .context(StrContext::Label("record field"))
         .parse_next(input)
     }
-
-    fn parse_record_access(input: &mut &str) -> PResult<Self> {
-        separated_pair(
-            Self::parse_atom,
-            '.',
-            Self::parse_variable,
-        )
-        .map(|(record, field)| SclangExpression::RecordAccess {
-            record: Box::new(record),
-            field,
-        })
-        .context(StrContext::Label("record access"))
-        .parse_next(input)
-    }
 }
 
+pub fn in_curly_braces<Input, Output, Error, ParseNext>(parser: ParseNext) -> impl Parser<Input, Output, Error>
+where
+    Input: Stream + winnow::stream::StreamIsPartial + winnow::stream::Compare<char>,
+    Error: ParserError<Input>,
+    ParseNext: Parser<Input, Output, Error>, <Input as winnow::stream::Stream>::Token: winnow::stream::AsChar, <Input as winnow::stream::Stream>::Token: std::clone::Clone
+{
+    delimited(
+        (multispace0, '{', multispace0),
+        parser,
+        (multispace0, '}')
+    )
+
+}

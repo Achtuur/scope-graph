@@ -145,7 +145,19 @@ mod tests {
 
     #[test]
     fn test_record_access() {
-        let input = "y.x".parse::<SclangExpression>();
+        let input = "y + r.a".parse::<SclangExpression>();
+        match &input {
+            Ok(s) => println!("s: {0:?}", s),
+            Err(e) => {
+                println!("e: {}", e)
+            },
+        }
+        assert!(input.is_ok());
+    }
+
+    #[test]
+    fn test_with() {
+        let input = "with {x = 3, y = 2} do {x + y}".parse::<SclangExpression>();
         match &input {
             Ok(s) => println!("s: {0:?}", s),
             Err(e) => {
@@ -158,7 +170,7 @@ mod tests {
     #[test]
     fn test_from_file() {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        path.push("../examples/record.sclang");
+        path.push("../examples/subtype.sclang");
         println!("path: {0:?}", path);
         let r = SclangExpression::from_file(path);
         match &r {

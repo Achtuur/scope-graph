@@ -46,16 +46,27 @@ impl scopegraphs::render::RenderScopeData for StlcData {
 }
 
 fn main() {
+    println!("Initialising scope graph");
     let storage = Storage::new();
     let sg = StlcGraph::new(&storage, ImplicitClose::default());
     let s0 = sg.add_scope_default();
 
+    let timer = std::time::Instant::now();
     let path = PathBuf::from_str("examples/record.sclang").unwrap();
-    let expr = SclangExpression::from_file(path).unwrap();
-    SgExpression::new(&expr).expr_type(&sg, s0);
+    let expr = match SclangExpression::from_file(&path) {
+        Ok(expr) => expr,
+        Err(e) => panic!("Error parsing {:?}: {}", path.as_path(), e),
+    };
+    println!("Parsing {:?} took {:?}", path.as_path(), timer.elapsed());
 
+    let timer = std::time::Instant::now();
+    SgExpression::new(&expr).expr_type(&sg, s0);
+    println!("Creating scope graph took {:?}", timer.elapsed());
+
+    println!("Rendering scope graph...");
     sg.render_to("output.mmd", RenderSettings::default())
         .unwrap();
+    println!("Done!");
 }
 
 #[cfg(test)]

@@ -5,5 +5,5 @@ let b = q.x;
 let p = with q do {
     let z = z;
     z
-}
+};
 a
