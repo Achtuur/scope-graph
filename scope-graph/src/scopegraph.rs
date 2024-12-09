@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use regex::Regex;
 
-use crate::{label::ScopeGraphLabel, scope::Scope};
+use crate::{data::ScopeGraphData, label::ScopeGraphLabel, lbl_regex::{LabelRegex, LabelRegexMatcher}, path::Path, scope::Scope};
 
 
 
@@ -31,10 +31,6 @@ where Lbl: ScopeGraphLabel + Clone
             edges: Vec::new(),
             data,
         }
-    }
-
-    fn is_final(&self) -> bool {
-        self.edges.is_empty()
     }
 }
 
@@ -81,9 +77,9 @@ where
 // queries
 
 #[derive(Debug)]
-pub struct QueryResult<Data> {
-    path: String,
-    data: Data,
+pub struct QueryResult<Lbl: ScopeGraphLabel, Data> {
+    pub path: Path<Lbl>,
+    pub data: Data,
 }
 
 impl<Lbl, Data> ScopeGraph<Lbl, Data>
@@ -100,35 +96,83 @@ where
     /// * Scope: Starting scope
     /// * path_regex: Regular expression to match the path
     /// * data_name: Name of the data to return
-    pub fn query<DF>(&self, scope: Scope, path_regex: &Regex, data_wellformedness: DF) -> Vec<QueryResult<Data>>
+    pub fn query<DF>(&self, scope: Scope, path_regex: &LabelRegexMatcher<Lbl>, data_wellformedness: DF) -> Vec<QueryResult<Lbl, Data>>
     where
         DF: Fn(&Data) -> bool
     {
-        let scope = self.scopes.get(&scope)
+        let scope_data = self.scopes.get(&scope)
         .expect("Attempting to query non-existant scope");
-        self.query_internal(scope, String::new(), path_regex, &data_wellformedness)
+        self.query_internal(scope_data, Path::start(scope), path_regex, &data_wellformedness)
     }
 
-    fn query_internal<DF>(&self, current_scope: &ScopeData<Lbl, Data>, path: String, path_regex: &Regex, data_equiv: &DF) -> Vec<QueryResult<Data>>
+    fn query_internal<DF>(&self,
+        current_scope: &ScopeData<Lbl, Data>,
+        path: Path<Lbl>,
+        path_regex: &LabelRegexMatcher<Lbl>,
+        data_equiv: &DF
+    ) -> Vec<QueryResult<Lbl, Data>>
     where
         DF: Fn(&Data) -> bool
     {
-        let mut results: Vec<QueryResult<Data>> = Vec::new();
+        let mut results: Vec<QueryResult<Lbl, Data>> = Vec::new();
         for edge in &current_scope.edges {
             let t_scope = self.scopes.get(&edge.to).unwrap();
-            let new_path = format!("{}{}", path, edge.label.char());
-            if t_scope.is_final() {
-                if path_regex.is_match(&new_path) && data_equiv(&t_scope.data) {
-                    results.push(QueryResult {
-                        path: new_path,
-                        data: t_scope.data.clone(),
-                    })
-                }
-            } else {
+            let new_path = path.clone().step(edge.label.clone(), edge.to);
+
+            if path_regex.full_match(&new_path) && data_equiv(&t_scope.data) {
+                results.push(QueryResult {
+                    path: new_path,
+                    data: t_scope.data.clone()
+                })
+            }
+            else if path_regex.partial_match(&new_path) {
                 let mut child_query = self.query_internal(t_scope, new_path, path_regex, data_equiv);
                 results.append(&mut child_query);
             }
         }
         results
+    }
+}
+
+// rendering
+
+
+
+impl<Lbl, Data> ScopeGraph<Lbl, Data>
+where
+    Lbl: ScopeGraphLabel + Clone,
+    Data: ScopeGraphData,
+{
+    pub fn as_mmd(&self, title: &str) -> String {
+        let mut mmd = format!("---\n\
+            title: \"{}\"\n\
+            ---\n\
+            flowchart LR\n\
+            ", title);
+
+        for s in self.scopes.keys() {
+            // todo, different node based on data
+            mmd += &format!("\tscope_{}((\"{}\"))\n", s.0, s.0);
+        }
+
+        for (s, d) in self.scopes.iter() {
+            if d.data.variant_has_data() {
+                mmd += &format!("\tscope_{}[\"{}\"]\n", s.0, d.data.render_string());
+            } else {
+                mmd += &format!("\tscope_{}((\"{}\"))\n", s.0, s.0);
+            }
+        }
+
+        for (s, d) in self.scopes.iter() {
+            for edge in d.edges.iter() {
+                mmd += &format!("scope_{} ==>|\"{}\"| scope_{}\n",
+                    s.0,
+                    edge.label.str(),
+                    edge.to.0
+                )
+            }
+        }
+
+        mmd
     }
 }
