@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use regex::Regex;
 
-use crate::{data::ScopeGraphData, label::ScopeGraphLabel, lbl_regex::{LabelRegex, LabelRegexMatcher}, path::Path, scope::Scope};
+use crate::{data::ScopeGraphData, label::ScopeGraphLabel, lbl_regex::{LabelRegex, LabelRegexMatcher}, order::LabelOrder, path::Path, scope::Scope};
 
 
 
@@ -96,26 +96,60 @@ where
     /// * Scope: Starting scope
     /// * path_regex: Regular expression to match the path
     /// * data_name: Name of the data to return
-    pub fn query<DF>(&self, scope: Scope, path_regex: &LabelRegexMatcher<Lbl>, data_wellformedness: DF) -> Vec<QueryResult<Lbl, Data>>
+    pub fn query<DF>(&self, scope: Scope, path_regex: &LabelRegexMatcher<Lbl>, order: &LabelOrder<Lbl>, data_wellformedness: DF) -> Vec<QueryResult<Lbl, Data>>
     where
         DF: Fn(&Data) -> bool
     {
         let scope_data = self.scopes.get(&scope)
         .expect("Attempting to query non-existant scope");
-        self.query_internal(scope_data, Path::start(scope), path_regex, &data_wellformedness)
+        self.query_internal(scope_data, Path::start(scope), path_regex, order, &data_wellformedness)
     }
 
     fn query_internal<DF>(&self,
         current_scope: &ScopeData<Lbl, Data>,
         path: Path<Lbl>,
         path_regex: &LabelRegexMatcher<Lbl>,
+        order: &LabelOrder<Lbl>,
         data_equiv: &DF
     ) -> Vec<QueryResult<Lbl, Data>>
     where
         DF: Fn(&Data) -> bool
     {
         let mut results: Vec<QueryResult<Lbl, Data>> = Vec::new();
-        for edge in &current_scope.edges {
+
+        let (mut ordered, unordered): (Vec<_>, Vec<_>) = current_scope.edges
+        .iter()
+        .partition(|edge| order.contains(&edge.label));
+
+        ordered.sort_by(|a, b| order.cmp(&a.label, &b.label));
+        println!("ordered: {0:?}", ordered);
+        println!("unordered: {0:?}", unordered);
+
+        // should break after all paths with current label are found
+        // or not? ambigious reference
+        for edge in ordered {
+            let t_scope = self.scopes.get(&edge.to).unwrap();
+            let new_path = path.clone().step(edge.label.clone(), edge.to);
+
+            if path_regex.full_match(&new_path) && data_equiv(&t_scope.data) {
+                results.push(QueryResult {
+                    path: new_path,
+                    data: t_scope.data.clone()
+                });
+            }
+            else if path_regex.partial_match(&new_path) {
+                let mut child_query = self.query_internal(t_scope, new_path, path_regex, order, data_equiv);
+                results.append(&mut child_query);
+            }
+
+            // break if something is found
+            if !results.is_empty(){
+                break;
+            }
+        }
+
+        // dont break
+        for edge in unordered {
             let t_scope = self.scopes.get(&edge.to).unwrap();
             let new_path = path.clone().step(edge.label.clone(), edge.to);
 
@@ -126,9 +160,36 @@ where
                 })
             }
             else if path_regex.partial_match(&new_path) {
-                let mut child_query = self.query_internal(t_scope, new_path, path_regex, data_equiv);
+                let mut child_query = self.query_internal(t_scope, new_path, path_regex, order, data_equiv);
                 results.append(&mut child_query);
             }
+        }
+        results
+    }
+
+    fn query_edge<DF>(&self,
+        edge: &Edge<Lbl>,
+        path: Path<Lbl>,
+        path_regex: &LabelRegexMatcher<Lbl>,
+        order: &LabelOrder<Lbl>,
+        data_equiv: &DF
+    ) -> Vec<QueryResult<Lbl, Data>>
+    where
+        DF: Fn(&Data) -> bool
+    {
+        let mut results = Vec::new();
+        let t_scope = self.scopes.get(&edge.to).unwrap();
+        let new_path = path.clone().step(edge.label.clone(), edge.to);
+
+        if path_regex.full_match(&new_path) && data_equiv(&t_scope.data) {
+            results.push(QueryResult {
+                path: new_path,
+                data: t_scope.data.clone()
+            })
+        }
+        else if path_regex.partial_match(&new_path) {
+            let mut child_query = self.query_internal(t_scope, new_path, path_regex, order, data_equiv);
+            results.append(&mut child_query);
         }
         results
     }

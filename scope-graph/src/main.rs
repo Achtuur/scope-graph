@@ -3,6 +3,7 @@ use std::io::Write;
 use data::ScopeGraphData;
 use label::ScopeGraphLabel;
 use lbl_regex::*;
+use order::LabelOrder;
 use scope::Scope;
 use scopegraph::ScopeGraph;
 
@@ -12,6 +13,7 @@ mod label;
 mod path;
 mod lbl_regex;
 mod data;
+pub mod order;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Label {
@@ -83,7 +85,7 @@ fn main() {
     graph.add_edge(scope2, scope1, Label::Parent);
     graph.add_edge(scope2, scope3, Label::NeverTake);
 
-    for _ in 0..10 {
+    for _ in 0..3 {
         graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
     }
     graph.add_decl(scope2, Label::Declaration, Data::var("x", "int"));
@@ -97,9 +99,11 @@ fn main() {
         LabelRegex::ZeroOrMore(Label::Parent),
         LabelRegex::Single(Label::Declaration)
     ];
+    let order = LabelOrder::new().push(Label::Parent, Label::Declaration);
     let matcher = LabelRegexMatcher::new(label_reg);
     let res = graph.query(scope2,
         &matcher,
+        &order,
         |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int")
     );
 

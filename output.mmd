@@ -2,75 +2,35 @@
 title: "Query: label_reg=P*D, data_eq=x:int"
 ---
 flowchart LR
-	scope_14(("14"))
-	scope_2(("2"))
-	scope_15(("15"))
-	scope_1(("1"))
-	scope_8(("8"))
-	scope_13(("13"))
-	scope_11(("11"))
-	scope_12(("12"))
-	scope_5(("5"))
 	scope_0(("0"))
-	scope_6(("6"))
-	scope_16(("16"))
-	scope_3(("3"))
-	scope_10(("10"))
 	scope_4(("4"))
+	scope_2(("2"))
+	scope_8(("8"))
+	scope_3(("3"))
+	scope_1(("1"))
 	scope_9(("9"))
 	scope_7(("7"))
-	scope_14["x: int"]
-	scope_2(("2"))
-	scope_15["x: bool"]
-	scope_1(("1"))
-	scope_8["x: int"]
-	scope_13["x: int"]
-	scope_11["x: int"]
-	scope_12["x: int"]
-	scope_5["x: int"]
+	scope_5(("5"))
+	scope_6(("6"))
 	scope_0(("0"))
-	scope_6["x: int"]
-	scope_16["x: int"]
-	scope_3(("3"))
-	scope_10["x: int"]
 	scope_4["x: int"]
+	scope_2(("2"))
+	scope_8["x: bool"]
+	scope_3(("3"))
+	scope_1(("1"))
 	scope_9["x: int"]
 	scope_7["x: int"]
+	scope_5["x: int"]
+	scope_6["x: int"]
 scope_2 ==>|"Parent"| scope_1
 scope_2 ==>|"NeverTake"| scope_3
-scope_2 ==>|"Declaration"| scope_14
-scope_2 ==>|"Declaration"| scope_15
+scope_2 ==>|"Declaration"| scope_7
+scope_2 ==>|"Declaration"| scope_8
+scope_3 ==>|"Declaration"| scope_9
 scope_1 ==>|"Parent"| scope_0
 scope_1 ==>|"Declaration"| scope_4
 scope_1 ==>|"Declaration"| scope_5
 scope_1 ==>|"Declaration"| scope_6
-scope_1 ==>|"Declaration"| scope_7
-scope_1 ==>|"Declaration"| scope_8
-scope_1 ==>|"Declaration"| scope_9
-scope_1 ==>|"Declaration"| scope_10
-scope_1 ==>|"Declaration"| scope_11
-scope_1 ==>|"Declaration"| scope_12
-scope_1 ==>|"Declaration"| scope_13
-scope_3 ==>|"Declaration"| scope_16
 
 scope_1 -.D.-> scope_4
 scope_2 -.P.-> scope_1
-scope_1 -.D.-> scope_5
-scope_2 -.P.-> scope_1
-scope_1 -.D.-> scope_6
-scope_2 -.P.-> scope_1
-scope_1 -.D.-> scope_7
-scope_2 -.P.-> scope_1
-scope_1 -.D.-> scope_8
-scope_2 -.P.-> scope_1
-scope_1 -.D.-> scope_9
-scope_2 -.P.-> scope_1
-scope_1 -.D.-> scope_10
-scope_2 -.P.-> scope_1
-scope_1 -.D.-> scope_11
-scope_2 -.P.-> scope_1
-scope_1 -.D.-> scope_12
-scope_2 -.P.-> scope_1
-scope_1 -.D.-> scope_13
-scope_2 -.P.-> scope_1
-scope_2 -.D.-> scope_14
