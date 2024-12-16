@@ -14,6 +14,7 @@ pub enum LabelRegex<Lbl: ScopeGraphLabel> {
     Or(Rc<Self>, Rc<Self>),
 }
 
+
 impl<Lbl: ScopeGraphLabel + Clone> LabelRegex<Lbl> {
     pub fn or(reg1: Self, reg2: Self) -> Self {
         Self::Or(Rc::new(reg1), Rc::new(reg2))

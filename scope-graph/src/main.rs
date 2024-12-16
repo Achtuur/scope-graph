@@ -13,7 +13,8 @@ mod label;
 mod path;
 mod lbl_regex;
 mod data;
-pub mod order;
+mod order;
+mod regex;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Label {
@@ -99,7 +100,7 @@ fn main() {
         LabelRegex::ZeroOrMore(Label::Parent),
         LabelRegex::Single(Label::Declaration)
     ];
-    let order = LabelOrder::new().push(Label::Parent, Label::Declaration);
+    let order = LabelOrder::new().push(Label::Declaration, Label::Parent);
     let matcher = LabelRegexMatcher::new(label_reg);
     let res = graph.query(scope2,
         &matcher,
