@@ -2,8 +2,9 @@ use std::io::Write;
 
 use data::ScopeGraphData;
 use label::ScopeGraphLabel;
-use lbl_regex::*;
+// use lbl_regex::*;
 use order::LabelOrder;
+use regex::{dfs::RegexAutomata, Regex};
 use scope::Scope;
 use scopegraph::ScopeGraph;
 
@@ -11,17 +12,27 @@ mod scopegraph;
 mod scope;
 mod label;
 mod path;
-mod lbl_regex;
+// mod lbl_regex;
 mod data;
 mod order;
 mod regex;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 enum Label {
     Parent,
     Declaration,
     /// Debug path that should never be taken
     NeverTake,
+}
+
+impl std::fmt::Display for Label {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Parent => write!(f, "P"),
+            Self::Declaration => write!(f, "D"),
+            Self::NeverTake => write!(f, "N"),
+        }
+    }
 }
 
 impl ScopeGraphLabel for Label {
@@ -96,12 +107,30 @@ fn main() {
     println!("graph: {0:?}", graph);
 
     // let label_reg = Regex::new("P*D").unwrap();
-    let label_reg = vec![
-        LabelRegex::ZeroOrMore(Label::Parent),
-        LabelRegex::Single(Label::Declaration)
-    ];
+    // let label_reg = vec![
+    //     LabelRegex::ZeroOrMore(Label::Parent),
+    //     LabelRegex::Single(Label::Declaration)
+    // ];
+    // let matcher = LabelRegexMatcher::new(label_reg);
+
     let order = LabelOrder::new().push(Label::Declaration, Label::Parent);
-    let matcher = LabelRegexMatcher::new(label_reg);
+
+    // P*PD;
+    let label_reg = Regex::concat(
+        Regex::kleene(Label::Parent),
+        Regex::concat(Label::Parent, Label::Declaration)
+        // Label::Declaration
+    );
+    let matcher = RegexAutomata::from_regex(label_reg);
+
+    let mut file = std::fs::OpenOptions::new()
+    .write(true)
+    .create(true)
+    .truncate(true)
+    .open("./automata.mmd")
+    .unwrap();
+    file.write_all(matcher.to_mmd().as_bytes()).unwrap();
+
     let res = graph.query(scope2,
         &matcher,
         &order,

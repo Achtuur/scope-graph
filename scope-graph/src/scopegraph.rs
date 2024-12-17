@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
-use regex::Regex;
 
-use crate::{data::ScopeGraphData, label::ScopeGraphLabel, lbl_regex::{LabelRegex, LabelRegexMatcher}, order::LabelOrder, path::Path, scope::Scope};
+use crate::{data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, path::Path, regex::dfs::RegexAutomata, scope::Scope};
 
 
 
@@ -84,7 +83,7 @@ pub struct QueryResult<Lbl: ScopeGraphLabel, Data> {
 
 impl<Lbl, Data> ScopeGraph<Lbl, Data>
 where
-    Lbl: ScopeGraphLabel + Clone + std::fmt::Debug,
+    Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + PartialEq + Eq + std::hash::Hash,
     Data: std::fmt::Debug + Clone
 {
     /// Returns the data associated with the scope baesd on path_regex and name of the data
@@ -96,7 +95,7 @@ where
     /// * Scope: Starting scope
     /// * path_regex: Regular expression to match the path
     /// * data_name: Name of the data to return
-    pub fn query<DF>(&self, scope: Scope, path_regex: &LabelRegexMatcher<Lbl>, order: &LabelOrder<Lbl>, data_wellformedness: DF) -> Vec<QueryResult<Lbl, Data>>
+    pub fn query<DF>(&self, scope: Scope, path_regex: &RegexAutomata<Lbl>, order: &LabelOrder<Lbl>, data_wellformedness: DF) -> Vec<QueryResult<Lbl, Data>>
     where
         DF: Fn(&Data) -> bool
     {
@@ -108,7 +107,7 @@ where
     fn query_internal<DF>(&self,
         current_scope: &ScopeData<Lbl, Data>,
         path: Path<Lbl>,
-        path_regex: &LabelRegexMatcher<Lbl>,
+        path_regex: &RegexAutomata<Lbl>,
         order: &LabelOrder<Lbl>,
         data_equiv: &DF
     ) -> Vec<QueryResult<Lbl, Data>>
@@ -122,8 +121,6 @@ where
         .partition(|edge| order.contains(&edge.label));
 
         ordered.sort_by(|a, b| order.cmp(&a.label, &b.label));
-        println!("ordered: {0:?}", ordered);
-        println!("unordered: {0:?}", unordered);
 
         // should break after all paths with current label are found
         // or not? ambigious reference
@@ -131,13 +128,13 @@ where
             let t_scope = self.scopes.get(&edge.to).unwrap();
             let new_path = path.clone().step(edge.label.clone(), edge.to);
 
-            if path_regex.full_match(&new_path) && data_equiv(&t_scope.data) {
+            if path_regex.is_match(&new_path.as_lbl_vec()) && data_equiv(&t_scope.data) {
                 results.push(QueryResult {
                     path: new_path,
                     data: t_scope.data.clone()
                 });
             }
-            else if path_regex.partial_match(&new_path) {
+            else if path_regex.partial_match(&new_path.as_lbl_vec()) {
                 let mut child_query = self.query_internal(t_scope, new_path, path_regex, order, data_equiv);
                 results.append(&mut child_query);
             }
@@ -153,52 +150,22 @@ where
             let t_scope = self.scopes.get(&edge.to).unwrap();
             let new_path = path.clone().step(edge.label.clone(), edge.to);
 
-            if path_regex.full_match(&new_path) && data_equiv(&t_scope.data) {
+            if path_regex.is_match(&new_path.as_lbl_vec()) && data_equiv(&t_scope.data) {
                 results.push(QueryResult {
                     path: new_path,
                     data: t_scope.data.clone()
                 })
             }
-            else if path_regex.partial_match(&new_path) {
+            else if path_regex.partial_match(&new_path.as_lbl_vec()) {
                 let mut child_query = self.query_internal(t_scope, new_path, path_regex, order, data_equiv);
                 results.append(&mut child_query);
             }
         }
         results
     }
-
-    fn query_edge<DF>(&self,
-        edge: &Edge<Lbl>,
-        path: Path<Lbl>,
-        path_regex: &LabelRegexMatcher<Lbl>,
-        order: &LabelOrder<Lbl>,
-        data_equiv: &DF
-    ) -> Vec<QueryResult<Lbl, Data>>
-    where
-        DF: Fn(&Data) -> bool
-    {
-        let mut results = Vec::new();
-        let t_scope = self.scopes.get(&edge.to).unwrap();
-        let new_path = path.clone().step(edge.label.clone(), edge.to);
-
-        if path_regex.full_match(&new_path) && data_equiv(&t_scope.data) {
-            results.push(QueryResult {
-                path: new_path,
-                data: t_scope.data.clone()
-            })
-        }
-        else if path_regex.partial_match(&new_path) {
-            let mut child_query = self.query_internal(t_scope, new_path, path_regex, order, data_equiv);
-            results.append(&mut child_query);
-        }
-        results
-    }
 }
 
 // rendering
-
-
-
 impl<Lbl, Data> ScopeGraph<Lbl, Data>
 where
     Lbl: ScopeGraphLabel + Clone,

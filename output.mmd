@@ -2,34 +2,35 @@
 title: "Query: label_reg=P*D, data_eq=x:int"
 ---
 flowchart LR
-	scope_2(("2"))
-	scope_9(("9"))
-	scope_0(("0"))
-	scope_4(("4"))
 	scope_1(("1"))
+	scope_2(("2"))
+	scope_4(("4"))
+	scope_0(("0"))
 	scope_3(("3"))
+	scope_8(("8"))
+	scope_9(("9"))
+	scope_6(("6"))
 	scope_7(("7"))
 	scope_5(("5"))
-	scope_8(("8"))
-	scope_6(("6"))
-	scope_2(("2"))
-	scope_9["x: int"]
-	scope_0(("0"))
-	scope_4["x: int"]
 	scope_1(("1"))
+	scope_2(("2"))
+	scope_4["x: int"]
+	scope_0(("0"))
 	scope_3(("3"))
+	scope_8["x: bool"]
+	scope_9["x: int"]
+	scope_6["x: int"]
 	scope_7["x: int"]
 	scope_5["x: int"]
-	scope_8["x: bool"]
-	scope_6["x: int"]
-scope_2 ==>|"Parent"| scope_1
-scope_2 ==>|"NeverTake"| scope_3
-scope_2 ==>|"Declaration"| scope_7
-scope_2 ==>|"Declaration"| scope_8
 scope_1 ==>|"Parent"| scope_0
 scope_1 ==>|"Declaration"| scope_4
 scope_1 ==>|"Declaration"| scope_5
 scope_1 ==>|"Declaration"| scope_6
+scope_2 ==>|"Parent"| scope_1
+scope_2 ==>|"NeverTake"| scope_3
+scope_2 ==>|"Declaration"| scope_7
+scope_2 ==>|"Declaration"| scope_8
 scope_3 ==>|"Declaration"| scope_9
 
-scope_2 -.D.-> scope_7
+scope_1 -.D.-> scope_4
+scope_2 -.P.-> scope_1

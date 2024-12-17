@@ -32,6 +32,7 @@ impl <Lbl: ScopeGraphLabel> Path<Lbl> {
             v.push(label);
             current = from;
         }
+        v.reverse();
         v
     }
 
