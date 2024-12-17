@@ -111,8 +111,7 @@ impl StlcType {
                         let StlcData::Variable(x_super, t_super) = sup.data() else {
                             panic!("Record subtype query somehow returned non-variable");
                         };
-                        x_sub == x_super
-                        && t_sub.is_subtype_of(t_super, sg)
+                        x_sub == x_super && t_sub.is_subtype_of(t_super, sg)
                     })
                 });
                 is_subtype

@@ -8,10 +8,10 @@ use regex::{dfs::RegexAutomata, Regex};
 use scope::Scope;
 use scopegraph::ScopeGraph;
 
-mod scopegraph;
-mod scope;
 mod label;
 mod path;
+mod scope;
+mod scopegraph;
 // mod lbl_regex;
 mod data;
 mod order;
@@ -90,7 +90,7 @@ fn main() {
 
     graph.add_scope(root, Data::NoData);
     graph.add_scope(scope1, Data::NoData);
-    graph.add_scope(scope2,  Data::NoData);
+    graph.add_scope(scope2, Data::NoData);
     graph.add_scope(scope3, Data::NoData);
 
     graph.add_edge(scope1, root, Label::Parent);
@@ -118,23 +118,23 @@ fn main() {
     // P*PD;
     let label_reg = Regex::concat(
         Regex::kleene(Label::Parent),
-        Regex::concat(Label::Parent, Label::Declaration)
-        // Label::Declaration
+        Regex::concat(Label::Parent, Label::Declaration), // Label::Declaration
     );
     let matcher = RegexAutomata::from_regex(label_reg);
 
     let mut file = std::fs::OpenOptions::new()
-    .write(true)
-    .create(true)
-    .truncate(true)
-    .open("./automata.mmd")
-    .unwrap();
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open("./automata.mmd")
+        .unwrap();
     file.write_all(matcher.to_mmd().as_bytes()).unwrap();
 
-    let res = graph.query(scope2,
+    let res = graph.query(
+        scope2,
         &matcher,
         &order,
-        |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int")
+        |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int"),
     );
 
     // println!("res: {0:?}", res);
@@ -149,11 +149,10 @@ fn main() {
     }
 
     let mut file = std::fs::OpenOptions::new()
-    .write(true)
-    .create(true)
-    .truncate(true)
-    .open("./output.mmd")
-    .unwrap();
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open("./output.mmd")
+        .unwrap();
     file.write_all(mmd.as_bytes()).unwrap();
-
 }

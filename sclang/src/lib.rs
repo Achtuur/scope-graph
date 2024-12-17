@@ -1,14 +1,12 @@
 mod expr;
 mod types;
 
-
-
 pub use expr::SclangExpression;
 pub use types::SclangType;
 
 #[cfg(test)]
 mod tests {
-    use std::{path::PathBuf, str::FromStr};
+    use std::path::PathBuf;
 
     use expr::RESERVED_KEYWORDS;
 
@@ -38,7 +36,9 @@ mod tests {
         // assert!(contain_alpha.is_err());
 
         let misspelled = SclangExpression::parse(&mut "treu");
-        assert!(misspelled.is_err() || !matches!(&misspelled.unwrap(), SclangExpression::Boolean(true)));
+        assert!(
+            misspelled.is_err() || !matches!(&misspelled.unwrap(), SclangExpression::Boolean(true))
+        );
 
         // let starts_alpha = SclangExpression::parse(&mut "strue");
         // assert!(starts_alpha.is_err());
@@ -51,12 +51,15 @@ mod tests {
         let y = SclangExpression::parse(&mut "x123").unwrap();
         assert_eq!(y, SclangExpression::Var("x123".to_string()));
         let underscore = SclangExpression::parse(&mut "some_variable").unwrap();
-        assert_eq!(underscore, SclangExpression::Var("some_variable".to_string()));
+        assert_eq!(
+            underscore,
+            SclangExpression::Var("some_variable".to_string())
+        );
 
         let wrong = SclangExpression::parse(&mut "1x");
         assert!(wrong.is_err());
 
-        for mut r in RESERVED_KEYWORDS.into_iter(){
+        for mut r in RESERVED_KEYWORDS.into_iter() {
             // make sure that the keyword is not parsed as a variable
             if let Ok(expr) = SclangExpression::parse(&mut r) {
                 assert!(!matches!(expr, SclangExpression::Var(_)))
@@ -72,7 +75,7 @@ mod tests {
             Ok(s) => println!("s: {0:?}", s),
             Err(e) => {
                 println!("e: {}", e)
-            },
+            }
         }
     }
 
@@ -84,7 +87,7 @@ mod tests {
             Ok(s) => println!("s: {0:?}", s),
             Err(e) => {
                 println!("e: {}", e)
-            },
+            }
         }
         assert!(x.is_ok());
     }
@@ -97,7 +100,7 @@ mod tests {
             Ok(s) => println!("s: {0:?}", s),
             Err(e) => {
                 println!("e: {}", e)
-            },
+            }
         }
         assert!(x.is_ok());
     }
@@ -110,7 +113,7 @@ mod tests {
             Ok(s) => println!("s: {0:?}", s),
             Err(e) => {
                 println!("e: {}", e)
-            },
+            }
         }
         assert!(x.is_ok());
     }
@@ -121,12 +124,13 @@ mod tests {
         let y = x(1) + 2;
         let z = x(y) + y;
         let z2 = 1;
-        z + z2".parse::<SclangExpression>();
+        z + z2"
+            .parse::<SclangExpression>();
         match &input {
             Ok(s) => println!("s: {0:?}", s),
             Err(e) => {
                 println!("e: {}", e)
-            },
+            }
         }
         assert!(input.is_ok());
     }
@@ -138,7 +142,7 @@ mod tests {
             Ok(s) => println!("s: {0:?}", s),
             Err(e) => {
                 println!("e: {}", e)
-            },
+            }
         }
         // assert!(input.is_ok());
     }
@@ -150,7 +154,7 @@ mod tests {
             Ok(s) => println!("s: {0:?}", s),
             Err(e) => {
                 println!("e: {}", e)
-            },
+            }
         }
         assert!(input.is_ok());
     }
@@ -162,7 +166,7 @@ mod tests {
             Ok(s) => println!("s: {0:?}", s),
             Err(e) => {
                 println!("e: {}", e)
-            },
+            }
         }
         assert!(input.is_ok());
     }
@@ -177,7 +181,7 @@ mod tests {
             Ok(s) => println!("s: {0:?}", s),
             Err(e) => {
                 println!("e: {}", e)
-            },
+            }
         }
         println!("r: {0:?}", r);
     }

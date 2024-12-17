@@ -1,5 +1,4 @@
 pub trait ScopeGraphData {
-
     /// Returns true if the variant has data.
     ///
     /// If have a data variant that contains no data, return false.

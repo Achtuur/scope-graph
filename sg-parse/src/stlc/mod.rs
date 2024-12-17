@@ -14,7 +14,6 @@ pub type StlcGraph<'s> = ScopeGraph<'s, StlcLabel, StlcData, ImplicitClose<StlcL
 
 pub(crate) struct SgExpression<'a>(&'a sclang::SclangExpression);
 
-
 impl<'a> SgExpression<'a> {
     pub fn new(expr: &'a sclang::SclangExpression) -> Self {
         SgExpression(expr)

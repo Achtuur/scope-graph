@@ -1,4 +1,4 @@
-pub trait ScopeGraphLabel : PartialEq {
+pub trait ScopeGraphLabel: PartialEq {
     fn char(&self) -> char;
     fn str(&self) -> &'static str;
 }

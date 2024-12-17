@@ -1,5 +1,3 @@
-use std::{array::IntoIter, rc::Rc};
-
 use crate::{label::ScopeGraphLabel, scope::Scope};
 
 #[derive(Debug, Clone)]
@@ -12,7 +10,7 @@ pub enum Path<Lbl: ScopeGraphLabel> {
     },
 }
 
-impl <Lbl: ScopeGraphLabel> Path<Lbl> {
+impl<Lbl: ScopeGraphLabel> Path<Lbl> {
     pub fn start(start: Scope) -> Self {
         Self::Start(start)
     }
@@ -39,9 +37,18 @@ impl <Lbl: ScopeGraphLabel> Path<Lbl> {
     pub fn as_mmd(&self, mut mmd: String) -> String {
         match self {
             Self::Start(_) => mmd,
-            Self::Step {from, label, target} => {
+            Self::Step {
+                from,
+                label,
+                target,
+            } => {
                 mmd += "\n";
-                mmd += &format!("scope_{} -.{}.-> scope_{}", from.scope_num(), label.char(), target.0);
+                mmd += &format!(
+                    "scope_{} -.{}.-> scope_{}",
+                    from.scope_num(),
+                    label.char(),
+                    target.0
+                );
                 from.as_mmd(mmd)
             }
         }
@@ -51,7 +58,11 @@ impl <Lbl: ScopeGraphLabel> Path<Lbl> {
     pub fn display(&self) -> String {
         match self {
             Self::Start(s) => format!("{s:?}"),
-            Self::Step { from, label, target } => {
+            Self::Step {
+                from,
+                label,
+                target,
+            } => {
                 format!("{} -{}-> {:?}", from.display(), label.char(), target)
             }
         }
@@ -63,7 +74,6 @@ impl <Lbl: ScopeGraphLabel> Path<Lbl> {
             Self::Step { target, .. } => target.0,
         }
     }
-
 }
 
 impl<Lbl: ScopeGraphLabel> std::fmt::Display for Path<Lbl> {

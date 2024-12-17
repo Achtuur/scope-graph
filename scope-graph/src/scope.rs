@@ -1,6 +1,5 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-
 static ScopeCounter: AtomicUsize = AtomicUsize::new(0);
 
 /// A single scope in the scope graph. Each scope is assigned an incrementing id.

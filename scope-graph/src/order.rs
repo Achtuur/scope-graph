@@ -1,20 +1,19 @@
 use crate::label::ScopeGraphLabel;
 
 pub(crate) struct LabelOrder<Lbl>
-where Lbl: ScopeGraphLabel
+where
+    Lbl: ScopeGraphLabel,
 {
     /// Orders of labels, el.0 < el.1
     order: Vec<(Lbl, Lbl)>,
 }
 
 impl<Lbl> LabelOrder<Lbl>
-where Lbl: ScopeGraphLabel
+where
+    Lbl: ScopeGraphLabel,
 {
-
     pub fn new() -> Self {
-        Self {
-            order: Vec::new(),
-        }
+        Self { order: Vec::new() }
     }
 
     pub fn push(mut self, lhs: Lbl, rhs: Lbl) -> Self {
@@ -23,7 +22,9 @@ where Lbl: ScopeGraphLabel
     }
 
     pub fn contains(&self, label: &Lbl) -> bool {
-        self.order.iter().any(|(lhs, rhs)| lhs == label || rhs == label)
+        self.order
+            .iter()
+            .any(|(lhs, rhs)| lhs == label || rhs == label)
     }
 
     pub fn cmp(&self, label1: &Lbl, label2: &Lbl) -> std::cmp::Ordering {

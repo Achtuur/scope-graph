@@ -1,4 +1,7 @@
-use std::{collections::{HashMap, HashSet}, hash::{self, Hash, Hasher}};
+use std::{
+    collections::HashMap,
+    hash::{Hash, Hasher},
+};
 
 use crate::label::ScopeGraphLabel;
 
@@ -8,10 +11,10 @@ pub trait RegexLabel: Default + Clone + PartialEq + Eq + Hash {}
 
 impl<T: ScopeGraphLabel + Hash + Eq + Clone + Default> RegexLabel for T {}
 
-
 #[derive(Default, Debug)]
 pub struct AutomataNode<Lbl>
-where Lbl: Clone + PartialEq + Eq + Hash
+where
+    Lbl: Clone + PartialEq + Eq + Hash,
 {
     // pub key: Regex<Lbl>,
     // key = edge label, value = target node key
@@ -19,7 +22,8 @@ where Lbl: Clone + PartialEq + Eq + Hash
 }
 
 impl<Lbl> AutomataNode<Lbl>
-where Lbl: Clone + PartialEq + Eq + Hash
+where
+    Lbl: Clone + PartialEq + Eq + Hash,
 {
     pub fn new() -> Self {
         Self {
@@ -30,15 +34,16 @@ where Lbl: Clone + PartialEq + Eq + Hash
 
 #[derive(Debug)]
 pub struct RegexAutomata<Lbl>
-where Lbl: Clone + PartialEq + Eq + Hash
-
+where
+    Lbl: Clone + PartialEq + Eq + Hash,
 {
     pub start_key: Regex<Lbl>,
     pub nodes: HashMap<Regex<Lbl>, AutomataNode<Lbl>>,
 }
 
 impl<Lbl> RegexAutomata<Lbl>
-where Lbl: Clone + PartialEq + Eq + Hash
+where
+    Lbl: Clone + PartialEq + Eq + Hash,
 {
     /// Create a new automata from a regex, also compiles the regex
     pub fn from_regex(regex: Regex<Lbl>) -> Self {
@@ -93,7 +98,7 @@ where Lbl: Clone + PartialEq + Eq + Hash
                 None => {
                     // no edge found with this `label` -> no match
                     return None;
-                },
+                }
             }
         }
         Some(current)
@@ -112,7 +117,8 @@ where Lbl: Clone + PartialEq + Eq + Hash
 }
 
 impl<Lbl> RegexAutomata<Lbl>
-where Lbl: Clone + PartialEq + Eq + Hash + std::fmt::Display
+where
+    Lbl: Clone + PartialEq + Eq + Hash + std::fmt::Display,
 {
     // uses display impl and removes spaces
     fn node_key(node: &Regex<Lbl>) -> u64 {
@@ -133,7 +139,6 @@ where Lbl: Clone + PartialEq + Eq + Hash + std::fmt::Display
         }
 
         for (node_reg, node) in &self.nodes {
-
             // group node.edges by target node
             let mut grouped_edges = HashMap::new();
             for (label, target) in &node.edges {
@@ -150,7 +155,9 @@ where Lbl: Clone + PartialEq + Eq + Hash + std::fmt::Display
                 }
                 mmd += &format!(
                     "{0:} ==>|\"{1:}\"| {2:}\n",
-                    node_key, combined_label.trim_end_matches(", "), target_key
+                    node_key,
+                    combined_label.trim_end_matches(", "),
+                    target_key
                 );
             }
         }
@@ -182,7 +189,7 @@ mod tests {
         //     Regex::concat('b', 'c'),
         // );
         // let regex = Regex::kleene('a');
-        let regex = Regex::concat(Regex::kleene('P'), Regex::concat('P','D'));
+        let regex = Regex::concat(Regex::kleene('P'), Regex::concat('P', 'D'));
 
         // let mut regex = Regex::from('a');
         // for c in 'b'..='z' {
@@ -210,8 +217,8 @@ mod tests {
 
     #[test]
     fn test_is_match_kleene() {
-        let regex = Regex::concat(Regex::kleene('P'), Regex::concat('P','D'));
-        let mut automata = RegexAutomata::from_regex(regex);
+        let regex = Regex::concat(Regex::kleene('P'), Regex::concat('P', 'D'));
+        let automata = RegexAutomata::from_regex(regex);
         let mmd = automata.to_mmd();
         write_mmd_to_file(&mmd);
         let haystack = vec![&'P', &'D'];

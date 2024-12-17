@@ -23,7 +23,8 @@ pub enum Regex<Lbl> {
 }
 
 impl<Lbl> std::fmt::Display for Regex<Lbl>
-where Lbl: std::fmt::Display
+where
+    Lbl: std::fmt::Display,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -46,7 +47,8 @@ where Lbl: std::fmt::Display
 // }
 
 impl<T> From<T> for Regex<T>
-where T: ScopeGraphLabel + Clone + std::hash::Hash
+where
+    T: ScopeGraphLabel + Clone + std::hash::Hash,
 {
     fn from(c: T) -> Self {
         Self::Character(c)
@@ -54,7 +56,8 @@ where T: ScopeGraphLabel + Clone + std::hash::Hash
 }
 
 impl<Lbl> Regex<Lbl>
-where Lbl: PartialEq + Clone
+where
+    Lbl: PartialEq + Clone,
 {
     pub fn or(r: impl Into<Self>, s: impl Into<Self>) -> Self {
         Self::Or(Box::new(r.into()), Box::new(s.into()))
@@ -86,8 +89,7 @@ where Lbl: PartialEq + Clone
             Self::EmptyString => Self::EmptyString,
             Self::ZeroSet => Self::ZeroSet,
             Self::Character(_) => Self::ZeroSet,
-            Self::And(r, s)
-            | Self::Concat(r, s) => match (r.v(), s.v()) {
+            Self::And(r, s) | Self::Concat(r, s) => match (r.v(), s.v()) {
                 (Self::EmptyString, Self::EmptyString) => Self::EmptyString,
                 _ => Self::ZeroSet,
             },
@@ -99,7 +101,9 @@ where Lbl: PartialEq + Clone
             Self::Neg(r) => match r.v() {
                 Self::EmptyString => Self::ZeroSet,
                 Self::ZeroSet => Self::EmptyString,
-                _ => unreachable!("v should not return anything other than empty set or empty string"),
+                _ => unreachable!(
+                    "v should not return anything other than empty set or empty string"
+                ),
             },
         }
     }
@@ -114,16 +118,10 @@ where Lbl: PartialEq + Clone
                 let lhs = Regex::Concat(Box::new(r.derivative(dim)), s.clone());
                 let rhs = Regex::concat(r.v(), s.derivative(dim));
                 Regex::or(lhs, rhs)
-            },
-            Self::KleeneStar(r) => {
-                Regex::concat(r.derivative(dim), Regex::KleeneStar(r.clone()))
-            },
-            Self::Or(r, s) => {
-                Regex::or(r.derivative(dim), s.derivative(dim))
-            },
-            Self::And(r, s) => {
-                Regex::and(r.derivative(dim), s.derivative(dim))
-            },
+            }
+            Self::KleeneStar(r) => Regex::concat(r.derivative(dim), Regex::KleeneStar(r.clone())),
+            Self::Or(r, s) => Regex::or(r.derivative(dim), s.derivative(dim)),
+            Self::And(r, s) => Regex::and(r.derivative(dim), s.derivative(dim)),
             Self::Neg(r) => Regex::neg(r.derivative(dim)),
         }
     }
@@ -131,21 +129,17 @@ where Lbl: PartialEq + Clone
     /// Returns all unique labels in the regex
     pub fn unique_labels(&self) -> Vec<&Lbl> {
         let mut v = match self {
-            Self::EmptyString
-            | Self::ZeroSet => Vec::new(),
+            Self::EmptyString | Self::ZeroSet => Vec::new(),
             Self::Character(l) => {
                 vec![l]
-            },
-            Self::Concat(r, s)
-            | Self::Or(r, s)
-            | Self::And(r, s) => {
+            }
+            Self::Concat(r, s) | Self::Or(r, s) | Self::And(r, s) => {
                 let mut v = Vec::new();
                 v.append(&mut r.unique_labels());
                 v.append(&mut s.unique_labels());
                 v
-            },
-            Self::KleeneStar(r)
-            | Self::Neg(r) => r.unique_labels(),
+            }
+            Self::KleeneStar(r) | Self::Neg(r) => r.unique_labels(),
         };
         v.dedup();
         v
@@ -168,14 +162,12 @@ where Lbl: PartialEq + Clone
     /// ```
     pub fn leading_labels(&self) -> Vec<&Lbl> {
         let mut v = match self {
-            Self::EmptyString
-            | Self::ZeroSet => Vec::new(),
+            Self::EmptyString | Self::ZeroSet => Vec::new(),
             Self::Character(l) => {
                 vec![l]
-            },
+            }
             // in concat and and, lhs is always considered first
-            Self::Concat(r, s)
-            | Self::And(r, s) => {
+            Self::Concat(r, s) | Self::And(r, s) => {
                 let mut v = Vec::new();
                 v.append(&mut r.leading_labels());
                 // only append right hand side if left is nullable
@@ -184,15 +176,14 @@ where Lbl: PartialEq + Clone
                     v.append(&mut s.unique_labels());
                 }
                 v
-            },
+            }
             Self::Or(r, s) => {
                 let mut v = Vec::new();
                 v.append(&mut r.leading_labels());
                 v.append(&mut s.leading_labels());
                 v
             }
-            Self::KleeneStar(r)
-            | Self::Neg(r) => r.leading_labels(),
+            Self::KleeneStar(r) | Self::Neg(r) => r.leading_labels(),
         };
         v.dedup();
         v
@@ -204,8 +195,7 @@ where Lbl: PartialEq + Clone
             Self::EmptyString => Self::EmptyString,
             Self::ZeroSet => Self::ZeroSet,
             Self::Character(_) => self,
-            Self::And(r, s)
-            | Self::Concat(r, s) => match (r.reduce(), s.reduce()) {
+            Self::And(r, s) | Self::Concat(r, s) => match (r.reduce(), s.reduce()) {
                 (Self::ZeroSet, _) | (_, Self::ZeroSet) => Self::ZeroSet,
                 (Self::EmptyString, s) => s,
                 (r, Self::EmptyString) => r,
@@ -217,8 +207,9 @@ where Lbl: PartialEq + Clone
                 r => Self::KleeneStar(Box::new(r)),
             },
             Self::Or(r, s) => match (r.reduce(), s.reduce()) {
-                (Self::EmptyString, Self::ZeroSet)
-                | (Self::ZeroSet, Self::EmptyString) => Self::EmptyString,
+                (Self::EmptyString, Self::ZeroSet) | (Self::ZeroSet, Self::EmptyString) => {
+                    Self::EmptyString
+                }
                 (Self::ZeroSet | Self::EmptyString, s) => s,
                 (r, Self::ZeroSet | Self::EmptyString) => r,
                 (r, s) => Self::or(r, s),
