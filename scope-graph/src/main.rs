@@ -16,6 +16,7 @@ mod scopegraph;
 mod data;
 mod order;
 mod regex;
+mod resolve;
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
 enum Label {
@@ -97,7 +98,7 @@ fn main() {
     graph.add_edge(scope2, scope1, Label::Parent);
     graph.add_edge(scope2, scope3, Label::NeverTake);
 
-    for _ in 0..3 {
+    for _ in 0..1 {
         graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
     }
     graph.add_decl(scope2, Label::Declaration, Data::var("x", "int"));
@@ -118,9 +119,10 @@ fn main() {
     // P*PD;
     let label_reg = Regex::concat(
         Regex::kleene(Label::Parent),
-        Regex::concat(Label::Parent, Label::Declaration), // Label::Declaration
+        // Regex::concat(Label::Parent, Label::Declaration), 
+        Label::Declaration
     );
-    let matcher = RegexAutomata::from_regex(label_reg);
+    let matcher = RegexAutomata::from_regex(label_reg.clone());
 
     let mut file = std::fs::OpenOptions::new()
         .write(true)
@@ -138,7 +140,8 @@ fn main() {
     );
 
     // println!("res: {0:?}", res);
-    let mut mmd = graph.as_mmd("Query: label_reg=P*D, data_eq=x:int");
+    let title = format!("Query: label_reg={}, label_order={}, data_eq=x:int", label_reg, order);
+    let mut mmd = graph.as_mmd(&title);
     if res.is_empty() {
         println!("No results found");
     } else {

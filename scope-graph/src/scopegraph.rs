@@ -6,21 +6,21 @@ use crate::{
 };
 
 #[derive(Clone, Copy, Debug)]
-struct Edge<Lbl>
+pub struct Edge<Lbl>
 where
     Lbl: ScopeGraphLabel + Clone,
 {
-    to: Scope,
-    label: Lbl,
+    pub to: Scope,
+    pub label: Lbl,
 }
 
 #[derive(Clone, Debug)]
-struct ScopeData<Lbl, Data>
+pub struct ScopeData<Lbl, Data>
 where
     Lbl: ScopeGraphLabel + Clone,
 {
-    edges: Vec<Edge<Lbl>>,
-    data: Data,
+    pub edges: Vec<Edge<Lbl>>,
+    pub data: Data,
 }
 
 impl<Lbl, Data> ScopeData<Lbl, Data>
@@ -40,7 +40,7 @@ pub struct ScopeGraph<Lbl, Data>
 where
     Lbl: ScopeGraphLabel + Clone,
 {
-    scopes: HashMap<Scope, ScopeData<Lbl, Data>>,
+    pub scopes: HashMap<Scope, ScopeData<Lbl, Data>>,
 }
 
 impl<Lbl, Data> ScopeGraph<Lbl, Data>
@@ -81,6 +81,20 @@ pub struct QueryResult<Lbl: ScopeGraphLabel, Data> {
     pub path: Path<Lbl>,
     pub data: Data,
 }
+
+impl<Lbl: ScopeGraphLabel, Data> QueryResult<Lbl, Data> {
+    pub fn shadow_vec(mut self, other: Vec<Self>) -> Self {
+        for o in other {
+            self = self.shadow(o)
+        }
+        self
+    }
+
+    pub fn shadow(mut self, other: Self) -> Self {
+        todo!()
+    }
+}
+
 
 impl<Lbl, Data> ScopeGraph<Lbl, Data>
 where

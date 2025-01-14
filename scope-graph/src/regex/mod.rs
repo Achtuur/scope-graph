@@ -31,7 +31,7 @@ where
             Self::EmptyString => write!(f, "ε"),
             Self::ZeroSet => write!(f, "∅"),
             Self::Character(c) => write!(f, "{c}"),
-            Self::Concat(r, s) => write!(f, "{r}⋅{s}"), // r dot s
+            Self::Concat(r, s) => write!(f, "{r}{s}"), // r dot s
             Self::KleeneStar(r) => write!(f, "{r}*"),
             Self::Or(r, s) => write!(f, "{r} + {s}"),
             Self::And(r, s) => write!(f, "{r} & {s}"),
