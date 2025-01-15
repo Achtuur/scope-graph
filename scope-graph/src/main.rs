@@ -54,7 +54,7 @@ impl ScopeGraphLabel for Label {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum Data {
     NoData,
     Variable(String, String),
@@ -136,6 +136,7 @@ fn main() {
         scope2,
         &matcher,
         &order,
+        |d1, d2| d1 == d2,
         |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int"),
     );
 

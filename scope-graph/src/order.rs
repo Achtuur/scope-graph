@@ -65,16 +65,31 @@ where
     //     std::cmp::Ordering::Equal
     // }
 
+    /// Returns the ordering of two labels w.r.t. `label1`
     pub fn cmp(&self, label1: &Lbl, label2: &Lbl) -> std::cmp::Ordering {
-        match (self.traverse_graph(label1, label2), self.traverse_graph(label2, label1)) {
+        if label1 == label2 {
+            return std::cmp::Ordering::Equal
+        }
+
+        let res = match (self.traverse_graph(label1, label2), self.traverse_graph(label2, label1)) {
             (Some(l1), Some(l2)) => {
                 eprintln!("Circular label order: {0:?} < {1:?} while {0:?} > {1:?}", l1, l2);
                 panic!("Circular ordering")
             },
-            (Some(_), None) => std::cmp::Ordering::Less,
-            (None, Some(_)) => std::cmp::Ordering::Greater,
-            (None, None) => std::cmp::Ordering::Equal,
-        }
+            (Some(_), None) => {
+                // println!("{:?} < {:?}", label1, label2);
+                std::cmp::Ordering::Less
+            },
+            (None, Some(_)) => {
+                // println!("{:?} > {:?}", label1, label2);
+                std::cmp::Ordering::Greater
+            },
+            (None, None) => {
+                // println!("{:?} = {:?}", label1, label2);
+                std::cmp::Ordering::Equal
+            },
+        };
+        res
     }
 
     fn traverse_graph<'a>(&'a self, lbl: &'a Lbl, end: &'a Lbl) -> Option<&'a Lbl> {
@@ -117,5 +132,16 @@ mod tests {
         assert_eq!(order.cmp(&'b', &'d'), Ordering::Equal);
         assert_eq!(order.cmp(&'c', &'d'), Ordering::Equal);
         assert_eq!(order.cmp(&'d', &'c'), Ordering::Equal);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_circular_order() {
+        let order = LabelOrder::new().push('a', 'b');
+        assert_eq!(order.cmp(&'a', &'b'), Ordering::Less);
+
+        let order = order.push('b', 'a');
+        // should panic
+        order.cmp(&'a', &'b');
     }
 }

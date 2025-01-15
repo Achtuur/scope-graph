@@ -23,6 +23,13 @@ impl<Lbl: ScopeGraphLabel> Path<Lbl> {
         }
     }
 
+    pub fn target(&self) -> Scope {
+        match self {
+            Self::Start(s) => *s,
+            Self::Step { target, .. } => *target,
+        }
+    }
+
     pub fn as_lbl_vec(&self) -> Vec<&Lbl> {
         let mut v = Vec::new();
         let mut current = self;

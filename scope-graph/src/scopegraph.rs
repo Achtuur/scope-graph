@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, path::Path,
-    regex::dfs::RegexAutomata, scope::Scope,
+    data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, path::Path, regex::dfs::RegexAutomata, resolve::Resolver, scope::Scope
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -82,19 +81,6 @@ pub struct QueryResult<Lbl: ScopeGraphLabel, Data> {
     pub data: Data,
 }
 
-impl<Lbl: ScopeGraphLabel, Data> QueryResult<Lbl, Data> {
-    pub fn shadow_vec(mut self, other: Vec<Self>) -> Self {
-        for o in other {
-            self = self.shadow(o)
-        }
-        self
-    }
-
-    pub fn shadow(mut self, other: Self) -> Self {
-        todo!()
-    }
-}
-
 
 impl<Lbl, Data> ScopeGraph<Lbl, Data>
 where
@@ -110,27 +96,38 @@ where
     /// * Scope: Starting scope
     /// * path_regex: Regular expression to match the path
     /// * data_name: Name of the data to return
-    pub fn query<DF>(
+    pub fn query(
         &self,
         scope: Scope,
         path_regex: &RegexAutomata<Lbl>,
         order: &LabelOrder<Lbl>,
-        data_wellformedness: DF,
+        data_equiv: impl Fn(&Data, &Data) -> bool,
+        data_wellformedness: impl Fn(&Data) -> bool,
     ) -> Vec<QueryResult<Lbl, Data>>
-    where
-        DF: Fn(&Data) -> bool,
     {
-        let scope_data = self
-            .scopes
-            .get(&scope)
-            .expect("Attempting to query non-existant scope");
-        self.query_internal(
-            scope_data,
-            Path::start(scope),
-            path_regex,
-            order,
-            &data_wellformedness,
-        )
+
+        let resolver = Resolver {
+            scope_graph: self,
+            path_re: path_regex,
+            lbl_order: order,
+            data_eq: &data_equiv,
+            data_wfd: &data_wellformedness,
+        };
+
+        resolver.resolve(Path::start(scope))
+
+
+        // let scope_data = self
+        //     .scopes
+        //     .get(&scope)
+        //     .expect("Attempting to query non-existant scope");
+        // self.query_internal(
+        //     scope_data,
+        //     Path::start(scope),
+        //     path_regex,
+        //     order,
+        //     &data_wellformedness,
+        // )
     }
 
     fn query_internal<DF>(
