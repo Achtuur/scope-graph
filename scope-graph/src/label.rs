@@ -12,3 +12,12 @@ impl ScopeGraphLabel for char {
         unimplemented!("char does not have a string representation")
     }
 }
+
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+pub(crate) enum LabelOrEnd<Lbl>
+where Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + PartialEq + Eq + std::hash::Hash
+{
+    Label(Lbl),
+    End,
+}

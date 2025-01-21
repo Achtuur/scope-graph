@@ -98,10 +98,10 @@ fn main() {
     graph.add_edge(scope2, scope1, Label::Parent);
     graph.add_edge(scope2, scope3, Label::NeverTake);
 
-    for _ in 0..1 {
+    for _ in 0..2 {
         graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
     }
-    graph.add_decl(scope2, Label::Declaration, Data::var("x", "int"));
+    // graph.add_decl(scope2, Label::Declaration, Data::var("x", "int"));
     graph.add_decl(scope2, Label::Declaration, Data::var("x", "bool"));
     graph.add_decl(scope3, Label::Declaration, Data::var("x", "int"));
 
@@ -132,7 +132,7 @@ fn main() {
         .unwrap();
     file.write_all(matcher.to_mmd().as_bytes()).unwrap();
 
-    let res = graph.query(
+    let (res, considered_paths) = graph.query(
         scope2,
         &matcher,
         &order,
@@ -150,6 +150,11 @@ fn main() {
             println!("r: {} ({:?})", r.path, r.data);
             mmd = r.path.as_mmd(mmd);
         }
+    }
+
+    for p in considered_paths {
+        println!("Considered path: {}", p);
+        mmd = p.as_mmd_debug(mmd);
     }
 
     let mut file = std::fs::OpenOptions::new()

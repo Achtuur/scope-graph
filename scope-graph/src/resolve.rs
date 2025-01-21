@@ -1,6 +1,6 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, collections::HashSet, sync::Mutex};
 
-use crate::{label::ScopeGraphLabel, order::LabelOrder, path::Path, regex::dfs::RegexAutomata, scope::Scope, scopegraph::{Edge, QueryResult, ScopeData, ScopeGraph}, Data, Label};
+use crate::{label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::Path, regex::dfs::RegexAutomata, scope::Scope, scopegraph::{Edge, QueryResult, ScopeData, ScopeGraph}, Data, Label};
 
 pub struct Resolver<'a, Lbl, Data, DEq, DWfd>
 where
@@ -14,6 +14,7 @@ where
     pub lbl_order: &'a LabelOrder<Lbl>,
     pub data_eq: DEq,
     pub data_wfd: DWfd,
+    pub considered_paths: Mutex<Vec<Path<Lbl>>>
 }
 
 
@@ -30,6 +31,7 @@ where
     ) -> Vec<QueryResult<Lbl, Data>>
     {
         println!("Resolving path: {}", path);
+        self.considered_paths.lock().unwrap().push(path.clone());
         self.get_env(path)
     }
 
@@ -40,48 +42,69 @@ where
     {
         // all edges where brzozowski derivative != 0
         let scope = self.get_scope(path.target()).expect("Scope not found");
-        let edges = scope.edges
-        .iter()
-        .filter(|edge| {
-            let new_path = path.clone().step(edge.label.clone(), edge.to);
-            self.path_re.partial_match(&new_path.as_lbl_vec())
-        })
-        .collect::<Vec<_>>();
 
-        self.getEnvForLabels(&edges, path)
+        let mut labels = scope.edges.iter()
+        .map(|e| e.label.clone())
+        // get unique labels by using hashset
+        .fold(HashSet::new(), |mut set, lbl| {
+            let mut label_vec = path.as_lbl_vec();
+            label_vec.push(&lbl);
+            if self.path_re.partial_match(&label_vec) {
+                set.insert(LabelOrEnd::Label(lbl));
+            }
+            set
+        })
+        .into_iter()
+        .collect::<Vec<_>>();
+        labels.push(LabelOrEnd::End);
+
+        // let edges = scope.edges
+        // .iter()
+        // .filter(|edge| {
+        //     let new_path = path.clone().step(edge.label.clone(), edge.to);
+        //     self.path_re.partial_match(&new_path.as_lbl_vec())
+        // })
+        // .collect::<Vec<_>>();
+
+        self.getEnvForLabels(&labels, path)
     }
 
     fn getEnvForLabels(
         &self,
-        edges: &[&Edge<Lbl>],
+        labels: &[LabelOrEnd<Lbl>],
+        // edges: &[&Edge<Lbl>],
         path: Path<Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>>
     {
         let mut results = Vec::new();
-        // println!("Resolving edges: {0:?}", edges);
+        println!("Resolving edges: {0:?}", labels);
 
-        // 'max' label edges, ie all edges with highest priority label
-        let max = edges
+        // 'max' labels ie all labels with lowest priority
+        // max refers to the numerical worth, ie a < b, b would be max
+        let max = labels
         .iter()
-        .filter(|e| {
-            !edges
+        .filter(|l1| {
+            !labels
             .iter()
-            .any(|e2| self.lbl_order.cmp(&e.label, &e2.label).is_gt())
+            .any(|l2| self.lbl_order.is_less(&l1, &l2))
         })
         .collect::<Vec<_>>();
 
-        // println!("Finding edges for max labels: {:?}", max);
+        println!("max: {0:?}", max);
 
-        for max_edge in max {
+        for max_lbl in max {
             // all labels that are lower priority than `lbl`
-            let lower_edges = edges.iter().filter_map(|e| {
-                match self.lbl_order.cmp(&max_edge.label, &e.label).is_lt() {
-                    true => Some(*e),
-                    false => None,
-                }
+            let lower_labels = labels
+            .iter()
+            .filter(|l| {
+                self.lbl_order.is_less(&l, &max_lbl)
             })
+            .cloned()
             .collect::<Vec<_>>();
-            let env = self.getShadowedEnv(max_edge, &lower_edges, path.clone());
+
+            println!("lower: {0:?}", lower_labels);
+            
+            let env = self.getShadowedEnv(max_lbl, &lower_labels, path.clone());
             results.extend(env.into_iter());
         }
 
@@ -90,46 +113,47 @@ where
 
     fn getShadowedEnv(
         &self,
-        max_edge: &Edge<Lbl>,
-        lower_edges: &[&Edge<Lbl>],
+        max_lbl: &LabelOrEnd<Lbl>,
+        lower_lbls: &[LabelOrEnd<Lbl>],
         path: Path<Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
-        let lower_paths = self.getEnvForLabels(lower_edges, path.clone());
-        let max_path = self.getEnvForLabel(max_edge, path);
+        let lower_paths = self.getEnvForLabels(lower_lbls, path.clone());
+        let max_path = self.getEnvForLabel(max_lbl, path);
         println!("lower_paths: {0:?}", lower_paths);
         println!("max_path: {0:?}", max_path);
-        self.shadow(max_path, lower_paths)
+        self.shadow(lower_paths, max_path)
     }
 
     fn getEnvForLabel(
         &self,
-        edge: &Edge<Lbl>,
+        label: &LabelOrEnd<Lbl>,
         path: Path<Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
-        // println!("get env for label: {:?} ({})", edge, path);
-        let path_to_edge = path.clone().step(edge.label.clone(), edge.to);
-        // println!("checking match: {:?} ({})", edge, path_to_edge);
-        if self.path_re.is_match(&path_to_edge.as_lbl_vec()) && self.scope_data_wfd(path_to_edge.target())
-        {
-            println!("Matching path found: {}", path);
-            return vec![QueryResult {
-                path: path.step(edge.label.clone(), edge.to),
-                data: self.get_scope(edge.to).unwrap().data.clone()
-            }]
+        let scope = self.get_scope(path.target()).unwrap();
+        match label {
+            // reached end of a path
+            LabelOrEnd::End => {
+                if self.path_re.is_match(&path.as_lbl_vec()) && (self.data_wfd)(&scope.data) {
+                    return vec![
+                        QueryResult {
+                            path,
+                            data: scope.data.clone(),
+                        }
+                    ]
+                }
+                vec![]
+            },
+            // not yet at end
+            LabelOrEnd::Label(label) => {
+                scope
+                .edges
+                .iter()
+                .filter(|e| &e.label == label)
+                .map(|e| path.clone().step(e.label.clone(), e.to)) // create new paths
+                .flat_map(|p| self.resolve(p)) // resolve new paths
+                .collect::<Vec<_>>()
+            }
         }
-        // if self.path_re.is_match(&path.as_lbl_vec()) && self.scope_data_wfd(path.target()) {
-        // }
-
-        let source_scope = self.get_scope(path.target()).unwrap();
-        source_scope
-        .edges
-        .clone()
-        .into_iter()
-        .flat_map(|e| {
-            let path_to_edge = path.clone().step(e.label, e.to);
-            self.resolve(path_to_edge)
-        })
-        .collect()
     }
 
     fn shadow(
@@ -144,7 +168,6 @@ where
         .collect::<Vec<_>>();
 
         a1.append(&mut keep_a2);
-        println!("a1: {0:?}", a1);
         a1
     }
 

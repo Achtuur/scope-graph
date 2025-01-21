@@ -41,6 +41,26 @@ impl<Lbl: ScopeGraphLabel> Path<Lbl> {
         v
     }
 
+    pub fn as_mmd_debug(&self, mut mmd: String) -> String {
+        match self {
+            Self::Start(_) => mmd,
+            Self::Step {
+                from,
+                label,
+                target,
+            } => {
+                mmd += "\n";
+                mmd += &format!(
+                    "scope_{} -..-> scope_{}",
+                    from.scope_num(),
+                    // label.char(),
+                    target.0
+                );
+                from.as_mmd_debug(mmd)
+            }
+        }
+    }
+
     pub fn as_mmd(&self, mut mmd: String) -> String {
         match self {
             Self::Start(_) => mmd,
@@ -51,7 +71,7 @@ impl<Lbl: ScopeGraphLabel> Path<Lbl> {
             } => {
                 mmd += "\n";
                 mmd += &format!(
-                    "scope_{} -.{}.-> scope_{}",
+                    "scope_{} --{}--> scope_{}",
                     from.scope_num(),
                     label.char(),
                     target.0

@@ -1,6 +1,6 @@
 use std::{collections::{hash_map::Entry, HashMap, HashSet}, hash::Hash};
 
-use crate::label::ScopeGraphLabel;
+use crate::{label::{LabelOrEnd, ScopeGraphLabel}, Label};
 
 pub(crate) struct LabelOrder<Lbl>
 where
@@ -66,7 +66,7 @@ where
     // }
 
     /// Returns the ordering of two labels w.r.t. `label1`
-    pub fn cmp(&self, label1: &Lbl, label2: &Lbl) -> std::cmp::Ordering {
+    fn cmp(&self, label1: &Lbl, label2: &Lbl) -> std::cmp::Ordering {
         if label1 == label2 {
             return std::cmp::Ordering::Equal
         }
@@ -90,6 +90,16 @@ where
             },
         };
         res
+    }
+
+    /// Less, so HIGHER priority
+    pub fn is_less(&self, label1: &LabelOrEnd<Lbl>, label2: &LabelOrEnd<Lbl>) -> bool {
+        match (label1, label2) {
+            (LabelOrEnd::End, LabelOrEnd::End) => false,
+            (LabelOrEnd::End, LabelOrEnd::Label(_)) => true,
+            (LabelOrEnd::Label(_), LabelOrEnd::End) => false,
+            (LabelOrEnd::Label(l1), LabelOrEnd::Label(l2)) => self.cmp(l1, l2).is_lt(),
+        }
     }
 
     fn traverse_graph<'a>(&'a self, lbl: &'a Lbl, end: &'a Lbl) -> Option<&'a Lbl> {

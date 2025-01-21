@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Mutex};
 
 use crate::{
     data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, path::Path, regex::dfs::RegexAutomata, resolve::Resolver, scope::Scope
@@ -103,94 +103,21 @@ where
         order: &LabelOrder<Lbl>,
         data_equiv: impl Fn(&Data, &Data) -> bool,
         data_wellformedness: impl Fn(&Data) -> bool,
-    ) -> Vec<QueryResult<Lbl, Data>>
+    ) -> (Vec<QueryResult<Lbl, Data>>, Vec<Path<Lbl>>)
     {
-
         let resolver = Resolver {
             scope_graph: self,
             path_re: path_regex,
             lbl_order: order,
             data_eq: &data_equiv,
             data_wfd: &data_wellformedness,
+            considered_paths: Mutex::new(Vec::new()),
         };
-
-        resolver.resolve(Path::start(scope))
-
-
-        // let scope_data = self
-        //     .scopes
-        //     .get(&scope)
-        //     .expect("Attempting to query non-existant scope");
-        // self.query_internal(
-        //     scope_data,
-        //     Path::start(scope),
-        //     path_regex,
-        //     order,
-        //     &data_wellformedness,
-        // )
+        let res = resolver.resolve(Path::start(scope));
+        let considered_paths = resolver.considered_paths.into_inner().unwrap();
+        (res, considered_paths)
     }
 
-    fn query_internal<DF>(
-        &self,
-        current_scope: &ScopeData<Lbl, Data>,
-        path: Path<Lbl>,
-        path_regex: &RegexAutomata<Lbl>,
-        order: &LabelOrder<Lbl>,
-        data_equiv: &DF,
-    ) -> Vec<QueryResult<Lbl, Data>>
-    where
-        DF: Fn(&Data) -> bool,
-    {
-        let mut results: Vec<QueryResult<Lbl, Data>> = Vec::new();
-
-        let (mut ordered, unordered): (Vec<_>, Vec<_>) = current_scope
-            .edges
-            .iter()
-            .partition(|edge| order.contains(&edge.label));
-
-        ordered.sort_by(|a, b| order.cmp(&a.label, &b.label));
-
-        // should break after all paths with current label are found
-        // or not? ambigious reference
-        for edge in ordered {
-            let t_scope = self.scopes.get(&edge.to).unwrap();
-            let new_path = path.clone().step(edge.label.clone(), edge.to);
-
-            if path_regex.is_match(&new_path.as_lbl_vec()) && data_equiv(&t_scope.data) {
-                results.push(QueryResult {
-                    path: new_path,
-                    data: t_scope.data.clone(),
-                });
-            } else if path_regex.partial_match(&new_path.as_lbl_vec()) {
-                let mut child_query =
-                    self.query_internal(t_scope, new_path, path_regex, order, data_equiv);
-                results.append(&mut child_query);
-            }
-
-            // break if something is found
-            if !results.is_empty() {
-                break;
-            }
-        }
-
-        // dont break
-        for edge in unordered {
-            let t_scope = self.scopes.get(&edge.to).unwrap();
-            let new_path = path.clone().step(edge.label.clone(), edge.to);
-
-            if path_regex.is_match(&new_path.as_lbl_vec()) && data_equiv(&t_scope.data) {
-                results.push(QueryResult {
-                    path: new_path,
-                    data: t_scope.data.clone(),
-                })
-            } else if path_regex.partial_match(&new_path.as_lbl_vec()) {
-                let mut child_query =
-                    self.query_internal(t_scope, new_path, path_regex, order, data_equiv);
-                results.append(&mut child_query);
-            }
-        }
-        results
-    }
 }
 
 // rendering

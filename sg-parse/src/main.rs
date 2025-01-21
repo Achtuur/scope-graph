@@ -52,7 +52,7 @@ fn main() {
     let s0 = sg.add_scope_default();
 
     let timer = std::time::Instant::now();
-    let path = PathBuf::from_str("examples/record.sclang").unwrap();
+    let path = PathBuf::from_str("examples/simple.sclang").unwrap();
     let expr = match SclangExpression::from_file(&path) {
         Ok(expr) => expr,
         Err(e) => panic!("Error parsing {:?}: {}", path.as_path(), e),
