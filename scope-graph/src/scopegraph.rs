@@ -1,7 +1,8 @@
 use std::{collections::HashMap, sync::Mutex};
 
 use crate::{
-    data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, path::Path, regex::dfs::RegexAutomata, resolve::Resolver, scope::Scope
+    data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, path::Path,
+    regex::dfs::RegexAutomata, resolve::Resolver, scope::Scope,
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -81,7 +82,6 @@ pub struct QueryResult<Lbl: ScopeGraphLabel, Data> {
     pub data: Data,
 }
 
-
 impl<Lbl, Data> ScopeGraph<Lbl, Data>
 where
     Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + PartialEq + Eq + std::hash::Hash,
@@ -103,8 +103,7 @@ where
         order: &LabelOrder<Lbl>,
         data_equiv: impl Fn(&Data, &Data) -> bool,
         data_wellformedness: impl Fn(&Data) -> bool,
-    ) -> (Vec<QueryResult<Lbl, Data>>, Vec<Path<Lbl>>)
-    {
+    ) -> (Vec<QueryResult<Lbl, Data>>, Vec<Path<Lbl>>) {
         let resolver = Resolver {
             scope_graph: self,
             path_re: path_regex,
@@ -117,7 +116,6 @@ where
         let considered_paths = resolver.considered_paths.into_inner().unwrap();
         (res, considered_paths)
     }
-
 }
 
 // rendering

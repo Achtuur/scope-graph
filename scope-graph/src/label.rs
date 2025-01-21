@@ -13,10 +13,10 @@ impl ScopeGraphLabel for char {
     }
 }
 
-
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub(crate) enum LabelOrEnd<Lbl>
-where Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + PartialEq + Eq + std::hash::Hash
+where
+    Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + PartialEq + Eq + std::hash::Hash,
 {
     Label(Lbl),
     End,

@@ -119,8 +119,8 @@ fn main() {
     // P*PD;
     let label_reg = Regex::concat(
         Regex::kleene(Label::Parent),
-        // Regex::concat(Label::Parent, Label::Declaration), 
-        Label::Declaration
+        // Regex::concat(Label::Parent, Label::Declaration),
+        Label::Declaration,
     );
     let matcher = RegexAutomata::from_regex(label_reg.clone());
 
@@ -141,7 +141,10 @@ fn main() {
     );
 
     // println!("res: {0:?}", res);
-    let title = format!("Query: label_reg={}, label_order={}, data_eq=x:int", label_reg, order);
+    let title = format!(
+        "Query: label_reg={}, label_order={}, data_eq=x:int",
+        label_reg, order
+    );
     let mut mmd = graph.as_mmd(&title);
     if res.is_empty() {
         println!("No results found");

@@ -1,6 +1,9 @@
-use std::{collections::{hash_map::Entry, HashMap, HashSet}, hash::Hash};
+use std::{
+    collections::{hash_map::Entry, HashMap},
+    hash::Hash,
+};
 
-use crate::{label::{LabelOrEnd, ScopeGraphLabel}, Label};
+use crate::label::{LabelOrEnd, ScopeGraphLabel};
 
 pub(crate) struct LabelOrder<Lbl>
 where
@@ -20,7 +23,7 @@ where
     Lbl: ScopeGraphLabel + std::fmt::Display + Hash + Eq,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut s = "todo: display label order";
+        let s = "todo: display label order";
 
         write!(f, "{}", s.trim_end_matches(" "))
     }
@@ -41,7 +44,7 @@ where
             // add edge
             Entry::Occupied(mut occ) => {
                 occ.get_mut().push(rhs);
-            },
+            }
 
             Entry::Vacant(vacant_entry) => {
                 vacant_entry.insert(vec![rhs]);
@@ -68,26 +71,32 @@ where
     /// Returns the ordering of two labels w.r.t. `label1`
     fn cmp(&self, label1: &Lbl, label2: &Lbl) -> std::cmp::Ordering {
         if label1 == label2 {
-            return std::cmp::Ordering::Equal
+            return std::cmp::Ordering::Equal;
         }
 
-        let res = match (self.traverse_graph(label1, label2), self.traverse_graph(label2, label1)) {
+        let res = match (
+            self.traverse_graph(label1, label2),
+            self.traverse_graph(label2, label1),
+        ) {
             (Some(l1), Some(l2)) => {
-                eprintln!("Circular label order: {0:?} < {1:?} while {0:?} > {1:?}", l1, l2);
+                eprintln!(
+                    "Circular label order: {0:?} < {1:?} while {0:?} > {1:?}",
+                    l1, l2
+                );
                 panic!("Circular ordering")
-            },
+            }
             (Some(_), None) => {
                 // println!("{:?} < {:?}", label1, label2);
                 std::cmp::Ordering::Less
-            },
+            }
             (None, Some(_)) => {
                 // println!("{:?} > {:?}", label1, label2);
                 std::cmp::Ordering::Greater
-            },
+            }
             (None, None) => {
                 // println!("{:?} = {:?}", label1, label2);
                 std::cmp::Ordering::Equal
-            },
+            }
         };
         res
     }
@@ -104,20 +113,19 @@ where
 
     fn traverse_graph<'a>(&'a self, lbl: &'a Lbl, end: &'a Lbl) -> Option<&'a Lbl> {
         if lbl == end {
-            return Some(end)
+            return Some(end);
         }
 
         // traverse all edges (breadth first search) to find match
         let edges = self.graph.get(lbl)?;
         for e in edges {
             if let Some(lbl) = self.traverse_graph(e, end) {
-                return Some(lbl)
+                return Some(lbl);
             }
         }
         None
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -128,10 +136,10 @@ mod tests {
     #[test]
     fn test_inference() {
         let order = LabelOrder::new()
-        .push('a', 'b')
-        .push('a', 'c')
-        .push('b', 'c')
-        .push('a', 'd');
+            .push('a', 'b')
+            .push('a', 'c')
+            .push('b', 'c')
+            .push('a', 'd');
 
         assert_eq!(order.cmp(&'a', &'b'), Ordering::Less);
         assert_eq!(order.cmp(&'b', &'a'), Ordering::Greater);
