@@ -1,10 +1,11 @@
 use std::{
-    collections::{hash_map::Entry, HashMap},
+    collections::{btree_map::Entry, BTreeMap, HashMap},
     hash::Hash,
 };
 
 use crate::label::{LabelOrEnd, ScopeGraphLabel};
 
+#[derive(Hash)]
 pub(crate) struct LabelOrder<Lbl>
 where
     Lbl: ScopeGraphLabel + Hash + Eq,
@@ -12,7 +13,7 @@ where
     /// graph containing labels and orderings.
     /// If an edge exists from a label to another label, then the source node has a higher priority
     /// ie if `graph.get('a') = ['b']`, then a < b
-    graph: HashMap<Lbl, Vec<Lbl>>,
+    graph: BTreeMap<Lbl, Vec<Lbl>>,
 }
 
 // use fullwidth_lt since mmd doesnt render '<' properly
@@ -31,11 +32,11 @@ where
 
 impl<Lbl> LabelOrder<Lbl>
 where
-    Lbl: ScopeGraphLabel + Clone + Hash + Eq,
+    Lbl: ScopeGraphLabel + Clone + Hash + Eq + Ord,
 {
     pub fn new() -> Self {
         Self {
-            graph: HashMap::new(),
+            graph: BTreeMap::new(),
         }
     }
 

@@ -1,9 +1,10 @@
-use std::io::Write;
+use std::{io::Write, os::unix::thread};
 
 use data::ScopeGraphData;
 use label::ScopeGraphLabel;
 // use lbl_regex::*;
 use order::LabelOrder;
+use rand::Rng;
 use regex::{dfs::RegexAutomata, Regex};
 use scope::Scope;
 use scopegraph::ScopeGraph;
@@ -18,7 +19,7 @@ mod order;
 mod regex;
 mod resolve;
 
-#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
 enum Label {
     Parent,
     Declaration,
@@ -82,7 +83,7 @@ impl ScopeGraphData for Data {
     }
 }
 
-fn main() {
+fn create_example_graph() -> ScopeGraph<Label, Data> {
     let mut graph = ScopeGraph::new();
     let root = Scope::new();
     let scope1 = Scope::new();
@@ -102,17 +103,52 @@ fn main() {
         graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
     }
     // graph.add_decl(scope2, Label::Declaration, Data::var("x", "int"));
-    graph.add_decl(scope2, Label::Declaration, Data::var("x", "bool"));
+    graph.add_decl(scope2, Label::Declaration, Data::var("x", "int"));
     graph.add_decl(scope3, Label::Declaration, Data::var("x", "int"));
+    graph
+}
 
-    println!("graph: {0:?}", graph);
+fn recurse_add_scopes(graph: &mut ScopeGraph<Label, Data>, parent: Scope, depth: usize) {
+    if depth == 0 {
+        return;
+    }
 
-    // let label_reg = Regex::new("P*D").unwrap();
-    // let label_reg = vec![
-    //     LabelRegex::ZeroOrMore(Label::Parent),
-    //     LabelRegex::Single(Label::Declaration)
-    // ];
-    // let matcher = LabelRegexMatcher::new(label_reg);
+    let mut thread_rng = rand::rng();
+
+    const MAX_CHILDREN: usize = 3;
+    let r = thread_rng.random_range(1..=MAX_CHILDREN);
+
+    for _ in 0..r {
+        let scope = Scope::new();
+        graph.add_scope(scope, Data::NoData);
+        graph.add_edge(scope, parent, Label::Parent);
+        recurse_add_scopes(graph, scope, depth - 1);
+    }
+}
+
+// graph with 1 decl near the root and a lot of children
+fn create_long_graph() -> ScopeGraph<Label, Data> {
+    let mut graph = ScopeGraph::new();
+    let root = Scope::new();
+    let scope1 = Scope::new();
+    graph.add_scope(root, Data::NoData);
+    graph.add_scope(scope1, Data::NoData);
+    graph.add_edge(scope1, root, Label::Parent);
+    graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
+
+    recurse_add_scopes(&mut graph, scope1, 4);
+    // let mut prev_scope = scope1;
+    // for _ in 0..10 {
+    //     let new_scope = Scope::new();
+    //     graph.add_scope(new_scope, Data::NoData);
+    //     graph.add_edge(new_scope, prev_scope, Label::Parent);
+    //     prev_scope = new_scope;
+    // }
+    graph
+}
+
+fn main() {
+    let graph = create_long_graph();
 
     let order = LabelOrder::new().push(Label::Declaration, Label::Parent);
 
@@ -131,9 +167,10 @@ fn main() {
         .open("./automata.mmd")
         .unwrap();
     file.write_all(matcher.to_mmd().as_bytes()).unwrap();
-
+    
+    let start_scope = graph.find_scope(2).unwrap();
     let (res, considered_paths) = graph.query(
-        scope2,
+        start_scope,
         &matcher,
         &order,
         |d1, d2| d1 == d2,
@@ -155,10 +192,10 @@ fn main() {
         }
     }
 
-    for p in considered_paths {
-        println!("Considered path: {}", p);
-        mmd = p.as_mmd_debug(mmd);
-    }
+    // for p in considered_paths {
+    //     println!("Considered path: {}", p);
+    //     mmd = p.as_mmd_debug(mmd);
+    // }
 
     let mut file = std::fs::OpenOptions::new()
         .write(true)

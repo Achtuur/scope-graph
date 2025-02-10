@@ -9,9 +9,19 @@ use crate::{
     scopegraph::{QueryResult, ScopeData, ScopeGraph},
 };
 
+#[derive(Hash)]
+struct CacheKey<Lbl>
+where Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + Eq + std::hash::Hash,
+{
+    scope: Scope,
+    lbl_order: LabelOrder<Lbl>,
+    path_re: RegexAutomata<Lbl>,
+}
+
+
 pub struct Resolver<'a, Lbl, Data, DEq, DWfd>
 where
-    Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + PartialEq + Eq + std::hash::Hash,
+    Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + Eq + std::hash::Hash + Ord,
     Data: std::fmt::Debug + Clone,
     DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
     DWfd: for<'da> Fn(&'da Data) -> bool,
@@ -26,7 +36,7 @@ where
 
 impl<Lbl, Data, DEq, DWfd> Resolver<'_, Lbl, Data, DEq, DWfd>
 where
-    Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + PartialEq + Eq + std::hash::Hash,
+    Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + Eq + std::hash::Hash + Ord,
     Data: std::fmt::Debug + Clone,
     DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
     DWfd: for<'da> Fn(&'da Data) -> bool,

@@ -53,6 +53,16 @@ where
         }
     }
 
+    pub fn find_scope(&self, scope_num: usize) -> Option<Scope> {
+        self.scopes.keys().find_map(|s| {
+            if s.0 == scope_num {
+                Some(*s)
+            } else {
+                None
+            }
+        })
+    }
+
     pub fn add_scope(&mut self, scope: Scope, data: Data) {
         self.scopes.insert(scope, ScopeData::new(data));
     }
@@ -84,7 +94,7 @@ pub struct QueryResult<Lbl: ScopeGraphLabel, Data> {
 
 impl<Lbl, Data> ScopeGraph<Lbl, Data>
 where
-    Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + PartialEq + Eq + std::hash::Hash,
+    Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + Eq + std::hash::Hash + Ord,
     Data: std::fmt::Debug + Clone,
 {
     /// Returns the data associated with the scope baesd on path_regex and name of the data
