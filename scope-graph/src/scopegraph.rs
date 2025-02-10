@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Mutex};
 
 use crate::{
-    data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, path::Path,
+    data::ScopeGraphData, label::ScopeGraphLabel, order::{LabelOrder, LabelOrderBuilder}, path::Path,
     regex::dfs::RegexAutomata, resolve::Resolver, scope::Scope,
 };
 
@@ -121,6 +121,7 @@ where
             data_eq: &data_equiv,
             data_wfd: &data_wellformedness,
             considered_paths: Mutex::new(Vec::new()),
+            cache: HashMap::new(),
         };
         let res = resolver.resolve(Path::start(scope));
         let considered_paths = resolver.considered_paths.into_inner().unwrap();

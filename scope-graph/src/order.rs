@@ -1,12 +1,11 @@
 use std::{
-    collections::{btree_map::Entry, BTreeMap, HashMap},
+    collections::{btree_map::Entry, BTreeMap, HashMap, HashSet},
     hash::Hash,
 };
 
 use crate::label::{LabelOrEnd, ScopeGraphLabel};
 
-#[derive(Hash)]
-pub(crate) struct LabelOrder<Lbl>
+pub(crate) struct LabelOrderBuilder<Lbl>
 where
     Lbl: ScopeGraphLabel + Hash + Eq,
 {
@@ -14,12 +13,13 @@ where
     /// If an edge exists from a label to another label, then the source node has a higher priority
     /// ie if `graph.get('a') = ['b']`, then a < b
     graph: BTreeMap<Lbl, Vec<Lbl>>,
+    all_labels: HashSet<Lbl>,
 }
 
 // use fullwidth_lt since mmd doesnt render '<' properly
 const FULLWIDTH_LT: char = '＜';
 
-impl<Lbl> std::fmt::Display for LabelOrder<Lbl>
+impl<Lbl> std::fmt::Display for LabelOrderBuilder<Lbl>
 where
     Lbl: ScopeGraphLabel + std::fmt::Display + Hash + Eq,
 {
@@ -30,17 +30,20 @@ where
     }
 }
 
-impl<Lbl> LabelOrder<Lbl>
+impl<Lbl> LabelOrderBuilder<Lbl>
 where
     Lbl: ScopeGraphLabel + Clone + Hash + Eq + Ord,
 {
     pub fn new() -> Self {
         Self {
             graph: BTreeMap::new(),
+            all_labels: HashSet::new(),
         }
     }
 
     pub fn push(mut self, lhs: Lbl, rhs: Lbl) -> Self {
+        self.all_labels.insert(lhs.clone());
+        self.all_labels.insert(rhs.clone());
         match self.graph.entry(lhs) {
             // add edge
             Entry::Occupied(mut occ) => {
@@ -54,20 +57,25 @@ where
         self
     }
 
-    pub fn contains(&self, label: &Lbl) -> bool {
-        self.graph.contains_key(label)
-    }
+    pub fn build(self) -> LabelOrder<Lbl> {
+        let mut orders = Vec::new();
 
-    // pub fn cmp(&self, label1: &Lbl, label2: &Lbl) -> std::cmp::Ordering {
-    //     for (lhs, rhs) in &self.order {
-    //         match (lhs, rhs) {
-    //             (l, r) if l == label1 && r == label2 => return std::cmp::Ordering::Less,
-    //             (l, r) if l == label2 && r == label1 => return std::cmp::Ordering::Greater,
-    //             _ => (),
-    //         }
-    //     }
-    //     std::cmp::Ordering::Equal
-    // }
+        for lbl in &self.all_labels {
+            let mut less_thans = Vec::new();
+            for lbl2 in &self.all_labels {
+                if lbl == lbl2 {
+                    continue;
+                }
+                if self.cmp(lbl, lbl2).is_lt() {
+                    less_thans.push(lbl2.clone());
+                }
+            }
+            orders.push((lbl.clone(), less_thans));
+        }
+        LabelOrder {
+            orders
+        }
+    }
 
     /// Returns the ordering of two labels w.r.t. `label1`
     fn cmp(&self, label1: &Lbl, label2: &Lbl) -> std::cmp::Ordering {
@@ -128,6 +136,42 @@ where
     }
 }
 
+
+
+#[derive(Debug, Hash)]
+pub(crate) struct LabelOrder<Lbl>
+where Lbl: ScopeGraphLabel + Eq + std::fmt::Debug,
+{
+    /// Label orderings
+    /// First vec contains all labels
+    /// Second vec contains all labels that are less than the first label
+    orders: Vec<(Lbl, Vec<Lbl>)>,
+}
+
+impl<Lbl> LabelOrder<Lbl>
+where Lbl: ScopeGraphLabel + Eq
+{
+    /// Less, so HIGHER priority
+    pub fn is_less(&self, label1: &LabelOrEnd<Lbl>, label2: &LabelOrEnd<Lbl>) -> bool {
+        match (label1, label2) {
+            (LabelOrEnd::End, LabelOrEnd::End) => false,
+            (LabelOrEnd::End, LabelOrEnd::Label(_)) => true,
+            (LabelOrEnd::Label(_), LabelOrEnd::End) => false,
+            (LabelOrEnd::Label(l1), LabelOrEnd::Label(l2)) => self.is_less_internal(l1, l2),
+        }
+    }
+
+    // returns true if lbl 1 is less than label2 (so higher priority)
+    fn is_less_internal(&self, lbl1: &Lbl, lbl2: &Lbl) -> bool {
+        let (_, less_thans) = self.orders
+        .iter()
+        .find(|(l, _)| l == lbl1)
+        .expect("Can't find label in ordering");
+        less_thans.iter().any(|l| l == lbl2)
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use std::cmp::Ordering;
@@ -136,27 +180,30 @@ mod tests {
 
     #[test]
     fn test_inference() {
-        let order = LabelOrder::new()
+        let order = LabelOrderBuilder::new()
             .push('a', 'b')
             .push('a', 'c')
             .push('b', 'c')
-            .push('a', 'd');
+            .push('a', 'd')
+            .build();
 
-        assert_eq!(order.cmp(&'a', &'b'), Ordering::Less);
-        assert_eq!(order.cmp(&'b', &'a'), Ordering::Greater);
-        assert_eq!(order.cmp(&'a', &'c'), Ordering::Less);
-        assert_eq!(order.cmp(&'c', &'a'), Ordering::Greater);
-        assert_eq!(order.cmp(&'a', &'d'), Ordering::Less);
-        assert_eq!(order.cmp(&'d', &'a'), Ordering::Greater);
-        assert_eq!(order.cmp(&'b', &'d'), Ordering::Equal);
-        assert_eq!(order.cmp(&'c', &'d'), Ordering::Equal);
-        assert_eq!(order.cmp(&'d', &'c'), Ordering::Equal);
+        println!("order: {0:?}", order);
+
+        assert!(order.is_less_internal(&'a', &'b'));
+        assert!(!order.is_less_internal(&'b', &'a'));
+        assert!(order.is_less_internal(&'a', &'c'));
+        assert!(!order.is_less_internal(&'c', &'a'));
+        assert!(order.is_less_internal(&'a', &'d'));
+        assert!(!order.is_less_internal(&'d', &'a'));
+        assert!(!order.is_less_internal(&'b', &'d'));
+        assert!(!order.is_less_internal(&'c', &'d'));
+        assert!(!order.is_less_internal(&'d', &'c'));
     }
 
     #[test]
     #[should_panic]
     fn test_circular_order() {
-        let order = LabelOrder::new().push('a', 'b');
+        let order = LabelOrderBuilder::new().push('a', 'b');
         assert_eq!(order.cmp(&'a', &'b'), Ordering::Less);
 
         let order = order.push('b', 'a');

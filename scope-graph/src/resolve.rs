@@ -1,8 +1,8 @@
-use std::{collections::HashSet, sync::Mutex};
+use std::{collections::{HashMap, HashSet}, sync::Mutex};
 
 use crate::{
     label::{LabelOrEnd, ScopeGraphLabel},
-    order::LabelOrder,
+    order::{LabelOrderBuilder, LabelOrder},
     path::Path,
     regex::dfs::RegexAutomata,
     scope::Scope,
@@ -16,6 +16,17 @@ where Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + Eq + std::hash::Hash,
     scope: Scope,
     lbl_order: LabelOrder<Lbl>,
     path_re: RegexAutomata<Lbl>,
+}
+struct CacheValue<Lbl, Data, DEq, DWfd>
+where
+    Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + Eq + std::hash::Hash + Ord,
+    Data: std::fmt::Debug + Clone,
+    DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
+    DWfd: for<'da> Fn(&'da Data) -> bool,
+{
+    envs: Vec<QueryResult<Lbl, Data>>,
+    data_eq: DEq,
+    data_wfd: DWfd
 }
 
 
@@ -32,15 +43,34 @@ where
     pub data_eq: DEq,
     pub data_wfd: DWfd,
     pub considered_paths: Mutex<Vec<Path<Lbl>>>,
+    cache: HashMap<CacheKey<Lbl>, CacheValue<Lbl, Data, DEq, DWfd>>,
 }
 
-impl<Lbl, Data, DEq, DWfd> Resolver<'_, Lbl, Data, DEq, DWfd>
+impl<'r, Lbl, Data, DEq, DWfd> Resolver<'r, Lbl, Data, DEq, DWfd>
 where
     Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + Eq + std::hash::Hash + Ord,
     Data: std::fmt::Debug + Clone,
     DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
     DWfd: for<'da> Fn(&'da Data) -> bool,
 {
+    pub fn new(
+        scope_graph: &'r ScopeGraph<Lbl, Data>,
+        path_re: &'r RegexAutomata<Lbl>,
+        lbl_order: &'r LabelOrder<Lbl>,
+        data_eq: DEq,
+        data_wfd: DWfd,
+    ) -> Resolver<'r, Lbl, Data, DEq, DWfd> {
+        Self {
+            scope_graph,
+            path_re,
+            lbl_order,
+            data_eq,
+            data_wfd,
+            considered_paths: Mutex::new(Vec::new()),
+            cache: HashMap::new(),
+        }
+    }
+    
     pub fn resolve(&self, path: Path<Lbl>) -> Vec<QueryResult<Lbl, Data>> {
         println!("Resolving path: {}", path);
         self.considered_paths.lock().unwrap().push(path.clone());
@@ -67,14 +97,6 @@ where
             .into_iter()
             .collect::<Vec<_>>();
         labels.push(LabelOrEnd::End);
-
-        // let edges = scope.edges
-        // .iter()
-        // .filter(|edge| {
-        //     let new_path = path.clone().step(edge.label.clone(), edge.to);
-        //     self.path_re.partial_match(&new_path.as_lbl_vec())
-        // })
-        // .collect::<Vec<_>>();
 
         self.get_env_for_labels(&labels, path)
     }

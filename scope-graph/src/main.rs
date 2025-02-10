@@ -3,7 +3,7 @@ use std::{io::Write, os::unix::thread};
 use data::ScopeGraphData;
 use label::ScopeGraphLabel;
 // use lbl_regex::*;
-use order::LabelOrder;
+use order::LabelOrderBuilder;
 use rand::Rng;
 use regex::{dfs::RegexAutomata, Regex};
 use scope::Scope;
@@ -115,7 +115,7 @@ fn recurse_add_scopes(graph: &mut ScopeGraph<Label, Data>, parent: Scope, depth:
 
     let mut thread_rng = rand::rng();
 
-    const MAX_CHILDREN: usize = 3;
+    const MAX_CHILDREN: usize = 2;
     let r = thread_rng.random_range(1..=MAX_CHILDREN);
 
     for _ in 0..r {
@@ -136,7 +136,7 @@ fn create_long_graph() -> ScopeGraph<Label, Data> {
     graph.add_edge(scope1, root, Label::Parent);
     graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
 
-    recurse_add_scopes(&mut graph, scope1, 4);
+    recurse_add_scopes(&mut graph, scope1, 8);
     // let mut prev_scope = scope1;
     // for _ in 0..10 {
     //     let new_scope = Scope::new();
@@ -150,7 +150,7 @@ fn create_long_graph() -> ScopeGraph<Label, Data> {
 fn main() {
     let graph = create_long_graph();
 
-    let order = LabelOrder::new().push(Label::Declaration, Label::Parent);
+    let order = LabelOrderBuilder::new().push(Label::Declaration, Label::Parent).build();
 
     // P*PD;
     let label_reg = Regex::concat(
@@ -168,7 +168,7 @@ fn main() {
         .unwrap();
     file.write_all(matcher.to_mmd().as_bytes()).unwrap();
     
-    let start_scope = graph.find_scope(2).unwrap();
+    let start_scope = graph.find_scope(21).unwrap();
     let (res, considered_paths) = graph.query(
         start_scope,
         &matcher,
@@ -179,7 +179,7 @@ fn main() {
 
     // println!("res: {0:?}", res);
     let title = format!(
-        "Query: label_reg={}, label_order={}, data_eq=x:int",
+        "Query: label_reg={}, label_order={:?}, data_eq=x:int",
         label_reg, order
     );
     let mut mmd = graph.as_mmd(&title);
