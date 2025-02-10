@@ -11,34 +11,40 @@ pub trait RegexLabel: Default + Clone + PartialEq + Eq + Hash {}
 
 impl<T: ScopeGraphLabel + Hash + Eq + Clone + Default> RegexLabel for T {}
 
-#[derive(Default, Debug)]
+#[derive(Debug, Hash)]
 pub struct AutomataNode<Lbl>
 where
     Lbl: Clone + PartialEq + Eq + Hash,
 {
-    // pub key: Regex<Lbl>,
-    // key = edge label, value = target node key
-    pub edges: HashMap<Lbl, Regex<Lbl>>,
+    pub value: Regex<Lbl>,
+    pub edges: Vec<(Lbl, usize)>,
+
 }
 
 impl<Lbl> AutomataNode<Lbl>
 where
     Lbl: Clone + PartialEq + Eq + Hash,
 {
-    pub fn new() -> Self {
+    pub fn new(val: Regex<Lbl>) -> Self {
         Self {
-            edges: HashMap::new(),
+            value: val,
+            edges: Vec::new(),
         }
+    }
+
+    pub fn get_edge(&self, lbl: &Lbl) -> Option<&usize> {
+        self.edges.iter()
+        .find(|(l, _)| l == lbl)
+        .map(|(_, idx)| idx)
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Hash)]
 pub struct RegexAutomata<Lbl>
 where
     Lbl: Clone + PartialEq + Eq + Hash,
 {
-    pub start_key: Regex<Lbl>,
-    pub nodes: HashMap<Regex<Lbl>, AutomataNode<Lbl>>,
+    pub node_vec: Vec<AutomataNode<Lbl>>,
 }
 
 impl<Lbl> RegexAutomata<Lbl>
@@ -47,61 +53,76 @@ where
 {
     /// Create a new automata from a regex, also compiles the regex
     pub fn from_regex(regex: Regex<Lbl>) -> Self {
-        let mut transitions = HashMap::new();
-        transitions.insert(regex.clone(), AutomataNode::new());
         let mut automata = Self {
-            start_key: regex.clone(),
-            nodes: transitions,
+            node_vec: Vec::new(),
         };
-        automata.compile();
+        automata.compile(regex);
         automata
     }
 
-    fn compile(&mut self) {
-        let mut queue = vec![self.start_key.clone()];
-        // let alfabet = self.start_key.unique_labels();
+    pub fn is_empty(&self) -> bool {
+        self.node_vec.is_empty()
+    }
+
+    pub fn get_node_mut(&mut self, regex: &Regex<Lbl>) -> Option<&mut AutomataNode<Lbl>> {
+        self.node_vec
+        .iter_mut()
+        .find(|n| n.value == *regex)
+    }
+
+    pub fn get_node_idx(&self, regex: &Regex<Lbl>) -> Option<usize> {
+        self.node_vec
+        .iter()
+        .position(|n| n.value == *regex)
+    }
+
+    fn compile(&mut self, reg: Regex<Lbl>) {
+        self.node_vec.push(AutomataNode::new(reg.clone()));
+        let mut queue = vec![reg];
+
         while let Some(key) = queue.pop() {
             if matches!(key, Regex::EmptyString | Regex::ZeroSet) {
                 continue;
             }
 
-            // let alfabet = key.unique_labels();
             let alfabet = key.leading_labels();
-            // take derivative wrt to each character in alfabet
-            // if new state -> add to queue
             for a in &alfabet {
-                // compute derivative
                 let derivative = key.derivative(a).reduce();
-                // add node if it doesnt exist yet
-                if !self.nodes.contains_key(&derivative) {
-                    self.nodes.insert(derivative.clone(), AutomataNode::new());
+
+                // add new node if it doesn't exist
+                if self.get_node_mut(&derivative).is_none() {
+                    self.node_vec.push(AutomataNode::new(derivative.clone()));
                     queue.push(derivative.clone());
                 }
-                // add edge to new node
-                let node = self.nodes.get_mut(&key).unwrap();
-                node.edges.insert((*a).clone(), derivative);
+
+                let derivative_idx = self.get_node_idx(&derivative).unwrap();
+                let node = self.get_node_mut(&key).unwrap();
+                node.edges.push(((*a).clone(), derivative_idx));
+
             }
         }
     }
 
     /// Traverses the DFA and returns the node where the search ends. If no match is found, returns None
     fn match_haystack<'a>(&'a self, haystack: &[&Lbl]) -> Option<&'a Regex<Lbl>> {
-        let mut current = &self.start_key;
-        for label in haystack {
-            let Some(node) = self.nodes.get(current) else {
-                // no node found with current key (should be impossible i think)
-                return None;
-            };
+        if self.is_empty() {
+            return None;
+        }
 
-            match node.edges.get(label) {
-                Some(e) => current = e,
+        let mut current_node = &self.node_vec[0];
+
+        for label in haystack {
+
+            match current_node.get_edge(label) {
+                Some(node_idx) => {
+                    current_node = &self.node_vec[*node_idx]
+                }
                 None => {
-                    // no edge found with this `label` -> no match
                     return None;
                 }
             }
         }
-        Some(current)
+        Some(&current_node.value)
     }
 
     pub fn is_match(&self, haystack: &[&Lbl]) -> bool {
@@ -121,11 +142,11 @@ where
     Lbl: Clone + PartialEq + Eq + Hash + std::fmt::Display,
 {
     // uses display impl and removes spaces
-    fn node_key(node: &Regex<Lbl>) -> u64 {
+    fn node_key(node_idx: usize) -> u64 {
         // let node_str = node.to_string();
         // node_str.replace(" ", "");
         let mut s = std::hash::DefaultHasher::new();
-        node.hash(&mut s);
+        node_idx.hash(&mut s);
         s.finish()
     }
 
@@ -133,32 +154,16 @@ where
         let mut mmd = String::new();
         mmd += "---\ntitle: Regex Automata\n---\n";
         mmd += "flowchart LR\n";
-        for node in self.nodes.keys() {
-            let node_key = Self::node_key(node);
-            mmd += &format!("{node_key}(({node}))\n",)
+        for (idx, node) in self.node_vec.iter().enumerate() {
+            let node_key = Self::node_key(idx);
+            mmd += &format!("{0:}(({1:}))\n", node_key, node.value);
         }
 
-        for (node_reg, node) in &self.nodes {
-            // group node.edges by target node
-            let mut grouped_edges = HashMap::new();
-            for (label, target) in &node.edges {
-                let entry = grouped_edges.entry(target).or_insert_with(Vec::new);
-                entry.push(label);
-            }
-
-            for (target, labels) in grouped_edges {
-                let node_key = Self::node_key(node_reg);
-                let target_key = Self::node_key(target);
-                let mut combined_label = String::new();
-                for l in labels {
-                    combined_label += &format!("{0:}, ", l);
-                }
-                mmd += &format!(
-                    "{0:} ==>|\"{1:}\"| {2:}\n",
-                    node_key,
-                    combined_label.trim_end_matches(", "),
-                    target_key
-                );
+        for (idx, node) in self.node_vec.iter().enumerate() {
+            for (lbl, target_node) in &node.edges {
+                let node_key = Self::node_key(idx);
+                let target_key = Self::node_key(*target_node);
+                mmd += &format!("{0:} ==>|\"{1:}\"| {2:}\n", node_key, lbl, target_key);
             }
         }
 
@@ -179,17 +184,17 @@ mod tests {
 
     #[test]
     fn test_generate() {
-        // let regex = Regex::or(
-        //     Regex::concat('a', 'c'),
-        //     Regex::concat('b', 'c'),
-        // );
+        let regex = Regex::or(
+            Regex::concat('a', 'c'),
+            Regex::concat('b', 'c'),
+        );
 
         // let regex = Regex::or(
         //     Regex::concat('a', 'c'),
         //     Regex::concat('b', 'c'),
         // );
         // let regex = Regex::kleene('a');
-        let regex = Regex::concat(Regex::kleene('P'), Regex::concat('P', 'D'));
+        // let regex = Regex::concat(Regex::kleene('P'), Regex::concat('P', 'D'));
 
         // let mut regex = Regex::from('a');
         // for c in 'b'..='z' {
@@ -221,7 +226,7 @@ mod tests {
         let automata = RegexAutomata::from_regex(regex);
         let mmd = automata.to_mmd();
         write_mmd_to_file(&mmd);
-        let haystack = vec![&'P', &'D'];
+        let haystack = vec![&'P', &'P', &'D'];
         assert!(automata.is_match(&haystack));
     }
 }
