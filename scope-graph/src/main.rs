@@ -83,7 +83,7 @@ impl ScopeGraphData for Data {
     }
 }
 
-fn create_example_graph() -> ScopeGraph<Label, Data> {
+fn create_example_graph<'a>() -> ScopeGraph<'a, Label, Data> {
     let mut graph = ScopeGraph::new();
     let root = Scope::new();
     let scope1 = Scope::new();
@@ -99,11 +99,8 @@ fn create_example_graph() -> ScopeGraph<Label, Data> {
     graph.add_edge(scope2, scope1, Label::Parent);
     graph.add_edge(scope2, scope3, Label::NeverTake);
 
-    for _ in 0..2 {
-        graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
-    }
-    // graph.add_decl(scope2, Label::Declaration, Data::var("x", "int"));
-    graph.add_decl(scope2, Label::Declaration, Data::var("x", "int"));
+    graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
+    graph.add_decl(scope2, Label::Declaration, Data::var("x", "bool"));
     graph.add_decl(scope3, Label::Declaration, Data::var("x", "int"));
     graph
 }
@@ -127,7 +124,7 @@ fn recurse_add_scopes(graph: &mut ScopeGraph<Label, Data>, parent: Scope, depth:
 }
 
 // graph with 1 decl near the root and a lot of children
-fn create_long_graph() -> ScopeGraph<Label, Data> {
+fn create_long_graph<'a>() -> ScopeGraph<'a, Label, Data> {
     let mut graph = ScopeGraph::new();
     let root = Scope::new();
     let scope1 = Scope::new();
@@ -135,20 +132,14 @@ fn create_long_graph() -> ScopeGraph<Label, Data> {
     graph.add_scope(scope1, Data::NoData);
     graph.add_edge(scope1, root, Label::Parent);
     graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
+    graph.add_decl(scope1, Label::Declaration, Data::var("x", "bool"));
 
-    recurse_add_scopes(&mut graph, scope1, 8);
-    // let mut prev_scope = scope1;
-    // for _ in 0..10 {
-    //     let new_scope = Scope::new();
-    //     graph.add_scope(new_scope, Data::NoData);
-    //     graph.add_edge(new_scope, prev_scope, Label::Parent);
-    //     prev_scope = new_scope;
-    // }
+    recurse_add_scopes(&mut graph, scope1, 6);
     graph
 }
 
 fn main() {
-    let graph = create_long_graph();
+    let mut graph = create_long_graph();
 
     let order = LabelOrderBuilder::new().push(Label::Declaration, Label::Parent).build();
 
@@ -167,35 +158,56 @@ fn main() {
         .open("./automata.mmd")
         .unwrap();
     file.write_all(matcher.to_mmd().as_bytes()).unwrap();
+
+
     
-    let start_scope = graph.find_scope(21).unwrap();
-    let (res, considered_paths) = graph.query(
+    
+    let start_scope = graph.find_scope(7).unwrap();
+    let timer = std::time::Instant::now();
+    let resA = graph.query(
         start_scope,
         &matcher,
         &order,
         |d1, d2| d1 == d2,
         |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int"),
     );
+    println!("first run {:?}", timer.elapsed());
+    let second_start = graph.find_scope(18).unwrap();
+    let timer = std::time::Instant::now();
+    let resB = graph.query(
+        second_start,
+        &matcher,
+        &order,
+        |d1, d2| d1 == d2,
+        |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int"),
+    );
+    println!("second run {:?}", timer.elapsed());
+
 
     // println!("res: {0:?}", res);
     let title = format!(
-        "Query: label_reg={}, label_order={:?}, data_eq=x:int",
-        label_reg, order
+        "Query1: {0:}, Query2: {1:}, label_reg={2:}, label_order={3:}, data_eq=x:int",
+        start_scope, second_start, label_reg, order
     );
     let mut mmd = graph.as_mmd(&title);
-    if res.is_empty() {
+    
+    if resA.is_empty() {
         println!("No results found");
     } else {
-        for r in res {
+        for r in resA {
             println!("r: {} ({:?})", r.path, r.data);
             mmd = r.path.as_mmd(mmd);
         }
     }
 
-    // for p in considered_paths {
-    //     println!("Considered path: {}", p);
-    //     mmd = p.as_mmd_debug(mmd);
-    // }
+    if resB.is_empty() {
+        println!("No results found");
+    } else {
+        for r in resB {
+            println!("r: {} ({:?})", r.path, r.data);
+            mmd = r.path.as_mmd(mmd);
+        }
+    }
 
     let mut file = std::fs::OpenOptions::new()
         .write(true)

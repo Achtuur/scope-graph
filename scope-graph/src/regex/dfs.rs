@@ -7,11 +7,7 @@ use crate::label::ScopeGraphLabel;
 
 use super::Regex;
 
-pub trait RegexLabel: Default + Clone + PartialEq + Eq + Hash {}
-
-impl<T: ScopeGraphLabel + Hash + Eq + Clone + Default> RegexLabel for T {}
-
-#[derive(Debug, Hash)]
+#[derive(Debug, Hash, PartialEq, Eq)]
 pub struct AutomataNode<Lbl>
 where
     Lbl: Clone + PartialEq + Eq + Hash,
@@ -39,12 +35,13 @@ where
     }
 }
 
-#[derive(Debug, Hash)]
+#[derive(Debug, Hash, PartialEq, Eq)]
 pub struct RegexAutomata<Lbl>
 where
     Lbl: Clone + PartialEq + Eq + Hash,
 {
     pub node_vec: Vec<AutomataNode<Lbl>>,
+    raw_reg: Regex<Lbl>,
 }
 
 impl<Lbl> RegexAutomata<Lbl>
@@ -55,6 +52,7 @@ where
     pub fn from_regex(regex: Regex<Lbl>) -> Self {
         let mut automata = Self {
             node_vec: Vec::new(),
+            raw_reg: regex.clone(),
         };
         automata.compile(regex);
         automata
@@ -74,6 +72,17 @@ where
         self.node_vec
         .iter()
         .position(|n| n.value == *regex)
+    }
+
+    pub fn is_match(&self, haystack: &[&Lbl]) -> bool {
+        match self.match_haystack(haystack) {
+            Some(node) => node.is_nullable(),
+            None => false,
+        }
+    }
+
+    pub fn partial_match(&self, haystack: &[&Lbl]) -> bool {
+        self.match_haystack(haystack).is_some()
     }
 
     fn compile(&mut self, reg: Regex<Lbl>) {
@@ -124,17 +133,6 @@ where
         }
         Some(&current_node.value)
     }
-
-    pub fn is_match(&self, haystack: &[&Lbl]) -> bool {
-        match self.match_haystack(haystack) {
-            Some(node) => node.is_nullable(),
-            None => false,
-        }
-    }
-
-    pub fn partial_match(&self, haystack: &[&Lbl]) -> bool {
-        self.match_haystack(haystack).is_some()
-    }
 }
 
 impl<Lbl> RegexAutomata<Lbl>
@@ -168,6 +166,14 @@ where
         }
 
         mmd
+    }
+}
+
+impl<Lbl> std::fmt::Display for RegexAutomata<Lbl>
+where Lbl: ScopeGraphLabel + std::fmt::Display + Clone + Eq + Hash
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.raw_reg)
     }
 }
 

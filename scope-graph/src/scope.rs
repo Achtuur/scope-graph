@@ -16,3 +16,9 @@ impl Scope {
         self.0
     }
 }
+
+impl std::fmt::Display for Scope {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Scope({})", self.0)
+    }
+}

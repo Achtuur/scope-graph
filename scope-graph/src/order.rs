@@ -1,6 +1,5 @@
 use std::{
-    collections::{btree_map::Entry, BTreeMap, HashMap, HashSet},
-    hash::Hash,
+    collections::{btree_map::Entry, BTreeMap, HashMap, HashSet}, fmt::Write, hash::Hash
 };
 
 use crate::label::{LabelOrEnd, ScopeGraphLabel};
@@ -18,17 +17,6 @@ where
 
 // use fullwidth_lt since mmd doesnt render '<' properly
 const FULLWIDTH_LT: char = '＜';
-
-impl<Lbl> std::fmt::Display for LabelOrderBuilder<Lbl>
-where
-    Lbl: ScopeGraphLabel + std::fmt::Display + Hash + Eq,
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = "todo: display label order";
-
-        write!(f, "{}", s.trim_end_matches(" "))
-    }
-}
 
 impl<Lbl> LabelOrderBuilder<Lbl>
 where
@@ -138,7 +126,7 @@ where
 
 
 
-#[derive(Debug, Hash)]
+#[derive(Debug, Hash, PartialEq, Eq)]
 pub(crate) struct LabelOrder<Lbl>
 where Lbl: ScopeGraphLabel + Eq + std::fmt::Debug,
 {
@@ -168,6 +156,30 @@ where Lbl: ScopeGraphLabel + Eq
         .find(|(l, _)| l == lbl1)
         .expect("Can't find label in ordering");
         less_thans.iter().any(|l| l == lbl2)
+    }
+}
+
+impl<Lbl> std::fmt::Display for LabelOrder<Lbl>
+where
+    Lbl: ScopeGraphLabel + std::fmt::Display + Hash + Eq,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = self
+        .orders
+        .iter()
+        .map(|(lbl, less_thans)| {
+            let less_than_str = less_thans.iter()
+            .fold(String::new(), |mut s, lt| {
+                write!(&mut s, "{} {} {}, ", lbl, FULLWIDTH_LT, lt)
+                .expect("Failed to write string");
+                s
+            });
+            less_than_str.trim_end_matches(", ").to_string()
+        })
+        .collect::<String>();
+
+
+        write!(f, "{}", s.trim_end_matches(" "))
     }
 }
 

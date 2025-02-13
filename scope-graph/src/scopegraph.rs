@@ -1,8 +1,8 @@
-use std::{collections::HashMap, sync::Mutex};
+use std::{collections::HashMap, sync::{Arc, Mutex, MutexGuard}};
 
 use crate::{
     data::ScopeGraphData, label::ScopeGraphLabel, order::{LabelOrder, LabelOrderBuilder}, path::Path,
-    regex::dfs::RegexAutomata, resolve::Resolver, scope::Scope,
+    regex::dfs::RegexAutomata, resolve::{CacheKey, CacheValue, ResolveCache, Resolver}, scope::Scope,
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -36,20 +36,24 @@ where
 }
 
 #[derive(Debug)]
-pub struct ScopeGraph<Lbl, Data>
+pub struct ScopeGraph<'s, Lbl, Data>
 where
-    Lbl: ScopeGraphLabel + Clone,
+    Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + Eq + std::hash::Hash + Ord,
+    Data: std::fmt::Debug + Clone,
 {
     pub scopes: HashMap<Scope, ScopeData<Lbl, Data>>,
+    pub(crate) resolve_cache: Mutex<ResolveCache<'s, Lbl, Data>>,
 }
 
-impl<Lbl, Data> ScopeGraph<Lbl, Data>
+impl<'s, Lbl, Data> ScopeGraph<'s, Lbl, Data>
 where
-    Lbl: ScopeGraphLabel + Clone,
+    Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + Eq + std::hash::Hash + Ord,
+    Data: std::fmt::Debug + Clone,
 {
     pub fn new() -> Self {
         Self {
             scopes: HashMap::new(),
+            resolve_cache: Mutex::new(ResolveCache::new()),
         }
     }
 
@@ -86,15 +90,29 @@ where
 
 // queries
 
-#[derive(Debug)]
-pub struct QueryResult<Lbl: ScopeGraphLabel, Data> {
+#[derive(Debug, Clone)]
+pub struct QueryResult<Lbl, Data>
+where
+    Lbl: ScopeGraphLabel + Clone,
+    Data: Clone,
+{
     pub path: Path<Lbl>,
     pub data: Data,
 }
 
-impl<Lbl, Data> ScopeGraph<Lbl, Data>
+impl<Lbl, Data> std::fmt::Display for QueryResult<Lbl, Data>
 where
-    Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + Eq + std::hash::Hash + Ord,
+    Lbl: ScopeGraphLabel + Clone,
+    Data: Clone + std::fmt::Debug,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} -[] {:?}", self.path, self.data)
+    }
+}
+
+impl<'s, Lbl, Data> ScopeGraph<'s, Lbl, Data>
+where
+    Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + std::fmt::Display + Eq + std::hash::Hash + Ord,
     Data: std::fmt::Debug + Clone,
 {
     /// Returns the data associated with the scope baesd on path_regex and name of the data
@@ -107,33 +125,31 @@ where
     /// * path_regex: Regular expression to match the path
     /// * data_name: Name of the data to return
     pub fn query(
-        &self,
+        &'s self,
         scope: Scope,
-        path_regex: &RegexAutomata<Lbl>,
-        order: &LabelOrder<Lbl>,
+        path_regex: &'s RegexAutomata<Lbl>,
+        order: &'s LabelOrder<Lbl>,
         data_equiv: impl Fn(&Data, &Data) -> bool,
         data_wellformedness: impl Fn(&Data) -> bool,
-    ) -> (Vec<QueryResult<Lbl, Data>>, Vec<Path<Lbl>>) {
-        let resolver = Resolver {
-            scope_graph: self,
-            path_re: path_regex,
-            lbl_order: order,
-            data_eq: &data_equiv,
-            data_wfd: &data_wellformedness,
-            considered_paths: Mutex::new(Vec::new()),
-            cache: HashMap::new(),
-        };
+    ) -> Vec<QueryResult<Lbl, Data>> {
+        let resolver = Resolver::new(
+            self,
+            path_regex,
+            order,
+            &data_equiv,
+            &data_wellformedness,
+        );
         let res = resolver.resolve(Path::start(scope));
-        let considered_paths = resolver.considered_paths.into_inner().unwrap();
-        (res, considered_paths)
+        resolver.print_cache();
+        res
     }
 }
 
 // rendering
-impl<Lbl, Data> ScopeGraph<Lbl, Data>
+impl<Lbl, Data> ScopeGraph<'_, Lbl, Data>
 where
-    Lbl: ScopeGraphLabel + Clone,
-    Data: ScopeGraphData,
+    Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + Eq + std::hash::Hash + Ord,
+    Data: std::fmt::Debug + Clone + ScopeGraphData,
 {
     pub fn as_mmd(&self, title: &str) -> String {
         let mut mmd = format!(
