@@ -20,11 +20,33 @@ where Lbl: ScopeGraphLabel + Clone
         Self::Start(start)
     }
 
+    /// Step forward (p -> new p)
     pub fn step(self, label: Lbl, scope: Scope) -> Self {
         Self::Step {
             label,
             target: scope,
             from: Box::new(self),
+        }
+    }
+
+    // step backwards (new p -> p)
+    pub fn step_back(self, label: Lbl, scope: Scope) -> Self {
+        match self {
+            Self::Start(s) => {
+                Self::Step {
+                    label,
+                    target: s,
+                    from: Box::new(Self::start(scope)),
+                }
+            }
+
+            Self::Step { label: lbl, target: tgt, from } => {
+                Self::Step {
+                    label: lbl,
+                    target: tgt,
+                    from: Box::new(from.step_back(label, scope)),
+                }
+            }
         }
     }
 

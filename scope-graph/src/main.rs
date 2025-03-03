@@ -1,23 +1,30 @@
 use std::{io::Write, os::unix::thread};
 
 use data::ScopeGraphData;
+use forward::ForwardScopeGraph;
+use graph::BaseScopeGraphHaver;
 use label::ScopeGraphLabel;
 // use lbl_regex::*;
 use order::LabelOrderBuilder;
 use rand::Rng;
 use regex::{dfs::RegexAutomata, Regex};
 use scope::Scope;
-use scopegraph::ScopeGraph;
 
 mod label;
 mod path;
 mod scope;
-mod scopegraph;
+mod forward;
 // mod lbl_regex;
 mod data;
 mod order;
 mod regex;
-mod resolve;
+pub mod resolve;
+pub mod bottomup;
+pub mod graph;
+
+
+/// Enable caching when doing forward resolution
+pub(crate) const FORWARD_ENABLE_CACHING: bool = true;
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
 enum Label {
@@ -55,7 +62,7 @@ impl ScopeGraphLabel for Label {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 enum Data {
     NoData,
     Variable(String, String),
@@ -64,6 +71,15 @@ enum Data {
 impl Data {
     fn var(x: impl ToString, t: impl ToString) -> Self {
         Self::Variable(x.to_string(), t.to_string())
+    }
+}
+
+impl std::fmt::Display for Data {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NoData => write!(f, "no data"),
+            Self::Variable(x, t) => write!(f, "{x}: {t}"),
+        }
     }
 }
 
@@ -83,8 +99,8 @@ impl ScopeGraphData for Data {
     }
 }
 
-fn create_example_graph<'a>() -> ScopeGraph<'a, Label, Data> {
-    let mut graph = ScopeGraph::new();
+fn create_example_graph<'a>() -> ForwardScopeGraph<'a, Label, Data> {
+    let mut graph = ForwardScopeGraph::new();
     let root = Scope::new();
     let scope1 = Scope::new();
     let scope2 = Scope::new();
@@ -105,7 +121,7 @@ fn create_example_graph<'a>() -> ScopeGraph<'a, Label, Data> {
     graph
 }
 
-fn recurse_add_scopes(graph: &mut ScopeGraph<Label, Data>, parent: Scope, depth: usize) {
+fn recurse_add_scopes(graph: &mut ForwardScopeGraph<Label, Data>, parent: Scope, depth: usize) {
     if depth == 0 {
         return;
     }
@@ -124,8 +140,8 @@ fn recurse_add_scopes(graph: &mut ScopeGraph<Label, Data>, parent: Scope, depth:
 }
 
 // graph with 1 decl near the root and a lot of children
-fn create_long_graph<'a>() -> ScopeGraph<'a, Label, Data> {
-    let mut graph = ScopeGraph::new();
+fn create_long_graph<'a>() -> ForwardScopeGraph<'a, Label, Data> {
+    let mut graph = ForwardScopeGraph::new();
     let root = Scope::new();
     let scope1 = Scope::new();
     graph.add_scope(root, Data::NoData);

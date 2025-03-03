@@ -1,4 +1,14 @@
-pub trait ScopeGraphLabel: PartialEq + std::fmt::Debug {
+use std::hash::Hash;
+
+pub trait ScopeGraphLabel:
+    PartialEq
+    + Clone
+    + std::fmt::Debug
+    + std::fmt::Display
+    + Eq
+    + Ord
+    + Hash
+{
     fn char(&self) -> char;
     fn str(&self) -> &'static str;
 }

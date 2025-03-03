@@ -1,4 +1,12 @@
-pub trait ScopeGraphData {
+pub trait ScopeGraphData:
+    PartialEq
+    + Clone
+    + std::fmt::Debug
+    + std::fmt::Display
+    + Eq
+    + Ord
+    + std::hash::Hash
+{
     /// Returns true if the variant has data.
     ///
     /// If have a data variant that contains no data, return false.
