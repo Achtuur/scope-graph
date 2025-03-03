@@ -105,6 +105,7 @@ where
         data_equiv: impl Fn(&Data, &Data) -> bool,
         data_wellformedness: impl Fn(&Data) -> bool,
     ) -> Vec<QueryResult<Lbl, Data>> {
+        println!("self.data_cache: {0:?}", self.data_cache);
         let cache_entry = self.data_cache.get(&scope).expect("Scope not found in cache");
 
         let query_results = cache_entry

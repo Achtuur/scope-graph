@@ -1,5 +1,6 @@
 use std::{io::Write, os::unix::thread};
 
+use bottomup::BottomupScopeGraph;
 use data::ScopeGraphData;
 use forward::ForwardScopeGraph;
 use graph::BaseScopeGraphHaver;
@@ -99,8 +100,8 @@ impl ScopeGraphData for Data {
     }
 }
 
-fn create_example_graph<'a>() -> ForwardScopeGraph<'a, Label, Data> {
-    let mut graph = ForwardScopeGraph::new();
+fn create_example_graph<'a>() -> BottomupScopeGraph<'a, Label, Data> {
+    let mut graph = BottomupScopeGraph::new();
     let root = Scope::new();
     let scope1 = Scope::new();
     let scope2 = Scope::new();
@@ -155,7 +156,7 @@ fn create_long_graph<'a>() -> ForwardScopeGraph<'a, Label, Data> {
 }
 
 fn main() {
-    let mut graph = create_long_graph();
+    let mut graph = create_example_graph();
 
     let order = LabelOrderBuilder::new().push(Label::Declaration, Label::Parent).build();
 
@@ -178,7 +179,7 @@ fn main() {
 
     
     
-    let start_scope = graph.find_scope(7).unwrap();
+    let start_scope = graph.find_scope(2).unwrap();
     let timer = std::time::Instant::now();
     let resA = graph.query(
         start_scope,
@@ -188,7 +189,7 @@ fn main() {
         |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int"),
     );
     println!("first run {:?}", timer.elapsed());
-    let second_start = graph.find_scope(18).unwrap();
+    let second_start = graph.find_scope(2).unwrap();
     let timer = std::time::Instant::now();
     let resB = graph.query(
         second_start,
