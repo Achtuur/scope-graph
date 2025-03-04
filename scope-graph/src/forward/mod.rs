@@ -77,7 +77,7 @@ where
             &data_wellformedness,
         );
         let res = resolver.resolve(Path::start(scope));
-        resolver.print_cache();
+        // resolver.print_cache();
         res
     }
 }

@@ -3,7 +3,9 @@ pub mod dfs;
 use crate::label::ScopeGraphLabel;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Regex<Lbl> {
+pub enum Regex<Lbl>
+where Lbl: ScopeGraphLabel
+{
     /// `eps`
     EmptyString,
     /// Empty set, calling it zero to make it immediately distinct from `EmptyString`
@@ -24,7 +26,7 @@ pub enum Regex<Lbl> {
 
 impl<Lbl> std::fmt::Display for Regex<Lbl>
 where
-    Lbl: std::fmt::Display,
+    Lbl: ScopeGraphLabel,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -40,12 +42,6 @@ where
     }
 }
 
-// impl From<char> for Regex<char> {
-//     fn from(c: char) -> Self {
-//         Self::Character(c)
-//     }
-// }
-
 impl<T> From<T> for Regex<T>
 where
     T: ScopeGraphLabel + Clone + std::hash::Hash,
@@ -57,7 +53,7 @@ where
 
 impl<Lbl> Regex<Lbl>
 where
-    Lbl: PartialEq + Clone,
+    Lbl: ScopeGraphLabel,
 {
     pub fn or(r: impl Into<Self>, s: impl Into<Self>) -> Self {
         Self::Or(Box::new(r.into()), Box::new(s.into()))

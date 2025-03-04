@@ -25,7 +25,7 @@ pub mod graph;
 
 
 /// Enable caching when doing forward resolution
-pub(crate) const FORWARD_ENABLE_CACHING: bool = true;
+pub(crate) const FORWARD_ENABLE_CACHING: bool = false;
 
 pub(crate) type TestSgType<'s, Lbl, Data> = BottomupScopeGraph<'s, Lbl, Data>;
 
@@ -180,35 +180,38 @@ fn main() {
 
     write_to_file("./automata.mmd", matcher.to_mmd().as_bytes());
 
-    let start_scope = graph.find_scope(9).unwrap();
-    let timer = std::time::Instant::now();
-    let res_a = graph.query(
-        start_scope,
-        &matcher,
-        &order,
-        |d1, d2| d1 == d2,
-        |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int"),
-    );
-    println!("first run {:?}", timer.elapsed());
 
-
-    // println!("res: {0:?}", res);
-    let title = format!(
-        "Query1: {0:} label_reg={1:}, label_order={2:}, data_eq=x:int",
-        start_scope, label_reg, order
-    );
-    let mut mmd = graph.as_mmd(&title);
-    
-    if res_a.is_empty() {
-        println!("No results found");
-    } else {
-        for r in res_a {
-            println!("r: {} ({:?})", r.path, r.data);
-            mmd = r.path.as_mmd(mmd);
-        }
+    for i in 5..13 {
+        let start_scope = graph.find_scope(i).unwrap();
+        let timer = std::time::Instant::now();
+        let res_a = graph.query(
+            start_scope,
+            &matcher,
+            &order,
+            |d1, d2| d1 == d2,
+            |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int"),
+        );
+        println!("{i} run {:?}", timer.elapsed());
     }
 
-    write_to_file("./output.mmd", mmd.as_bytes());
+
+    // // println!("res: {0:?}", res);
+    // let title = format!(
+    //     "Query1: {0:} label_reg={1:}, label_order={2:}, data_eq=x:int",
+    //     start_scope, label_reg, order
+    // );
+    // let mut mmd = graph.as_mmd(&title);
+    
+    // if res_a.is_empty() {
+    //     println!("No results found");
+    // } else {
+    //     for r in res_a {
+    //         println!("r: {} ({:?})", r.path, r.data);
+    //         mmd = r.path.as_mmd(mmd);
+    //     }
+    // }
+
+    // write_to_file("./output.mmd", mmd.as_bytes());
 }
 
 fn write_to_file(fname: &str, content: &[u8]) {

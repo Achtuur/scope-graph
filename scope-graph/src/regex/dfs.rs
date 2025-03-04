@@ -10,7 +10,7 @@ use super::Regex;
 #[derive(Debug, Hash, PartialEq, Eq)]
 pub struct AutomataNode<Lbl>
 where
-    Lbl: Clone + PartialEq + Eq + Hash,
+    Lbl: ScopeGraphLabel,
 {
     pub value: Regex<Lbl>,
     pub edges: Vec<(Lbl, usize)>,
@@ -19,7 +19,7 @@ where
 
 impl<Lbl> AutomataNode<Lbl>
 where
-    Lbl: Clone + PartialEq + Eq + Hash,
+    Lbl: ScopeGraphLabel,
 {
     pub fn new(val: Regex<Lbl>) -> Self {
         Self {
@@ -38,7 +38,7 @@ where
 #[derive(Debug, Hash, PartialEq, Eq)]
 pub struct RegexAutomata<Lbl>
 where
-    Lbl: Clone + PartialEq + Eq + Hash,
+    Lbl: ScopeGraphLabel,
 {
     pub node_vec: Vec<AutomataNode<Lbl>>,
     raw_reg: Regex<Lbl>,
@@ -46,7 +46,7 @@ where
 
 impl<Lbl> RegexAutomata<Lbl>
 where
-    Lbl: Clone + PartialEq + Eq + Hash,
+    Lbl: ScopeGraphLabel,
 {
     /// Create a new automata from a regex, also compiles the regex
     pub fn from_regex(regex: Regex<Lbl>) -> Self {
@@ -137,7 +137,7 @@ where
 
 impl<Lbl> RegexAutomata<Lbl>
 where
-    Lbl: Clone + PartialEq + Eq + Hash + std::fmt::Display,
+    Lbl: ScopeGraphLabel,
 {
     // uses display impl and removes spaces
     fn node_key(node_idx: usize) -> u64 {

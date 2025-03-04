@@ -113,6 +113,16 @@ where
         }
     }
 
+    /// Returns cache size in bytes
+    pub fn cache_size(&self) -> usize {
+        self.data_cache.values().map(|v| {
+            let mem_size = v.iter().map(|(d, p)| {
+                std::mem::size_of::<Data>() + p.mem_size()
+            }).sum::<usize>();
+            std::mem::size_of::<Scope>() + mem_size
+        }).sum()
+    }
+
     pub(crate) fn query(
         &'s self,
         scope: Scope,
@@ -121,7 +131,8 @@ where
         data_equiv: impl Fn(&Data, &Data) -> bool,
         data_wellformedness: impl Fn(&Data) -> bool,
     ) -> Vec<QueryResult<Lbl, Data>> {
-        self.print_cache();
+        // self.print_cache();
+        println!("cache size: {}", self.cache_size());
         let cache_entry = self.data_cache.get(&scope).expect("Scope not found in cache");
 
         // all matching data and path regex
@@ -137,9 +148,9 @@ where
         })
         .collect::<Vec<_>>();
 
-        for (idx, qr) in query_results.iter().enumerate() {
-            println!("{}: {}", idx, qr);
-        }
+        // for (idx, qr) in query_results.iter().enumerate() {
+        //     println!("{}: {}", idx, qr);
+        // }
 
         // an environment is shadowed if another env exists that
         // - has equivalent data

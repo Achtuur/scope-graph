@@ -76,7 +76,7 @@ where
     }
 
     pub fn resolve(&self, path: Path<Lbl>) -> Vec<QueryResult<Lbl, Data>> {
-        println!("Resolving path: {}", path);
+        // println!("Resolving path: {}", path);
         self.considered_paths.lock().unwrap().push(path.clone());
         let envs = self.get_env(path.clone());
         self.cache_env(&path, envs.clone());
@@ -117,8 +117,8 @@ where
         let val = CacheValue {
             envs,
         };
-        println!("path: {0:?}", path);
-        println!("Caching: {}: {:?}", key, val);
+        // println!("path: {0:?}", path);
+        // println!("Caching: {}: {:?}", key, val);
 
         self.scope_graph.resolve_cache.lock().unwrap().insert(key, val);
     }
@@ -159,7 +159,7 @@ where
         let scope = self.get_scope(path.target()).expect("Scope not found");
 
         if let Some(env) = self.get_cached_env(&path) {
-            println!("Cache hit for {}", path);
+            // println!("Cache hit for {}", path);
             return env;
         }
 

@@ -113,20 +113,12 @@ where Lbl: ScopeGraphLabel + Clone
         }
     }
 
-    // pub fn trim_start_matching(self, other: &Self) -> Self {
-    //     let mut current = self;
-    //     let mut other = other;
-    //     loop {
-    //         match (current, other) {
-    //             (Self::Start(s), _) => {
-    //                 Self::Start(s)
-    //             }
-
-
-    //             _ => current
-    //         }
-    //     }
-    // }
+    pub fn mem_size(&self) -> usize {
+        match self {
+            Self::Start(_) => std::mem::size_of::<Self>(),
+            Self::Step { from, .. } => std::mem::size_of::<Self>() + from.mem_size(),
+        }
+    }
 
     pub fn as_mmd_debug(&self, mut mmd: String) -> String {
         match self {
