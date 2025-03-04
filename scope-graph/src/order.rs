@@ -2,11 +2,11 @@ use std::{
     collections::{btree_map::Entry, BTreeMap, HashMap, HashSet}, fmt::Write, hash::Hash
 };
 
-use crate::label::{LabelOrEnd, ScopeGraphLabel};
+use crate::{label::{LabelOrEnd, ScopeGraphLabel}, path::Path};
 
 pub(crate) struct LabelOrderBuilder<Lbl>
 where
-    Lbl: ScopeGraphLabel + Hash + Eq,
+    Lbl: ScopeGraphLabel,
 {
     /// graph containing labels and orderings.
     /// If an edge exists from a label to another label, then the source node has a higher priority
@@ -128,7 +128,7 @@ where
 
 #[derive(Debug, Hash, PartialEq, Eq)]
 pub(crate) struct LabelOrder<Lbl>
-where Lbl: ScopeGraphLabel + Eq + std::fmt::Debug,
+where Lbl: ScopeGraphLabel,
 {
     /// Label orderings
     /// First vec contains all labels
@@ -137,7 +137,7 @@ where Lbl: ScopeGraphLabel + Eq + std::fmt::Debug,
 }
 
 impl<Lbl> LabelOrder<Lbl>
-where Lbl: ScopeGraphLabel + Eq
+where Lbl: ScopeGraphLabel
 {
     /// Less, so HIGHER priority
     pub fn is_less(&self, label1: &LabelOrEnd<Lbl>, label2: &LabelOrEnd<Lbl>) -> bool {
@@ -147,6 +147,29 @@ where Lbl: ScopeGraphLabel + Eq
             (LabelOrEnd::Label(_), LabelOrEnd::End) => false,
             (LabelOrEnd::Label(l1), LabelOrEnd::Label(l2)) => self.is_less_internal(l1, l2),
         }
+    }
+
+    pub fn cmp_path(&self, path1: &Path<Lbl>, path2: &Path<Lbl>) -> std::cmp::Ordering {
+        if path1 == path2 {
+            return std::cmp::Ordering::Equal;
+        }
+
+        match self.path_is_less(path1, path2) {
+            true => std::cmp::Ordering::Less,
+            false => std::cmp::Ordering::Greater,
+        }
+    }
+
+
+    // sort data using label order
+    // p1 < p2 if all labels in p1 < all labels in p2
+    pub fn path_is_less(&self, path1: &Path<Lbl>, path2: &Path<Lbl>) -> bool {
+        let lbl1 = path1.as_lbl_vec();
+        let lbl2 = path2.as_lbl_vec();
+
+        lbl1.iter()
+        .zip(lbl2.iter())
+        .all(|(l1, l2)| self.is_less_internal(l1, l2))
     }
 
     // returns true if lbl 1 is less than label2 (so higher priority)
@@ -161,7 +184,7 @@ where Lbl: ScopeGraphLabel + Eq
 
 impl<Lbl> std::fmt::Display for LabelOrder<Lbl>
 where
-    Lbl: ScopeGraphLabel + std::fmt::Display + Hash + Eq,
+    Lbl: ScopeGraphLabel,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = self

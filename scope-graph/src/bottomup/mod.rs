@@ -51,15 +51,22 @@ where
         self.sg_mut().add_edge(source, target, label.clone());
 
         // child scope should inherit cache and extend path
-        let source_cache = self.data_cache.get(&source).cloned().unwrap_or_default();
-        let new_cache = source_cache
+        let target_cache = self.data_cache.get(&target).cloned().unwrap_or_default();
+        let mut new_cache = target_cache
         .into_iter()
         .map(|(d, p)| {
-            (d, p.step(label.clone(), source))
+            (d, p.step_back(label.clone(), source))
         })
         .collect::<Vec<_>>();
 
-        self.data_cache.insert(source, new_cache);
+        match self.data_cache.entry(source) {
+            std::collections::hash_map::Entry::Occupied(mut occupied_entry) => {
+                occupied_entry.get_mut().append(&mut new_cache);
+            },
+            std::collections::hash_map::Entry::Vacant(vacant_entry) => {
+                vacant_entry.insert(new_cache);
+            },
+        }
     }
 
     fn add_decl(&mut self, source: Scope, label: Lbl, data: Data) -> Scope {
@@ -97,7 +104,16 @@ where
         &self.sg.scopes
     }
 
-    pub fn query(
+    pub fn print_cache(&self) {
+        for (scope, data) in &self.data_cache {
+            println!("Scope: {}", scope);
+            for (d, p) in data {
+                println!("  Data: {} Path: {}", d, p);
+            }
+        }
+    }
+
+    pub(crate) fn query(
         &'s self,
         scope: Scope,
         path_regex: &'s RegexAutomata<Lbl>,
@@ -105,15 +121,14 @@ where
         data_equiv: impl Fn(&Data, &Data) -> bool,
         data_wellformedness: impl Fn(&Data) -> bool,
     ) -> Vec<QueryResult<Lbl, Data>> {
-        println!("self.data_cache: {0:?}", self.data_cache);
+        self.print_cache();
         let cache_entry = self.data_cache.get(&scope).expect("Scope not found in cache");
 
+        // all matching data and path regex
         let query_results = cache_entry
         .iter()
-        .filter(|(d, p)| {
-            data_wellformedness(d)
-            && path_regex.is_match(&p.as_lbl_vec())
-        })
+        .filter(|(d, _)| data_wellformedness(d))
+        .filter(|(_, p)| path_regex.is_match(&p.as_lbl_vec()))
         .map(|(d, p)| {
             QueryResult {
                 path: p.clone(),
@@ -121,6 +136,28 @@ where
             }
         })
         .collect::<Vec<_>>();
+
+        for (idx, qr) in query_results.iter().enumerate() {
+            println!("{}: {}", idx, qr);
+        }
+
+        // an environment is shadowed if another env exists that
+        // - has equivalent data
+        // - path is less
+
+        // shadowing
         query_results
+        .iter()
+        .filter(|qr| {
+            !query_results
+            .iter()
+            .any(|qr2| {
+                *qr != qr2
+                && data_equiv(&qr.data, &qr2.data)
+                && order.path_is_less(&qr2.path, &qr.path)
+            })
+        })
+        .cloned()
+        .collect::<Vec<_>>()
     }
 }

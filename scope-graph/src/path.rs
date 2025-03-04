@@ -1,7 +1,7 @@
 use crate::{label::ScopeGraphLabel, scope::Scope};
 
 /// Path enum "starts" at the target scope, ie its in reverse order
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Path<Lbl>
 where Lbl: ScopeGraphLabel + Clone
 {

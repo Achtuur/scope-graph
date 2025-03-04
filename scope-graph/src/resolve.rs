@@ -1,6 +1,6 @@
 use crate::{label::ScopeGraphLabel, path::Path};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QueryResult<Lbl, Data>
 where
     Lbl: ScopeGraphLabel + Clone,
