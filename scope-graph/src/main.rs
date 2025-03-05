@@ -157,7 +157,7 @@ fn create_long_graph<'a>() -> TestSgType<'a, Label, Data> {
     graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
     graph.add_decl(scope1, Label::Declaration, Data::var("x", "bool"));
     graph.add_edge(scope1, root, Label::Parent);
-    
+
     recurse_add_scopes(&mut graph, scope1, 6);
     graph
 }
@@ -181,37 +181,48 @@ fn main() {
     write_to_file("./automata.mmd", matcher.to_mmd().as_bytes());
 
 
-    for i in 5..13 {
-        let start_scope = graph.find_scope(i).unwrap();
-        let timer = std::time::Instant::now();
-        let res_a = graph.query(
-            start_scope,
-            &matcher,
-            &order,
-            |d1, d2| d1 == d2,
-            |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int"),
-        );
-        println!("{i} run {:?}", timer.elapsed());
+    let start_scope = graph.find_scope(7).unwrap();
+    let timer = std::time::Instant::now();
+    let res_a = graph.query(
+        start_scope,
+        &matcher,
+        &order,
+        |d1, d2| d1 == d2,
+        |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int"),
+    );
+    println!("run {:?}", timer.elapsed());
+
+    // println!("res: {0:?}", res);
+    let title = format!(
+        "Query1: {}, label_reg={}, label_order={}, data_eq=x:int",
+        start_scope, label_reg, order
+    );
+    let mut mmd = graph.as_mmd(&title);
+
+    if res_a.is_empty() {
+        println!("No results found");
+    } else {
+        for r in &res_a {
+            println!("r: {} ({:?})", r.path, r.data);
+            mmd = r.path.as_mmd(mmd);
+        }
     }
 
+    let header = format!("@startuml \"{}\"\n'skinparam linetype ortho", title);
+    let graph_uml = graph.as_uml();
 
-    // // println!("res: {0:?}", res);
-    // let title = format!(
-    //     "Query1: {0:} label_reg={1:}, label_order={2:}, data_eq=x:int",
-    //     start_scope, label_reg, order
-    // );
-    // let mut mmd = graph.as_mmd(&title);
-    
-    // if res_a.is_empty() {
-    //     println!("No results found");
-    // } else {
-    //     for r in res_a {
-    //         println!("r: {} ({:?})", r.path, r.data);
-    //         mmd = r.path.as_mmd(mmd);
-    //     }
-    // }
+    let res_a_uml = res_a
+        .iter()
+        .map(|r| r.path.as_uml("red"))
+        .collect::<Vec<String>>()
+        .join("\n");
 
-    // write_to_file("./output.mmd", mmd.as_bytes());
+    let uml = format!(
+        "{}\n{}\n{}\n@enduml",
+        header, graph_uml, res_a_uml
+    );
+    write_to_file("./output.mmd", mmd.as_bytes());
+    write_to_file("./output.puml", uml.as_bytes());
 }
 
 fn write_to_file(fname: &str, content: &[u8]) {

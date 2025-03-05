@@ -68,6 +68,13 @@ where Lbl: ScopeGraphLabel + Clone
         v
     }
 
+    pub fn extend(&mut self, extension: Self) {
+        let mut current = self;
+        while let Path::Step { from, .. } = current {
+            current = from;
+        }
+        *current = extension;
+    }
 
     pub fn append(&mut self, other: Self) {
         // keep going deeper into from, start
@@ -156,6 +163,27 @@ where Lbl: ScopeGraphLabel + Clone
                     target.0
                 );
                 from.as_mmd(mmd)
+            }
+        }
+    }
+
+    pub fn as_uml(&self, color: &str) -> String {
+        match self {
+            Self::Start(_) => String::new(),
+            Self::Step {
+                from,
+                label,
+                target,
+            } => {
+                let segment = format!(
+                    "scope_{0:} --> scope_{1:} #{3:};line.dashed : {2:}",
+                    from.scope_num(),
+                    target.0,
+                    label.char(),
+                    color,
+                );
+                let from_seg = from.as_uml(color);
+                format!("{}\n{}", from_seg, segment)
             }
         }
     }
