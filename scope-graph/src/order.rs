@@ -169,15 +169,16 @@ where Lbl: ScopeGraphLabel
 
         lbl1.iter()
         .zip(lbl2.iter())
+        // if labels are equal, continue. We only care about the part of paths that is different.
+        .skip_while(|(l1, l2)| l1 == l2)
         .all(|(l1, l2)| self.is_less_internal(l1, l2))
     }
 
     // returns true if lbl 1 is less than label2 (so higher priority)
     fn is_less_internal(&self, lbl1: &Lbl, lbl2: &Lbl) -> bool {
-        let (_, less_thans) = self.orders
-        .iter()
-        .find(|(l, _)| l == lbl1)
-        .expect("Can't find label in ordering");
+        let Some((_, less_thans)) = self.orders.iter().find(|(l, _)| l == lbl1) else {
+            return false;
+        };
         less_thans.iter().any(|l| l == lbl2)
     }
 }

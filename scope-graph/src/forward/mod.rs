@@ -48,6 +48,13 @@ where
         }
     }
 
+    pub fn from_base(sg: BaseScopeGraph<Lbl, Data>) -> Self {
+        Self {
+            sg,
+            resolve_cache: Mutex::new(HashMap::new()),
+        }
+    }
+
     pub fn scopes(&self) -> &ScopeMap<Lbl, Data> {
         &self.sg.scopes
     }
@@ -61,14 +68,18 @@ where
     /// * Scope: Starting scope
     /// * path_regex: Regular expression to match the path
     /// * data_name: Name of the data to return
-    pub fn query(
+    pub fn query<DEq, DWfd>(
         &'s self,
         scope: Scope,
         path_regex: &'s RegexAutomata<Lbl>,
         order: &'s LabelOrder<Lbl>,
-        data_equiv: impl Fn(&Data, &Data) -> bool,
-        data_wellformedness: impl Fn(&Data) -> bool,
-    ) -> Vec<QueryResult<Lbl, Data>> {
+        data_equiv: DEq,
+        data_wellformedness: DWfd,
+    ) -> Vec<QueryResult<Lbl, Data>>
+    where
+        DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
+        DWfd: for<'da> Fn(&'da Data) -> bool,
+    {
         let resolver = Resolver::new(
             self,
             path_regex,

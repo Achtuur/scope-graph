@@ -1,89 +1,35 @@
 @startuml "Query1: Scope(7), label_reg=P*D, label_order=D ＜ P, data_eq=x:int"
 'skinparam linetype ortho
-usecase "9" as scope_9
-usecase "6" as scope_6
-usecase "7" as scope_7
-usecase "12" as scope_12
-usecase "27" as scope_27
-usecase "19" as scope_19
-usecase "28" as scope_28
-usecase "25" as scope_25
-usecase "31" as scope_31
-usecase "37" as scope_37
-usecase "18" as scope_18
-usecase "13" as scope_13
-usecase "14" as scope_14
-usecase "24" as scope_24
-card "x: int" as scope_2
-usecase "4" as scope_4
-usecase "21" as scope_21
-usecase "39" as scope_39
-usecase "22" as scope_22
-usecase "17" as scope_17
-usecase "29" as scope_29
-usecase "26" as scope_26
-card "x: bool" as scope_3
-usecase "8" as scope_8
-usecase "20" as scope_20
 usecase "0" as scope_0
-usecase "16" as scope_16
-usecase "32" as scope_32
+usecase "7" as scope_7
+usecase "4" as scope_4
+usecase "9" as scope_9
+card "x: int" as scope_10
+usecase "6" as scope_6
 usecase "11" as scope_11
-usecase "30" as scope_30
-usecase "33" as scope_33
-usecase "35" as scope_35
+usecase "8" as scope_8
+card "x: int" as scope_2
 usecase "1" as scope_1
-usecase "23" as scope_23
-usecase "15" as scope_15
-usecase "38" as scope_38
-usecase "34" as scope_34
-usecase "36" as scope_36
-usecase "5" as scope_5
-usecase "10" as scope_10
-scope_9 -u-> scope_8 : Parent
-scope_6 -u-> scope_5 : Parent
+card "x: int" as scope_5
+card "x: bool" as scope_3
 scope_7 -u-> scope_6 : Parent
-scope_12 -u-> scope_11 : Parent
-scope_27 -u-> scope_26 : Parent
-scope_19 -u-> scope_18 : Parent
-scope_28 -u-> scope_16 : Parent
-scope_25 -u-> scope_23 : Parent
-scope_31 -u-> scope_30 : Parent
-scope_37 -u-> scope_34 : Parent
-scope_18 -u-> scope_17 : Parent
-scope_13 -u-> scope_10 : Parent
-scope_14 -u-> scope_13 : Parent
-scope_24 -u-> scope_23 : Parent
+scope_4 --> scope_5 : Declaration
 scope_4 -u-> scope_1 : Parent
-scope_21 -u-> scope_19 : Parent
-scope_39 -u-> scope_37 : Parent
-scope_22 -u-> scope_17 : Parent
-scope_17 -u-> scope_16 : Parent
-scope_29 -u-> scope_28 : Parent
-scope_26 -u-> scope_22 : Parent
-scope_8 -u-> scope_7 : Parent
-scope_20 -u-> scope_19 : Parent
-scope_16 -u-> scope_4 : Parent
-scope_32 -u-> scope_29 : Parent
-scope_11 -u-> scope_10 : Parent
-scope_30 -u-> scope_29 : Parent
-scope_33 -u-> scope_32 : Parent
-scope_35 -u-> scope_34 : Parent
+scope_9 --> scope_10 : Declaration
+scope_9 -u-> scope_4 : Parent
+scope_6 -u-> scope_4 : Parent
+scope_11 -u-> scope_9 : Parent
+scope_8 -u-> scope_6 : Parent
 scope_1 --> scope_2 : Declaration
 scope_1 --> scope_3 : Declaration
 scope_1 -u-> scope_0 : Parent
-scope_23 -u-> scope_22 : Parent
-scope_15 -u-> scope_13 : Parent
-scope_38 -u-> scope_37 : Parent
-scope_34 -u-> scope_28 : Parent
-scope_36 -u-> scope_35 : Parent
-scope_5 -u-> scope_4 : Parent
-scope_10 -u-> scope_6 : Parent
 
 
 scope_7 --> scope_6 #red;line.dashed : P
-scope_6 --> scope_5 #red;line.dashed : P
-scope_5 --> scope_4 #red;line.dashed : P
-scope_4 --> scope_1 #red;line.dashed : P
-scope_1 --> scope_2 #red;line.dashed : D
+scope_6 --> scope_4 #red;line.dashed : P
+scope_4 --> scope_5 #red;line.dashed : D
+
+scope_7 --> scope_6 #blue;line.dashed : P
+scope_6 --> scope_4 #blue;line.dashed : P
+scope_4 --> scope_5 #blue;line.dashed : D
 @enduml

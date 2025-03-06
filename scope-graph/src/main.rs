@@ -1,4 +1,4 @@
-use std::{io::Write, os::unix::thread};
+use std::{io::Write, os::unix::thread, sync::atomic::AtomicUsize};
 
 use bottomup::BottomupScopeGraph;
 use data::ScopeGraphData;
@@ -15,7 +15,6 @@ mod label;
 mod path;
 mod scope;
 mod forward;
-// mod lbl_regex;
 mod data;
 mod order;
 mod regex;
@@ -23,6 +22,22 @@ pub mod resolve;
 pub mod bottomup;
 pub mod graph;
 
+
+pub(crate) const COLORS: &[&str] = &[
+    "red",
+    "green",
+    "purple",
+    "blue",
+    "orange",
+];
+
+pub(crate) static COLOR_POINTER: AtomicUsize = AtomicUsize::new(0);
+
+pub fn next_color() -> &'static str {
+    let idx = COLOR_POINTER.load(std::sync::atomic::Ordering::Relaxed);
+    let _ = COLOR_POINTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    COLORS[idx % COLORS.len()]
+}
 
 /// Enable caching when doing forward resolution
 pub(crate) const FORWARD_ENABLE_CACHING: bool = false;
@@ -142,6 +157,9 @@ fn recurse_add_scopes(graph: &mut TestSgType<Label, Data>, parent: Scope, depth:
     for _ in 0..r {
         let scope = Scope::new();
         graph.add_scope(scope, Data::NoData);
+        if thread_rng.random_bool(0.2) {
+            graph.add_decl(scope, Label::Declaration, Data::var("x", "int"));
+        }
         graph.add_edge(scope, parent, Label::Parent);
         recurse_add_scopes(graph, scope, depth - 1);
     }
@@ -158,12 +176,13 @@ fn create_long_graph<'a>() -> TestSgType<'a, Label, Data> {
     graph.add_decl(scope1, Label::Declaration, Data::var("x", "bool"));
     graph.add_edge(scope1, root, Label::Parent);
 
-    recurse_add_scopes(&mut graph, scope1, 6);
+    recurse_add_scopes(&mut graph, scope1, 3);
     graph
 }
 
 fn main() {
-    let graph = create_long_graph();
+    let bu_graph = create_long_graph();
+    let forward_graph = ForwardScopeGraph::from_base(bu_graph.sg().clone());
 
     let order = LabelOrderBuilder::new()
     .push(Label::Declaration, Label::Parent)
@@ -172,56 +191,70 @@ fn main() {
     // P*D;
     let label_reg = Regex::concat(
         Regex::kleene(Label::Parent),
-        // Regex::concat(Label::Parent, Label::Declaration),
         Label::Declaration,
     );
     let matcher = RegexAutomata::from_regex(label_reg.clone());
 
-
     write_to_file("./automata.mmd", matcher.to_mmd().as_bytes());
 
 
-    let start_scope = graph.find_scope(7).unwrap();
+    let start_scope = bu_graph.first_scope_without_data(5).unwrap();
     let timer = std::time::Instant::now();
-    let res_a = graph.query(
+    let res_bu = bu_graph.query(
         start_scope,
         &matcher,
         &order,
         |d1, d2| d1 == d2,
         |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int"),
     );
-    println!("run {:?}", timer.elapsed());
+    println!("run bu {:?}", timer.elapsed());
 
-    // println!("res: {0:?}", res);
+    let timer = std::time::Instant::now();
+    let res_fw = forward_graph.query(
+        start_scope,
+        &matcher,
+        &order,
+        |d1, d2| d1 == d2,
+        |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int"),
+    );
+    println!("run fw {:?}", timer.elapsed());
+
+    if res_bu.is_empty() && res_fw.is_empty() {
+        println!("No results found");
+    } else {
+        println!("bottomup: ");
+        for r in &res_bu {
+            println!("{}", r);
+        }
+        println!("fw: ");
+        for r in &res_fw {
+            println!("{}", r);
+        }
+    }
+
     let title = format!(
         "Query1: {}, label_reg={}, label_order={}, data_eq=x:int",
         start_scope, label_reg, order
     );
-    let mut mmd = graph.as_mmd(&title);
-
-    if res_a.is_empty() {
-        println!("No results found");
-    } else {
-        for r in &res_a {
-            println!("r: {} ({:?})", r.path, r.data);
-            mmd = r.path.as_mmd(mmd);
-        }
-    }
-
     let header = format!("@startuml \"{}\"\n'skinparam linetype ortho", title);
-    let graph_uml = graph.as_uml();
+    let graph_uml = bu_graph.as_uml();
 
-    let res_a_uml = res_a
+    let res_a_uml = res_bu
         .iter()
         .map(|r| r.path.as_uml("red"))
         .collect::<Vec<String>>()
         .join("\n");
 
-    let uml = format!(
-        "{}\n{}\n{}\n@enduml",
-        header, graph_uml, res_a_uml
-    );
-    write_to_file("./output.mmd", mmd.as_bytes());
+    let res_b_uml = res_fw
+        .iter()
+        .map(|r| r.path.as_uml("blue"))
+        .collect::<Vec<String>>()
+        .join("\n");
+
+
+    let mut uml = [header, graph_uml, res_a_uml, res_b_uml].join("\n");
+    uml.push_str("\n@enduml");
+
     write_to_file("./output.puml", uml.as_bytes());
 }
 

@@ -39,14 +39,6 @@ where
         &mut self.sg
     }
 
-    fn find_scope(&self, scope_num: usize) -> Option<Scope> {
-        self.sg().find_scope(scope_num)
-    }
-
-    fn add_scope(&mut self, scope: Scope, data: Data) {
-        self.sg_mut().add_scope(scope, data);
-    }
-
     fn add_edge(&mut self, source: Scope, target: Scope, label: Lbl) {
         self.sg_mut().add_edge(source, target, label.clone());
 
@@ -78,12 +70,6 @@ where
         scope_entry.push((data, path));
         data_scope
     }
-
-    fn as_mmd(&self, title: &str) -> String {
-        self.sg().as_mmd(title)
-    }
-
-
 }
 
 
@@ -132,7 +118,7 @@ where
         data_wellformedness: impl Fn(&Data) -> bool,
     ) -> Vec<QueryResult<Lbl, Data>> {
         // self.print_cache();
-        println!("cache size: {}", self.cache_size());
+        // println!("cache size: {}", self.cache_size());
         let cache_entry = self.data_cache.get(&scope).expect("Scope not found in cache");
 
         // all matching data and path regex
@@ -156,19 +142,94 @@ where
         // - has equivalent data
         // - path is less
 
+        let shadows = |qr1: &QueryResult<Lbl, Data>, qr2: &QueryResult<Lbl, Data>| {
+            qr1 != qr2
+            && data_equiv(&qr1.data, &qr2.data)
+            && order.path_is_less(&qr1.path, &qr2.path)
+        };
+
         // shadowing
         query_results
         .iter()
         .filter(|qr| {
             !query_results
             .iter()
-            .any(|qr2| {
-                *qr != qr2
-                && data_equiv(&qr.data, &qr2.data)
-                && order.path_is_less(&qr2.path, &qr.path)
-            })
+            .any(|qr2| shadows(qr2, qr))
         })
         .cloned()
         .collect::<Vec<_>>()
+    }
+}
+
+
+
+#[cfg(test)]
+mod tests {
+    use crate::{regex::Regex, Data, Label, LabelOrderBuilder};
+
+    use super::*;
+
+    #[test]
+    fn test_bug() {
+        let order = LabelOrderBuilder::new()
+        .push(Label::Declaration, Label::Parent)
+        .build();
+
+        // P*D;
+        let label_reg = Regex::concat(
+            Regex::kleene(Label::Parent),
+            Label::Declaration,
+        );
+        let matcher = RegexAutomata::from_regex(label_reg);
+
+        let data_equiv = |d1, d2| d1 == d2;
+        let data_wfd= |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int");
+
+        let query_results = vec![
+            QueryResult {
+                data: Data::var("x", "int"),
+                path: Path::start(Scope(20))
+                .step(Label::Parent, Scope(14))
+                .step(Label::Declaration, Scope(15)),
+            },
+            QueryResult {
+                data: Data::var("x", "int"),
+                path: Path::start(Scope(20))
+                .step(Label::Parent, Scope(14))
+                .step(Label::Parent, Scope(6))
+                .step(Label::Parent, Scope(4))
+                .step(Label::Declaration, Scope(5)),
+            },
+            QueryResult {
+                data: Data::var("x", "int"),
+                path: Path::start(Scope(20))
+                .step(Label::Parent, Scope(14))
+                .step(Label::Parent, Scope(4))
+                .step(Label::Parent, Scope(1))
+                .step(Label::Declaration, Scope(2)),
+            },
+        ];
+
+        let shadowed = query_results
+        .iter()
+        .filter(|qr| {
+            !query_results
+            .iter()
+            .any(|qr2| {
+                let is_different = *qr != qr2;
+                let data_eq = data_equiv(&qr.data, &qr2.data);
+                let order_less = order.path_is_less(&qr2.path, &qr.path);
+                println!("{} {}", qr, qr2);
+                println!("{} {} {}\n", is_different, data_eq, order_less);
+                is_different && data_eq && order_less
+            })
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+
+        println!("shadowed:");
+        for s in shadowed {
+            println!("{s}")
+        }
     }
 }

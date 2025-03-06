@@ -62,11 +62,16 @@ where
 
     pub fn find_scope(&self, scope_num: usize) -> Option<Scope> {
         self.scopes.keys().find_map(|s| {
-            if s.0 == scope_num {
-                Some(*s)
-            } else {
-                None
+            (s.0 == scope_num).then_some(*s)
+        })
+    }
+
+    fn first_scope_without_data(&self, scope_num: usize) -> Option<Scope> {
+        self.scopes.iter().find_map(|(s, d)| {
+            if d.data.variant_has_data() {
+                return None;
             }
+            (s.0 >= scope_num).then_some(*s)
         })
     }
 
@@ -180,6 +185,10 @@ where
 
     fn find_scope(&self, scope_num: usize) -> Option<Scope> {
         self.sg().find_scope(scope_num)
+    }
+
+    fn first_scope_without_data(&self, scope_num: usize) -> Option<Scope> {
+        self.sg().first_scope_without_data(scope_num)
     }
 
     fn add_scope(&mut self, scope: Scope, data: Data) {
