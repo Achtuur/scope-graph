@@ -64,7 +64,7 @@ fn main() {
     println!("Creating scope graph took {:?}", timer.elapsed());
 
     println!("Rendering scope graph...");
-    sg.render_to("output.mmd", RenderSettings::default())
+    sg.render_to("output/output.mmd", RenderSettings::default())
         .unwrap();
     println!("Done!");
 }

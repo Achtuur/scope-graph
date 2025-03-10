@@ -195,7 +195,7 @@ fn main() {
     );
     let matcher = RegexAutomata::from_regex(label_reg.clone());
 
-    write_to_file("./automata.mmd", matcher.to_mmd().as_bytes());
+    write_to_file("output/automata.mmd", matcher.to_mmd().as_bytes());
 
 
     let start_scope = bu_graph.first_scope_without_data(5).unwrap();
@@ -255,7 +255,7 @@ fn main() {
     let mut uml = [header, graph_uml, res_a_uml, res_b_uml].join("\n");
     uml.push_str("\n@enduml");
 
-    write_to_file("./output.puml", uml.as_bytes());
+    write_to_file("output/output.puml", uml.as_bytes());
 }
 
 fn write_to_file(fname: &str, content: &[u8]) {
