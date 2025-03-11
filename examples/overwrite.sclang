@@ -1,0 +1,4 @@
+let x = false;
+let x = 3;
+let f = fun(x: num) { x };
+f(x)

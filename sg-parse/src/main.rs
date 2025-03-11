@@ -45,6 +45,18 @@ impl scopegraphs::render::RenderScopeData for StlcData {
     }
 }
 
+const SRC_DIR: &str = "examples/";
+const OUTPUT_DIR: &str = "output/";
+
+macro_rules! path {
+    ($dir: expr, $name:ident . $ext: ident) => {{
+        let mut path = PathBuf::from_str($dir).unwrap()
+        .join(stringify!($name));
+        path.set_extension(stringify!($ext));
+        path
+    }}
+}
+
 fn main() {
     println!("Initialising scope graph");
     let storage = Storage::new();
@@ -52,7 +64,8 @@ fn main() {
     let s0 = sg.add_scope_default();
 
     let timer = std::time::Instant::now();
-    let path = PathBuf::from_str("examples/simple.sclang").unwrap();
+
+    let path = path!(SRC_DIR, one_decl.sclang);
     let expr = match SclangExpression::from_file(&path) {
         Ok(expr) => expr,
         Err(e) => panic!("Error parsing {:?}: {}", path.as_path(), e),
@@ -64,7 +77,8 @@ fn main() {
     println!("Creating scope graph took {:?}", timer.elapsed());
 
     println!("Rendering scope graph...");
-    sg.render_to("output/output.mmd", RenderSettings::default())
+    let path = path!(OUTPUT_DIR, one_decl.mmd);
+    sg.render_to(path, RenderSettings::default())
         .unwrap();
     println!("Done!");
 }

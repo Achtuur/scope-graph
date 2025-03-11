@@ -1,5 +1,0 @@
-let x = false;
-let x = 3;
-let y = x;
-let f = fun(x: num) { let z = x; true };
-f(y)
