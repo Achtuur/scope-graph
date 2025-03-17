@@ -7,6 +7,7 @@ use graph::{BaseScopeGraph, BaseScopeGraphHaver};
 use label::ScopeGraphLabel;
 // use lbl_regex::*;
 use order::LabelOrderBuilder;
+use plantuml::{Color, PlantUmlDiagram};
 use rand::Rng;
 use regex::{dfs::RegexAutomata, Regex};
 use scope::Scope;
@@ -23,30 +24,32 @@ pub mod bottomup;
 pub mod graph;
 
 
-pub(crate) const COLORS: &[&str] = &[
-    "red",
-    "green",
-    "purple",
-    "blue",
-    "orange",
+pub(crate) const COLORS: &[Color] = &[
+    Color::Red,
+    Color::Green,
+    Color::Purple,
+    Color::Blue,
+    Color::Orange,
 ];
 
 pub(crate) static COLOR_POINTER: AtomicUsize = AtomicUsize::new(0);
 
-pub fn next_color() -> &'static str {
+pub fn next_color() -> Color {
     let idx = COLOR_POINTER.load(std::sync::atomic::Ordering::Relaxed);
     let _ = COLOR_POINTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     COLORS[idx % COLORS.len()]
 }
 
-pub fn get_color(idx: usize) -> &'static str {
+pub fn get_color(idx: usize) -> Color {
     COLORS[idx % COLORS.len()]
 }
 
 /// Enable caching when doing forward resolution
-pub(crate) const FORWARD_ENABLE_CACHING: bool = false;
+pub(crate) const FORWARD_ENABLE_CACHING: bool = true;
 
-pub(crate) type TestSgType<'s, Lbl, Data> = BottomupScopeGraph<'s, Lbl, Data>;
+pub(crate) const DRAW_CACHES: bool = false;
+
+pub(crate) type UsedScopeGraph<'s, Lbl, Data> = BottomupScopeGraph<'s, Lbl, Data>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
 enum Label {
@@ -121,8 +124,8 @@ impl ScopeGraphData for Data {
     }
 }
 
-fn create_example_graph<'a>() -> TestSgType<'a, Label, Data> {
-    let mut graph = TestSgType::new();
+fn create_example_graph<'a>() -> UsedScopeGraph<'a, Label, Data> {
+    let mut graph = UsedScopeGraph::new();
     let root = Scope::new();
     let scope1 = Scope::new();
     let scope2 = Scope::new();
@@ -148,7 +151,7 @@ fn create_example_graph<'a>() -> TestSgType<'a, Label, Data> {
     graph
 }
 
-fn recurse_add_scopes(graph: &mut TestSgType<Label, Data>, parent: Scope, depth: usize) {
+fn recurse_add_scopes(graph: &mut UsedScopeGraph<Label, Data>, parent: Scope, depth: usize) {
     if depth == 0 {
         return;
     }
@@ -170,8 +173,8 @@ fn recurse_add_scopes(graph: &mut TestSgType<Label, Data>, parent: Scope, depth:
 }
 
 // graph with 1 decl near the root and a lot of children
-fn create_long_graph<'a>() -> TestSgType<'a, Label, Data> {
-    let mut graph = TestSgType::new();
+fn create_long_graph<'a>() -> UsedScopeGraph<'a, Label, Data> {
+    let mut graph = UsedScopeGraph::new();
     let root = Scope::new();
     let scope1 = Scope::new();
     graph.add_scope(root, Data::NoData);
@@ -185,29 +188,27 @@ fn create_long_graph<'a>() -> TestSgType<'a, Label, Data> {
 }
 
 fn slides_example() {
-    let mut base_graph = BaseScopeGraph::new();
+    let mut graph = UsedScopeGraph::new();
     let root = Scope::new();
     let scope1 = Scope::new();
     let scope2 = Scope::new();
     let scope3 = Scope::new();
     let scope4 = Scope::new();
     let scope5 = Scope::new();
-    base_graph.add_scope(root, Data::NoData);
-    base_graph.add_scope(scope1, Data::NoData);
-    base_graph.add_scope(scope2, Data::NoData);
-    base_graph.add_scope(scope2, Data::NoData);
-    base_graph.add_scope(scope3, Data::NoData);
-    base_graph.add_scope(scope4, Data::NoData);
-    base_graph.add_scope(scope5, Data::NoData);
+    graph.add_scope(root, Data::NoData);
+    graph.add_scope(scope1, Data::NoData);
+    graph.add_scope(scope2, Data::NoData);
+    graph.add_scope(scope2, Data::NoData);
+    graph.add_scope(scope3, Data::NoData);
+    graph.add_scope(scope4, Data::NoData);
+    graph.add_scope(scope5, Data::NoData);
 
-    base_graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
-    base_graph.add_edge(scope1, root, Label::Parent);
-    base_graph.add_edge(scope2, scope1, Label::Parent);
-    base_graph.add_edge(scope3, scope1, Label::Parent);
-    base_graph.add_edge(scope4, scope2, Label::Parent);
-    base_graph.add_edge(scope5, scope4, Label::Parent);
-
-    let graph = ForwardScopeGraph::from_base(base_graph);
+    graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
+    graph.add_edge(scope1, root, Label::Parent);
+    graph.add_edge(scope2, scope1, Label::Parent);
+    graph.add_edge(scope3, scope1, Label::Parent);
+    graph.add_edge(scope4, scope2, Label::Parent);
+    graph.add_edge(scope5, scope4, Label::Parent);
 
     let order = LabelOrderBuilder::new()
     .push(Label::Declaration, Label::Parent)
@@ -227,7 +228,6 @@ fn slides_example() {
     ];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
-
         let res = set.into_iter()
         .flat_map(|s| graph.query(
             s,
@@ -241,18 +241,17 @@ fn slides_example() {
             "Query1: {}, label_reg={}, label_order={}, data_eq=x:int",
             0, label_reg, order
         );
-        let header = format!("@startuml \"{}\"\n'skinparam linetype ortho", title);
-        let graph_uml = graph.as_uml();
 
+        let graph_uml = graph.as_uml(DRAW_CACHES);
         let res_uml = res
             .enumerate()
-            .map(|(i, r)| r.path.as_uml(get_color(i)))
-            .collect::<Vec<String>>()
-            .join("\n");
+            .flat_map(|(i, r)| r.path.as_uml(get_color(i), false));
 
+        let mut diagram = PlantUmlDiagram::new(title.as_str());
+        diagram.extend(graph_uml);
+        diagram.extend(res_uml);
+        let uml = diagram.as_uml();
 
-        let mut uml = [header, graph_uml, res_uml].join("\n");
-        uml.push_str("\n@enduml");
         let fname = format!("output/output{}.puml", idx);
         write_to_file(&fname, uml.as_bytes());
     }
@@ -318,24 +317,22 @@ fn main() {
         "Query1: {}, label_reg={}, label_order={}, data_eq=x:int",
         start_scope, label_reg, order
     );
-    let header = format!("@startuml \"{}\"\n'skinparam linetype ortho", title);
-    let graph_uml = bu_graph.as_uml();
+    let graph_uml = bu_graph.as_uml(DRAW_CACHES);
 
     let res_a_uml = res_bu
         .iter()
-        .map(|r| r.path.as_uml("red"))
-        .collect::<Vec<String>>()
-        .join("\n");
+        .flat_map(|r| r.path.as_uml(Color::Red, false));
 
     let res_b_uml = res_fw
         .iter()
-        .map(|r| r.path.as_uml("blue"))
-        .collect::<Vec<String>>()
-        .join("\n");
+        .flat_map(|r| r.path.as_uml(Color::Blue, false));
 
 
-    let mut uml = [header, graph_uml, res_a_uml, res_b_uml].join("\n");
-    uml.push_str("\n@enduml");
+    let mut diagram = PlantUmlDiagram::new(title.as_str());
+    diagram.extend(graph_uml);
+    diagram.extend(res_a_uml);
+    diagram.extend(res_b_uml);
+    let uml = diagram.as_uml();
 
     write_to_file("output/output.puml", uml.as_bytes());
 }

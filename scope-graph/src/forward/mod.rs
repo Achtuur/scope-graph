@@ -1,5 +1,6 @@
 use std::{collections::HashMap, sync::{Arc, Mutex, MutexGuard}};
 
+use plantuml::{PlantUmlItem};
 use resolve::{ResolveCache, Resolver};
 
 use crate::{
@@ -21,7 +22,7 @@ where
     pub(crate) resolve_cache: Mutex<ResolveCache<'s, Lbl, Data>>,
 }
 
-impl<Lbl, Data> BaseScopeGraphHaver<Lbl, Data> for ForwardScopeGraph<'_, Lbl, Data> 
+impl<'s, Lbl, Data> BaseScopeGraphHaver<Lbl, Data> for ForwardScopeGraph<'s, Lbl, Data>
 where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
@@ -32,6 +33,31 @@ where
 
     fn sg_mut(&mut self) -> &mut BaseScopeGraph<Lbl, Data> {
         &mut self.sg
+    }
+
+    fn cache_uml<'a>(&'a self) -> Vec<PlantUmlItem>
+    where Lbl: 'a, Data: 'a {
+        self.resolve_cache
+        .lock()
+        .unwrap()
+        .iter()
+        .filter_map(|(key, value)| {
+            if value.envs.is_empty() {
+                return None;
+            }
+
+            let vals = value.envs.iter().map(|env| {
+                env.to_string()
+            })
+            .collect::<Vec<String>>()
+            .join("\n");
+
+            let cache_str = format!("<b>{}</b>\n{}", key, vals);
+            Some(
+                PlantUmlItem::note(key.scope.0, cache_str)
+            )
+        })
+        .collect::<Vec<_>>()
     }
 }
 

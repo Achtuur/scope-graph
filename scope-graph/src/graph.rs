@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use crate::{data::ScopeGraphData, label::ScopeGraphLabel, scope::Scope};
+use plantuml::{Color, EdgeDirection, NodeType, PlantUmlItem};
+
+use crate::{data::ScopeGraphData, label::ScopeGraphLabel, scope::{self, Scope}};
 
 
 #[derive(Clone, Copy, Debug)]
@@ -132,43 +134,44 @@ where
                 )
             }
         }
-
         mmd
     }
 
-    pub fn as_uml(&self) -> String {
-        let scope_decls = self
-        .scopes
+    fn scope_holds_data(&self, scope: Scope) -> bool {
+        self.scopes.get(&scope).map(|d| d.data.variant_has_data()).unwrap_or_default()
+    }
+
+    pub fn as_uml(&self) -> Vec<PlantUmlItem> {
+        let scope_nodes = self.scopes
         .iter()
         .map(|(s, d)| {
-            match d.data.variant_has_data() {
-                true => format!("card \"{1:}\" as scope_{0:}", s.0, d.data.render_string()),
-                false => format!("usecase \"{0:}\" as scope_{0:}", s.0),
-            }
-        })
-        .collect::<Vec<String>>()
-        .join("\n");
+            let node_type = match d.data.variant_has_data() {
+                true => NodeType::Card,
+                false => NodeType::Node,
+            };
+            let contents = match d.data.variant_has_data() {
+                true => d.data.render_string(),
+                false => s.0.to_string(),
+            };
+            PlantUmlItem::node(s.uml_id(), contents, node_type)
+        });
 
         let edges = self
         .scopes
         .iter()
-        .flat_map(|(s, d)| {
-            d.edges.iter().map(|edge| {
-                let target_has_data = self.scopes.get(&edge.to).unwrap().data.variant_has_data();
-                let dir = match target_has_data {
-                    true => "r",
-                    false => "u",
+        .flat_map(move |(s, d)| {
+            d.edges.iter().map(move |edge| {
+                let dir = match self.scope_holds_data(edge.to) {
+                    true => EdgeDirection::Right,
+                    false => EdgeDirection::Up,
                 };
-                format!(
-                    "scope_{0:} -{3:}-> scope_{1:} : {2:}",
-                    s.0, edge.to.0, edge.label.str(), dir
-                )
-            })
-        })
-        .collect::<Vec<String>>()
-        .join("\n");
 
-        format!("{}\n{}\n", scope_decls, edges)
+                PlantUmlItem::edge(s.uml_id(), edge.to.uml_id(), edge.label.str(), dir)
+                .with_line_color(Color::Black)
+            })
+        });
+
+        scope_nodes.chain(edges).collect()
     }
 }
 
@@ -182,6 +185,11 @@ where
 {
     fn sg(&self) -> &BaseScopeGraph<Lbl, Data>;
     fn sg_mut(&mut self) -> &mut BaseScopeGraph<Lbl, Data>;
+
+    fn cache_uml<'a>(&'a self) -> Vec<PlantUmlItem>
+    where Lbl: 'a, Data: 'a {
+        Vec::new()
+    }
 
     fn find_scope(&self, scope_num: usize) -> Option<Scope> {
         self.sg().find_scope(scope_num)
@@ -207,7 +215,16 @@ where
         self.sg().as_mmd(title)
     }
 
-    fn as_uml(&self) -> String {
-        self.sg().as_uml()
+    fn as_uml<'a>(&'a self, display_cache: bool) -> Vec<PlantUmlItem>
+    where Lbl: 'a, Data: 'a
+    {
+        let mut items = self.sg().as_uml();
+        match display_cache {
+            true => {
+                items.extend(self.cache_uml());
+                items
+            },
+            false => items,
+        }
     }
 }

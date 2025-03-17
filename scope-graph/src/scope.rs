@@ -3,7 +3,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 static SCOPE_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 /// A single scope in the scope graph. Each scope is assigned an incrementing id.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Scope(pub usize);
 
 impl Scope {
@@ -14,6 +14,10 @@ impl Scope {
 
     pub fn id(&self) -> usize {
         self.0
+    }
+
+    pub fn uml_id(&self) -> String {
+        format!("scope_{}", self.0)
     }
 }
 

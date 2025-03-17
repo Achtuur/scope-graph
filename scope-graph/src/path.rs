@@ -1,3 +1,5 @@
+use plantuml::{Color, EdgeDirection, LineStyle, PlantUmlItem};
+
 use crate::{label::ScopeGraphLabel, scope::Scope};
 
 /// Path enum "starts" at the target scope, ie its in reverse order
@@ -167,23 +169,37 @@ where Lbl: ScopeGraphLabel + Clone
         }
     }
 
-    pub fn as_uml(&self, color: &str) -> String {
+    /// Transforms path to uml arrows. This can be multiple lines.
+    ///
+    /// # Arguments
+    ///
+    /// * `color` - The color of the arrow
+    /// * `reverse` - If true, the arrow will be reversed
+    pub fn as_uml<'a>(&self, color: Color, reverse: bool) -> Vec<PlantUmlItem> {
         match self {
-            Self::Start(_) => String::new(),
+            Self::Start(_) => Vec::new(),
             Self::Step {
                 from,
                 label,
                 target,
             } => {
-                let segment = format!(
-                    "scope_{0:} -[norank]-> scope_{1:} #{3:};line.dashed : {2:}",
-                    from.scope_num(),
-                    target.0,
+                let (from_scope, to_scope) = match reverse {
+                    false => (from.scope(), target),
+                    true => (target, from.scope()),
+                };
+
+                let item = PlantUmlItem::edge(
+                    from_scope.uml_id(),
+                    to_scope.uml_id(),
                     label.char(),
-                    color,
-                );
-                let from_seg = from.as_uml(color);
-                format!("{}\n{}", from_seg, segment)
+                    EdgeDirection::Norank
+                )
+                .with_line_color(color)
+                .with_line_style(LineStyle::Dashed);
+
+                let mut from_items = from.as_uml(color, reverse);
+                from_items.push(item);
+                from_items
             }
         }
     }
@@ -206,6 +222,13 @@ where Lbl: ScopeGraphLabel + Clone
         match self {
             Self::Start(s) => s.0,
             Self::Step { target, .. } => target.0,
+        }
+    }
+
+    fn scope(&self) -> &Scope {
+        match self {
+            Self::Start(s) => s,
+            Self::Step { target, .. } => target,
         }
     }
 }

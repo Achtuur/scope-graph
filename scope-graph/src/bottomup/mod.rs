@@ -1,5 +1,7 @@
 use std::{collections::HashMap, marker::PhantomData};
 
+use plantuml::{PlantUmlItem};
+
 use crate::{data::ScopeGraphData, graph::{BaseScopeGraph, BaseScopeGraphHaver, ScopeMap}, label::ScopeGraphLabel, order::LabelOrder, path::Path, regex::dfs::RegexAutomata, resolve::QueryResult, scope::Scope};
 
 
@@ -37,6 +39,29 @@ where
 
     fn sg_mut(&mut self) -> &mut BaseScopeGraph<Lbl, Data> {
         &mut self.sg
+    }
+
+    fn cache_uml<'a>(&self) -> Vec<PlantUmlItem>
+    where Lbl: 'a, Data: 'a
+    {
+        self.data_cache
+        .iter()
+        .filter_map(|(scope, cache)| {
+            if cache.is_empty() {
+                return None;
+            }
+
+            let cache_str = cache.iter().map(|(d, p)| {
+                format!("<b>{}</b>: {}", d, p)
+            })
+            .collect::<Vec<String>>()
+            .join("\n");
+
+            Some(
+                PlantUmlItem::note(scope.0, cache_str)
+            )
+        })
+        .collect::<Vec<_>>()
     }
 
     fn add_edge(&mut self, source: Scope, target: Scope, label: Lbl) {
@@ -133,10 +158,6 @@ where
             }
         })
         .collect::<Vec<_>>();
-
-        // for (idx, qr) in query_results.iter().enumerate() {
-        //     println!("{}: {}", idx, qr);
-        // }
 
         // an environment is shadowed if another env exists that
         // - has equivalent data

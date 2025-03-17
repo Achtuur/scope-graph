@@ -10,9 +10,9 @@ use super::{QueryResult, ScopeData, ForwardScopeGraph};
 pub(crate) struct CacheKey<'c, Lbl>
 where Lbl: ScopeGraphLabel,
 {
-    scope: Scope,
-    lbl_order: &'c LabelOrder<Lbl>,
-    path_re: &'c RegexAutomata<Lbl>,
+    pub(super) scope: Scope,
+    pub(super) lbl_order: &'c LabelOrder<Lbl>,
+    pub(super) path_re: &'c RegexAutomata<Lbl>,
 }
 
 impl<Lbl> std::fmt::Display for CacheKey<'_, Lbl>
@@ -29,7 +29,7 @@ where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
 {
-    envs: Vec<QueryResult<Lbl, Data>>,
+    pub(super) envs: Vec<QueryResult<Lbl, Data>>,
 }
 
 pub(crate) type ResolveCache<'c, Lbl, Data> = HashMap<CacheKey<'c, Lbl>, CacheValue<Lbl, Data>>;
