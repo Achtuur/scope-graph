@@ -65,7 +65,7 @@ fn main() {
 
     let timer = std::time::Instant::now();
 
-    let path = path!(SRC_DIR, one_decl.sclang);
+    let path = path!(SRC_DIR, first_example.sclang);
     let expr = match SclangExpression::from_file(&path) {
         Ok(expr) => expr,
         Err(e) => panic!("Error parsing {:?}: {}", path.as_path(), e),
@@ -77,7 +77,7 @@ fn main() {
     println!("Creating scope graph took {:?}", timer.elapsed());
 
     println!("Rendering scope graph...");
-    let path = path!(OUTPUT_DIR, one_decl.mmd);
+    let path = path!(OUTPUT_DIR, first_example.mmd);
     sg.render_to(path, RenderSettings::default())
         .unwrap();
     println!("Done!");
