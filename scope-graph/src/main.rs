@@ -39,6 +39,10 @@ pub fn next_color() -> &'static str {
     COLORS[idx % COLORS.len()]
 }
 
+pub fn get_color(idx: usize) -> &'static str {
+    COLORS[idx % COLORS.len()]
+}
+
 /// Enable caching when doing forward resolution
 pub(crate) const FORWARD_ENABLE_CACHING: bool = false;
 
@@ -180,7 +184,86 @@ fn create_long_graph<'a>() -> TestSgType<'a, Label, Data> {
     graph
 }
 
+fn slides_example() {
+    let mut base_graph = BaseScopeGraph::new();
+    let root = Scope::new();
+    let scope1 = Scope::new();
+    let scope2 = Scope::new();
+    let scope3 = Scope::new();
+    let scope4 = Scope::new();
+    let scope5 = Scope::new();
+    base_graph.add_scope(root, Data::NoData);
+    base_graph.add_scope(scope1, Data::NoData);
+    base_graph.add_scope(scope2, Data::NoData);
+    base_graph.add_scope(scope2, Data::NoData);
+    base_graph.add_scope(scope3, Data::NoData);
+    base_graph.add_scope(scope4, Data::NoData);
+    base_graph.add_scope(scope5, Data::NoData);
+
+    base_graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
+    base_graph.add_edge(scope1, root, Label::Parent);
+    base_graph.add_edge(scope2, scope1, Label::Parent);
+    base_graph.add_edge(scope3, scope1, Label::Parent);
+    base_graph.add_edge(scope4, scope2, Label::Parent);
+    base_graph.add_edge(scope5, scope4, Label::Parent);
+
+    let graph = ForwardScopeGraph::from_base(base_graph);
+
+    let order = LabelOrderBuilder::new()
+    .push(Label::Declaration, Label::Parent)
+    .build();
+
+    // P*D;
+    let label_reg = Regex::concat(
+        Regex::kleene(Label::Parent),
+        Label::Declaration,
+    );
+    let matcher = RegexAutomata::from_regex(label_reg.clone());
+
+    let query_scope_set = [
+        vec![scope2],
+        vec![scope2, scope4],
+        vec![scope2, scope4, scope5],
+    ];
+
+    for (idx, set) in query_scope_set.into_iter().enumerate() {
+
+        let res = set.into_iter()
+        .flat_map(|s| graph.query(
+            s,
+            &matcher,
+            &order,
+            |d1, d2| d1 == d2,
+            |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int"),
+        ));
+
+        let title = format!(
+            "Query1: {}, label_reg={}, label_order={}, data_eq=x:int",
+            0, label_reg, order
+        );
+        let header = format!("@startuml \"{}\"\n'skinparam linetype ortho", title);
+        let graph_uml = graph.as_uml();
+
+        let res_uml = res
+            .enumerate()
+            .map(|(i, r)| r.path.as_uml(get_color(i)))
+            .collect::<Vec<String>>()
+            .join("\n");
+
+
+        let mut uml = [header, graph_uml, res_uml].join("\n");
+        uml.push_str("\n@enduml");
+        let fname = format!("output/output{}.puml", idx);
+        write_to_file(&fname, uml.as_bytes());
+    }
+
+}
+
+
 fn main() {
+    slides_example();
+    return;
+
     let bu_graph = create_long_graph();
     let forward_graph = ForwardScopeGraph::from_base(bu_graph.sg().clone());
 
@@ -196,7 +279,6 @@ fn main() {
     let matcher = RegexAutomata::from_regex(label_reg.clone());
 
     write_to_file("output/automata.mmd", matcher.to_mmd().as_bytes());
-
 
     let start_scope = bu_graph.first_scope_without_data(5).unwrap();
     let timer = std::time::Instant::now();
@@ -265,5 +347,6 @@ fn write_to_file(fname: &str, content: &[u8]) {
         .truncate(true)
         .open(fname)
         .unwrap();
+    println!("Writing to file {}", fname);
     file.write_all(content).unwrap();
 }

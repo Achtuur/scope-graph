@@ -156,7 +156,7 @@ where
             d.edges.iter().map(|edge| {
                 let target_has_data = self.scopes.get(&edge.to).unwrap().data.variant_has_data();
                 let dir = match target_has_data {
-                    true => "",
+                    true => "r",
                     false => "u",
                 };
                 format!(

@@ -176,7 +176,7 @@ where Lbl: ScopeGraphLabel + Clone
                 target,
             } => {
                 let segment = format!(
-                    "scope_{0:} --> scope_{1:} #{3:};line.dashed : {2:}",
+                    "scope_{0:} -[norank]-> scope_{1:} #{3:};line.dashed : {2:}",
                     from.scope_num(),
                     target.0,
                     label.char(),
