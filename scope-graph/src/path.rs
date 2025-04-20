@@ -207,13 +207,13 @@ where Lbl: ScopeGraphLabel + Clone
     /// Identical to using `std::fmt::Display`
     pub fn display(&self) -> String {
         match self {
-            Self::Start(s) => format!("{s:?}"),
+            Self::Start(s) => format!("{}", s),
             Self::Step {
                 from,
                 label,
                 target,
             } => {
-                format!("{} -{}-> {:?}", from.display(), label.char(), target)
+                format!("{} -{}-> {}", from.display(), label.char(), target)
             }
         }
     }
