@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::{Arc, Mutex, MutexGuard}};
 
 use plantuml::{PlantUmlItem};
-use resolve::{ResolveCache, Resolver};
+use resolve::{CachedResolver};
 
 use crate::{
     data::ScopeGraphData, graph::{BaseScopeGraph, ScopeData, ScopeMap}, label::ScopeGraphLabel, order::{LabelOrder, LabelOrderBuilder}, path::Path, regex::dfs::RegexAutomata, resolve::QueryResult, scope::Scope
@@ -12,18 +12,36 @@ use super::ScopeGraph;
 mod resolve;
 
 
+/// Key for the cache.
+///
+/// This is a tuple of index in regex automata, the result from projecting the data and the target scope.
+///
+/// You can alternatively think of this as a (usize, DataProj) cache per scope.
+type QueryCacheKey<DataProj> = (usize, DataProj, Scope);
+
+/// Cache for the results of a certain query
+type QueryCache<Lbl, Data> = HashMap<QueryCacheKey<Data>, Vec<QueryResult<Lbl, Data>>>;
+
+/// Key for `ScopeGraphCache`
+type ParameterKey<Lbl> = (LabelOrder<Lbl>, RegexAutomata<Lbl>);
+/// Cache for the entire scope graph.
+///
+/// This contains a cache per set of query parameters
+type ScopeGraphCache<Lbl, Data> = HashMap<ParameterKey<Lbl>, QueryCache<Lbl, Data>>;
+
+
 #[derive(Debug)]
-pub struct ForwardScopeGraph<Lbl, Data>
+pub struct CachedScopeGraph<Lbl, Data>
 where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
 {
     sg: BaseScopeGraph<Lbl, Data>,
     // pub scopes: HashMap<Scope, ScopeData<Lbl, Data>>,
-    pub(crate) resolve_cache: Mutex<ResolveCache<Lbl, Data>>,
+    resolve_cache: ScopeGraphCache<Lbl, Data>,
 }
 
-impl<'s, Lbl, Data> ScopeGraph<'s, Lbl, Data> for ForwardScopeGraph<Lbl, Data>
+impl<Lbl, Data> ScopeGraph<Lbl, Data> for CachedScopeGraph<Lbl, Data>
 where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
@@ -53,7 +71,7 @@ where
     }
 
     fn query<DEq, DWfd>(
-        & self,
+        & mut self,
         scope: Scope,
         path_regex: & RegexAutomata<Lbl>,
         order: & LabelOrder<Lbl>,
@@ -64,8 +82,13 @@ where
         DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
         DWfd: for<'da> Fn(&'da Data) -> bool,
     {
-        let resolver = Resolver::new(
-            self,
+        let cache = self.resolve_cache
+        .entry((order.clone(), path_regex.clone()))
+        .or_default();
+
+        let resolver = CachedResolver::new(
+            &self.sg,
+            cache,
             path_regex,
             order,
             &data_equiv,
@@ -76,31 +99,34 @@ where
 
     fn generate_cache_uml<'a>(&'a self) -> Vec<PlantUmlItem>
     where Lbl: 'a, Data: 'a {
-        self.resolve_cache
-            .lock()
-            .unwrap()
-            .iter()
-            .filter_map(|(key, value)| {
-                if value.envs.is_empty() {
-                    return None;
-                }
+        todo!()
+        // self.resolve_cache
+        //     .iter()
+        //     .filter_map(|(key, value)| {
+        //         if value.envs.is_empty() {
+        //             return None;
+        //         }
 
-                let vals = value.envs.iter().map(|env| {
-                    env.to_string()
-                })
-                .collect::<Vec<String>>()
-                .join("\n");
+        //         let vals = value.envs.iter().map(|env| {
+        //             env.to_string()
+        //         })
+        //         .collect::<Vec<String>>()
+        //         .join("\n");
 
-                let cache_str = format!("<b>{}</b>\n{}", key, vals);
-                Some(
-                    PlantUmlItem::note(key.scope.0, cache_str)
-                )
-            })
-            .collect::<Vec<_>>()
+        //         let cache_str = format!("<b>{}</b>\n{}", key, vals);
+        //         Some(
+        //             PlantUmlItem::note(key.scope.0, cache_str)
+        //         )
+        //     })
+        //     .collect::<Vec<_>>()
+    }
+    
+    fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>> {
+        self.sg.get_scope(scope)
     }
 }
 
-impl<'s, Lbl, Data> ForwardScopeGraph<Lbl, Data>
+impl<'s, Lbl, Data> CachedScopeGraph<Lbl, Data>
 where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
@@ -108,18 +134,18 @@ where
     pub fn new() -> Self {
         Self {
             sg: BaseScopeGraph::new(),
-            resolve_cache: Mutex::new(HashMap::new()),
+            resolve_cache: ScopeGraphCache::new(),
         }
     }
 
     pub fn from_base(sg: BaseScopeGraph<Lbl, Data>) -> Self {
         Self {
             sg,
-            resolve_cache: Mutex::new(HashMap::new()),
+            resolve_cache: ScopeGraphCache::new(),
         }
     }
 
     pub fn scopes(&self) -> &ScopeMap<Lbl, Data> {
-        &self.sg.scopes
+        self.sg.scopes()
     }
 }

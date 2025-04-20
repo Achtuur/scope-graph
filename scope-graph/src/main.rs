@@ -2,9 +2,9 @@ use std::{io::Write, sync::atomic::AtomicUsize};
 
 use plantuml::{Color, PlantUmlDiagram};
 use rand::Rng;
-use scope_graph::{data::ScopeGraphData, get_color, graph::{BottomupScopeGraph2, ForwardScopeGraph, ScopeGraph}, label::ScopeGraphLabel, order::LabelOrderBuilder, regex::{dfs::RegexAutomata, Regex}, scope::Scope, DRAW_CACHES};
+use scope_graph::{data::ScopeGraphData, get_color, graph::{BaseScopeGraph, CachedScopeGraph, ScopeGraph}, label::ScopeGraphLabel, order::LabelOrderBuilder, regex::{dfs::RegexAutomata, Regex}, scope::Scope, DRAW_CACHES};
 
-pub type UsedScopeGraph<'s, Lbl, Data> = BottomupScopeGraph2<Lbl, Data>;
+pub type UsedScopeGraph<'s, Lbl, Data> = BaseScopeGraph<Lbl, Data>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub enum Label {
@@ -148,7 +148,7 @@ fn create_long_graph<'a>() -> UsedScopeGraph<'a, Label, Data> {
 }
 
 fn slides_example() {
-    let mut graph = BottomupScopeGraph2::new();
+    let mut graph = UsedScopeGraph::new();
     let root = Scope::new();
     let scope1 = Scope::new();
     let scope2 = Scope::new();
@@ -194,28 +194,26 @@ fn slides_example() {
     ];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
-        let res = set.into_iter()
+        let title = format!(
+            "Query1: {}, label_reg={}, label_order={}, data_eq=x:int",
+            0, label_reg, order
+        );
+        let mut diagram = PlantUmlDiagram::new(title.as_str());
+
+        let res_uml = set.into_iter()
         .flat_map(|s| graph.query(
             s,
             &matcher,
             &order,
             |d1, d2| d1 == d2,
             |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int"),
-        ));
-
-        let title = format!(
-            "Query1: {}, label_reg={}, label_order={}, data_eq=x:int",
-            0, label_reg, order
-        );
+        ))
+        .enumerate()
+        .flat_map(|(i, r)| r.path.as_uml(get_color(i), false));
+        diagram.extend(res_uml);
 
         let graph_uml = graph.as_uml(DRAW_CACHES);
-        let res_uml = res
-            .enumerate()
-            .flat_map(|(i, r)| r.path.as_uml(get_color(i), false));
-
-        let mut diagram = PlantUmlDiagram::new(title.as_str());
         diagram.extend(graph_uml);
-        diagram.extend(res_uml);
         let uml = diagram.as_uml();
 
         let fname = format!("output/output{}.puml", idx);
@@ -233,8 +231,8 @@ fn main() {
     // slides_example();
     // return;
 
-    let bu_graph = create_long_graph();
-    let forward_graph = ForwardScopeGraph::from_base(bu_graph.base().clone());
+    let mut bu_graph = create_long_graph();
+    let mut forward_graph = CachedScopeGraph::from_base(bu_graph.clone());
 
     let order = LabelOrderBuilder::new()
     .push(Label::Declaration, Label::Parent)

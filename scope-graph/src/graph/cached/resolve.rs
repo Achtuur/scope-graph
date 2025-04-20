@@ -1,40 +1,13 @@
 use std::{collections::{HashMap, HashSet}, path::is_separator, sync::Mutex};
 
 use crate::{
-    data::ScopeGraphData, label::{LabelOrEnd, ScopeGraphLabel}, order::{LabelOrder, LabelOrderBuilder}, path::Path, regex::dfs::RegexAutomata, scope::Scope, FORWARD_ENABLE_CACHING
+    data::ScopeGraphData, graph::BaseScopeGraph, label::{LabelOrEnd, ScopeGraphLabel}, order::{LabelOrder, LabelOrderBuilder}, path::Path, regex::dfs::RegexAutomata, scope::Scope, FORWARD_ENABLE_CACHING
 };
 
-use super::{QueryResult, ScopeData, ForwardScopeGraph};
+use super::{CachedScopeGraph, QueryCache, QueryResult, ScopeData};
 
-#[derive(Hash, PartialEq, Eq, Debug)]
-pub struct CacheKey<Lbl>
-where Lbl: ScopeGraphLabel,
-{
-    pub(super) scope: Scope,
-    pub(super) lbl_order: LabelOrder<Lbl>,
-    pub(super) path_re: RegexAutomata<Lbl>,
-}
-
-impl<Lbl> std::fmt::Display for CacheKey<Lbl>
-where Lbl: ScopeGraphLabel
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{{{}, {}, {}}}", self.scope, self.lbl_order, self.path_re)
-    }
-}
-
-#[derive(Debug)]
-pub struct CacheValue<Lbl, Data>
-where
-    Lbl: ScopeGraphLabel,
-    Data: ScopeGraphData,
-{
-    pub(super) envs: Vec<QueryResult<Lbl, Data>>,
-}
-
-pub type ResolveCache<Lbl, Data> = HashMap<CacheKey<Lbl>, CacheValue<Lbl, Data>>;
-
-pub struct Resolver<'r, Lbl, Data, DEq, DWfd>
+// todo: reuse code from Resolver
+pub struct CachedResolver<'r, Lbl, Data, DEq, DWfd>
 where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
@@ -43,7 +16,10 @@ where
 
 {
     // scopegraph contains cache
-    pub scope_graph: &'r ForwardScopeGraph<Lbl, Data>,
+    pub scope_graph: &'r BaseScopeGraph<Lbl, Data>,
+
+    cache: &'r mut QueryCache<Lbl, Data>,
+
     pub path_re: &'r RegexAutomata<Lbl>,
     pub lbl_order: &'r LabelOrder<Lbl>,
     pub data_eq: DEq,
@@ -51,7 +27,7 @@ where
     pub considered_paths: Mutex<Vec<Path<Lbl>>>,
 }
 
-impl<'r, Lbl, Data, DEq, DWfd> Resolver<'r, Lbl, Data, DEq, DWfd>
+impl<'r, Lbl, Data, DEq, DWfd> CachedResolver<'r, Lbl, Data, DEq, DWfd>
 where
     Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + std::fmt::Display + Eq + std::hash::Hash + Ord,
     Data: ScopeGraphData,
@@ -59,14 +35,16 @@ where
     DWfd: for<'da> Fn(&'da Data) -> bool,
 {
     pub fn new(
-        scope_graph: &'r ForwardScopeGraph<Lbl, Data>,
+        scope_graph: &'r BaseScopeGraph<Lbl, Data>,
+        cache: &'r mut QueryCache<Lbl, Data>,
         path_re: &'r RegexAutomata<Lbl>,
         lbl_order: &'r LabelOrder<Lbl>,
         data_eq: DEq,
         data_wfd: DWfd,
-    ) -> Resolver<'r, Lbl, Data, DEq, DWfd> {
+    ) -> CachedResolver<'r, Lbl, Data, DEq, DWfd> {
         Self {
             scope_graph,
+            cache,
             path_re,
             lbl_order,
             data_eq,
@@ -85,14 +63,14 @@ where
 
 
     pub fn print_cache(&self) {
-        println!("Resolver cache:");
-        for (k, v) in self.scope_graph.resolve_cache.lock().unwrap().iter() {
-            println!("{}: [", k);
-            for qr in &v.envs {
-                println!("\t{}", qr);
-            }
-            println!("]");
-        }
+        // println!("Resolver cache:");
+        // for (k, v) in self.scope_graph.resolve_cache.lock().unwrap().iter() {
+        //     println!("{}: [", k);
+        //     for qr in &v.envs {
+        //         println!("\t{}", qr);
+        //     }
+        //     println!("]");
+        // }
     }
 
     fn cache_env(&self, path: &Path<Lbl>, mut envs: Vec<QueryResult<Lbl, Data>>) {
@@ -100,27 +78,29 @@ where
             return;
         }
 
-        let key = CacheKey {
-            scope: path.target(),
-            lbl_order: self.lbl_order.clone(),
-            path_re: self.path_re.clone(),
-        };
-        // 'path' is path from start of query to current scope
-        // envs contains the path from starting scope of query to target scope
-        // the env should NOT contain part of the path that is in `path`
+        todo!()
 
-        envs.iter_mut().for_each(|env| {
-            env.path = env.path.clone().trim_matching_start(path);
-        });
+        // let key = CacheKey {
+        //     scope: path.target(),
+        //     lbl_order: self.lbl_order.clone(),
+        //     path_re: self.path_re.clone(),
+        // };
+        // // 'path' is path from start of query to current scope
+        // // envs contains the path from starting scope of query to target scope
+        // // the env should NOT contain part of the path that is in `path`
+
+        // envs.iter_mut().for_each(|env| {
+        //     env.path = env.path.clone().trim_matching_start(path);
+        // });
 
 
-        let val = CacheValue {
-            envs,
-        };
-        // println!("path: {0:?}", path);
-        // println!("Caching: {}: {:?}", key, val);
+        // let val = CacheValue {
+        //     envs,
+        // };
+        // // println!("path: {0:?}", path);
+        // // println!("Caching: {}: {:?}", key, val);
 
-        self.scope_graph.resolve_cache.lock().unwrap().insert(key, val);
+        // self.scope_graph.resolve_cache.lock().unwrap().insert(key, val);
     }
 
     fn get_cached_env(&self, path: &Path<Lbl>) -> Option<Vec<QueryResult<Lbl, Data>>> {
@@ -128,30 +108,32 @@ where
             return None;
         }
 
-        let key = CacheKey {
-            scope: path.target(),
-            lbl_order: self.lbl_order.clone(),
-            path_re: self.path_re.clone(),
-        };
-        let cache = self.scope_graph.resolve_cache.lock().unwrap();
-        let matching_envs = cache
-        .get(&key)?
-        .envs
-        .iter()
-        .filter(|qr| {
-            // data EQ here? how?
-            (self.data_wfd)(&qr.data) // data WFD should match whatever is in the cache
-        })
-        .map(|qr| {
-            // append 'path' to 'qr.env'
-            qr
-        })
-        .cloned()
-        .collect::<Vec<_>>();
-        match matching_envs.is_empty() {
-            true => None,
-            false => Some(matching_envs),
-        }
+        todo!()
+
+        // let key = CacheKey {
+        //     scope: path.target(),
+        //     lbl_order: self.lbl_order.clone(),
+        //     path_re: self.path_re.clone(),
+        // };
+        // let cache = self.scope_graph.resolve_cache.lock().unwrap();
+        // let matching_envs = cache
+        // .get(&key)?
+        // .envs
+        // .iter()
+        // .filter(|qr| {
+        //     // data EQ here? how?
+        //     (self.data_wfd)(&qr.data) // data WFD should match whatever is in the cache
+        // })
+        // .map(|qr| {
+        //     // append 'path' to 'qr.env'
+        //     qr
+        // })
+        // .cloned()
+        // .collect::<Vec<_>>();
+        // match matching_envs.is_empty() {
+        //     true => None,
+        //     false => Some(matching_envs),
+        // }
     }
 
     fn get_env(&self, path: Path<Lbl>) -> Vec<QueryResult<Lbl, Data>> {

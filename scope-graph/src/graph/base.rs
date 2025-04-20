@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use plantuml::{Color, EdgeDirection, NodeType, PlantUmlItem};
 
-use crate::{data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, regex::dfs::RegexAutomata, resolve::QueryResult, scope::Scope};
+use crate::{data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, path::Path, regex::dfs::RegexAutomata, resolve::QueryResult, scope::Scope};
 
-use super::{Edge, ScopeData, ScopeGraph, ScopeMap};
+use super::{resolve::Resolver, Edge, ScopeData, ScopeGraph, ScopeMap};
 
 /// Base scope graph behaviour
 ///
@@ -30,9 +30,13 @@ where
             scopes: HashMap::new(),
         }
     }
+
+    pub fn scopes(&self) -> &ScopeMap<Lbl, Data> {
+        &self.scopes
+    }
 }
 
-impl<'s, Lbl, Data> ScopeGraph<'s, Lbl, Data> for BaseScopeGraph<Lbl, Data>
+impl<Lbl, Data> ScopeGraph<Lbl, Data> for BaseScopeGraph<Lbl, Data>
 where Lbl: ScopeGraphLabel + Clone,
       Data: ScopeGraphData + Clone,
 {
@@ -61,8 +65,12 @@ where Lbl: ScopeGraphLabel + Clone,
             .push(edge_to_child);
     }
 
+    fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>> {
+        self.scopes.get(&scope)
+    }
+
     fn query<DEq, DWfd>(
-        & self,
+        &mut self,
         scope: Scope,
         path_regex: & RegexAutomata<Lbl>,
         order: & LabelOrder<Lbl>,
@@ -72,7 +80,14 @@ where Lbl: ScopeGraphLabel + Clone,
     where
         DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
         DWfd: for<'da> Fn(&'da Data) -> bool {
-        unreachable!("Can't query base graph")
+        let resolver = Resolver::new(
+            self,
+            path_regex,
+            order,
+            &data_equiv,
+            &data_wellformedness,
+        );
+        resolver.resolve(Path::start(scope))
     }
 
     fn scope_iter<'a>(&'a self) -> impl Iterator<Item = (&'a Scope, &'a ScopeData<Lbl, Data>)> where Lbl: 'a, Data: 'a {

@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rand::Rng;
-use scope_graph::{data::ScopeGraphData, graph::{BottomupScopeGraph, BottomupScopeGraph2, ForwardScopeGraph, ScopeGraph}, label::ScopeGraphLabel, order::LabelOrderBuilder, regex::{dfs::RegexAutomata, Regex}, scope::Scope};
+use scope_graph::{data::ScopeGraphData, graph::{BaseScopeGraph, CachedScopeGraph, ScopeGraph}, label::ScopeGraphLabel, order::LabelOrderBuilder, regex::{dfs::RegexAutomata, Regex}, scope::Scope};
 
 
 const MAX_CHILDREN: usize = 2;
@@ -72,7 +72,7 @@ impl ScopeGraphData for Data {
 }
 
 
-fn recurse_add_scopes<'a, Sg: ScopeGraph<'a, Label, Data>>(graph: &mut Sg, parent: Scope, depth: usize) {
+fn recurse_add_scopes<'a, Sg: ScopeGraph<Label, Data>>(graph: &mut Sg, parent: Scope, depth: usize) {
     if depth == 0 {
         return;
     }
@@ -90,7 +90,7 @@ fn recurse_add_scopes<'a, Sg: ScopeGraph<'a, Label, Data>>(graph: &mut Sg, paren
 }
 
 // graph with 1 decl near the root and a lot of children
-fn create_long_graph<'a, Sg: ScopeGraph<'a, Label, Data>>(graph: &mut Sg) {
+fn create_long_graph<'a, Sg: ScopeGraph<Label, Data>>(graph: &mut Sg) {
     let root = Scope::new();
     let scope1 = Scope::new();
     graph.add_scope(root, Data::NoData);
@@ -103,8 +103,8 @@ fn create_long_graph<'a, Sg: ScopeGraph<'a, Label, Data>>(graph: &mut Sg) {
 }
 
 
-fn query_graph<'s, Sg>(graph: Sg, num_queries: usize)
-where Sg: ScopeGraph<'s, Label, Data>
+fn query_graph<'s, Sg>(mut graph: Sg, num_queries: usize)
+where Sg: ScopeGraph<Label, Data>
 {
     const MAX_SCOPE_NUM: usize = 50;
     let order = LabelOrderBuilder::new()
@@ -135,13 +135,13 @@ where Sg: ScopeGraph<'s, Label, Data>
 }
 
 fn bench_graph<'s, Sg>(mut graph: Sg, num_queries: usize)
-where Sg: ScopeGraph<'s, Label, Data> + 's
+where Sg: ScopeGraph<Label, Data>
 {
     create_long_graph(&mut graph);
     query_graph(graph, num_queries);
 }
 
-fn build_graph<'a, Sg: ScopeGraph<'a, Label, Data>>(mut graph: Sg)
+fn build_graph<'a, Sg: ScopeGraph<Label, Data>>(mut graph: Sg)
 {
     let root = Scope::new();
     let scope1 = Scope::new();
@@ -172,12 +172,10 @@ fn build_graph<'a, Sg: ScopeGraph<'a, Label, Data>>(mut graph: Sg)
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    // c.bench_function("forward bench", |b| b.iter(|| bench_graph(black_box(ForwardScopeGraph::new()))));
-    // c.bench_function("bottom-up 1 bench", |b| b.iter(|| bench_graph(black_box(BottomupScopeGraph::new()))));
-    c.bench_function("bottom-up 2 bench 50", |b| b.iter(|| bench_graph(black_box(ForwardScopeGraph::new()), 50)));
-    c.bench_function("bottom-up 2 bench 100", |b| b.iter(|| bench_graph(black_box(ForwardScopeGraph::new()), 100)));
-    c.bench_function("bottom-up 2 bench 250", |b| b.iter(|| bench_graph(black_box(ForwardScopeGraph::new()), 250)));
-    c.bench_function("bottom-up 2 bench 500", |b| b.iter(|| bench_graph(black_box(ForwardScopeGraph::new()), 500)));
+    c.bench_function("bottom-up 2 bench 50", |b| b.iter(|| bench_graph(black_box(CachedScopeGraph::new()), 50)));
+    c.bench_function("bottom-up 2 bench 100", |b| b.iter(|| bench_graph(black_box(CachedScopeGraph::new()), 100)));
+    c.bench_function("bottom-up 2 bench 250", |b| b.iter(|| bench_graph(black_box(CachedScopeGraph::new()), 250)));
+    c.bench_function("bottom-up 2 bench 500", |b| b.iter(|| bench_graph(black_box(CachedScopeGraph::new()), 500)));
 }
 
 criterion_group!(benches, criterion_benchmark);

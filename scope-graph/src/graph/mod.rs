@@ -4,15 +4,12 @@ use plantuml::{Color, EdgeDirection, NodeType, PlantUmlItem};
 
 use crate::{data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, regex::dfs::RegexAutomata, resolve::QueryResult, scope::Scope};
 
-mod forward;
-mod bottomup;
-mod bottomup2;
 mod base;
+mod cached;
+mod resolve;
 
 pub use base::*;
-pub use forward::*;
-pub use bottomup::*;
-pub use bottomup2::*;
+pub use cached::*;
 
 /// Bi-directional edge between two scopes
 #[derive(Clone, Copy, Debug)]
@@ -81,7 +78,7 @@ where
 
 pub type ScopeMap<Lbl, Data> = HashMap<Scope, ScopeData<Lbl, Data>>;
 
-pub trait ScopeGraph<'s, Lbl, Data>
+pub trait ScopeGraph<Lbl, Data>
 where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
@@ -99,7 +96,7 @@ where
 
     /// 'r is lifetime of resolver
     fn query<DEq, DWfd>(
-        &self,
+        &mut self,
         scope: Scope,
         path_regex: &RegexAutomata<Lbl>,
         order: &LabelOrder<Lbl>,
@@ -109,6 +106,9 @@ where
     where
         DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
         DWfd: for<'da> Fn(&'da Data) -> bool;
+
+
+    fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>>;
 
     // stuff for generating graphs below
     fn scope_iter<'a>(&'a self) -> impl Iterator<Item = (&'a Scope, &'a ScopeData<Lbl, Data>)> where Lbl: 'a, Data: 'a;
