@@ -12,15 +12,17 @@ use super::ScopeGraph;
 mod resolve;
 
 
+type ProjHash = u128;
+
 /// Key for the cache.
 ///
 /// This is a tuple of index in regex automata, the result from projecting the data and the target scope.
 ///
 /// You can alternatively think of this as a (usize, DataProj) cache per scope.
-type QueryCacheKey<DataProj> = (usize, DataProj, Scope);
+type QueryCacheKey = (usize, ProjHash, Scope);
 
 /// Cache for the results of a certain query
-type QueryCache<Lbl, Data> = HashMap<QueryCacheKey<Data>, Vec<QueryResult<Lbl, Data>>>;
+type QueryCache<Lbl, Data> = HashMap<QueryCacheKey, Vec<QueryResult<Lbl, Data>>>;
 
 /// Key for `ScopeGraphCache`
 type ParameterKey<Lbl> = (LabelOrder<Lbl>, RegexAutomata<Lbl>);
@@ -82,17 +84,45 @@ where
         DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
         DWfd: for<'da> Fn(&'da Data) -> bool,
     {
-        let cache = self.resolve_cache
-        .entry((order.clone(), path_regex.clone()))
-        .or_default();
+        unreachable!("Use query_proj instead");
+        // let cache = self.resolve_cache
+        // .entry((order.clone(), path_regex.clone()))
+        // .or_default();
 
+        // let resolver = CachedResolver::new(
+        //     &self.sg,
+        //     cache,
+        //     path_regex,
+        //     order,
+        //     &data_equiv,
+        //     &data_wellformedness,
+        // );
+        // resolver.resolve(Path::start(scope))
+    }
+
+    fn query_proj<P, DProj, DEq>(
+        &mut self,
+        scope: Scope,
+        path_regex: &RegexAutomata<Lbl>,
+        order: &LabelOrder<Lbl>,
+        data_proj: DProj,
+        proj_wfd: P,
+        data_equiv: DEq,
+    ) -> Vec<QueryResult<Lbl, Data>>
+    where
+        P: std::hash::Hash + Eq,
+        DProj: for<'da> Fn(&'da Data) -> P,
+        DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
+    {
         let resolver = CachedResolver::new(
             &self.sg,
-            cache,
+            self.resolve_cache.entry((order.clone(), path_regex.clone())).or_default(),
             path_regex,
             order,
             &data_equiv,
-            &data_wellformedness,
+            // &data_wfd,
+            data_proj,
+            proj_wfd,
         );
         resolver.resolve(Path::start(scope))
     }

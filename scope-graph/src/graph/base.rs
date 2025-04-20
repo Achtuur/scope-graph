@@ -90,6 +90,32 @@ where Lbl: ScopeGraphLabel + Clone,
         resolver.resolve(Path::start(scope))
     }
 
+    fn query_proj<P, DProj, DEq>(
+            &mut self,
+            scope: Scope,
+            path_regex: &RegexAutomata<Lbl>,
+            order: &LabelOrder<Lbl>,
+            data_proj: DProj,
+            proj_wfd: P,
+            data_equiv: DEq,
+        ) -> Vec<QueryResult<Lbl, Data>>
+        where
+            P: std::hash::Hash + Eq,
+            DProj: for<'da> Fn(&'da Data) -> P,
+            DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool {
+        let data_wfd = |data: &Data| {
+            data_proj(data) == proj_wfd
+        };
+        let resolver = Resolver::new(
+            self,
+            path_regex,
+            order,
+            &data_equiv,
+            &data_wfd,
+        );
+        resolver.resolve(Path::start(scope))
+    }
+
     fn scope_iter<'a>(&'a self) -> impl Iterator<Item = (&'a Scope, &'a ScopeData<Lbl, Data>)> where Lbl: 'a, Data: 'a {
         self.scopes.iter()
     }

@@ -96,7 +96,7 @@ where
             }
 
             let alfabet = key.leading_labels();
-            println!("(key, alfabet): {0:?}", (&key, &alfabet));
+            // println!("(key, alfabet): {0:?}", (&key, &alfabet));
             for a in &alfabet {
                 let derivative = key.derivative(a).reduce();
 

@@ -7,32 +7,39 @@ use crate::{
 use super::{CachedScopeGraph, QueryCache, QueryResult, ScopeData};
 
 // todo: reuse code from Resolver
-pub struct CachedResolver<'r, Lbl, Data, DEq, DWfd>
+pub struct CachedResolver<'r, Lbl, Data, DEq, P, DProj>
 where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
+    P: std::hash::Hash + Eq,
+    DProj: for<'da> Fn(&'da Data) -> P,
     DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
-    DWfd: for<'da> Fn(&'da Data) -> bool,
+    // DWfd: for<'da> Fn(&'da Data) -> bool,
 
 {
     // scopegraph contains cache
-    pub scope_graph: &'r BaseScopeGraph<Lbl, Data>,
+    scope_graph: &'r BaseScopeGraph<Lbl, Data>,
 
     cache: &'r mut QueryCache<Lbl, Data>,
 
-    pub path_re: &'r RegexAutomata<Lbl>,
-    pub lbl_order: &'r LabelOrder<Lbl>,
-    pub data_eq: DEq,
-    pub data_wfd: DWfd,
-    pub considered_paths: Mutex<Vec<Path<Lbl>>>,
+    path_re: &'r RegexAutomata<Lbl>,
+    lbl_order: &'r LabelOrder<Lbl>,
+    data_eq: DEq,
+    // data_wfd: DWfd,
+    considered_paths: Mutex<Vec<Path<Lbl>>>,
+
+    data_proj: DProj,
+    proj_wfd: P,
 }
 
-impl<'r, Lbl, Data, DEq, DWfd> CachedResolver<'r, Lbl, Data, DEq, DWfd>
+impl<'r, Lbl, Data, DEq, P, DProj> CachedResolver<'r, Lbl, Data, DEq, P, DProj>
 where
     Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + std::fmt::Display + Eq + std::hash::Hash + Ord,
     Data: ScopeGraphData,
     DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
-    DWfd: for<'da> Fn(&'da Data) -> bool,
+    // DWfd: for<'da> Fn(&'da Data) -> bool,
+    P: std::hash::Hash + Eq,
+    DProj: for<'da> Fn(&'da Data) -> P,
 {
     pub fn new(
         scope_graph: &'r BaseScopeGraph<Lbl, Data>,
@@ -40,16 +47,20 @@ where
         path_re: &'r RegexAutomata<Lbl>,
         lbl_order: &'r LabelOrder<Lbl>,
         data_eq: DEq,
-        data_wfd: DWfd,
-    ) -> CachedResolver<'r, Lbl, Data, DEq, DWfd> {
+        // data_wfd: DWfd,
+        data_proj: DProj,
+        proj_wfd: P,
+    ) -> CachedResolver<'r, Lbl, Data, DEq, P, DProj> {
         Self {
             scope_graph,
             cache,
             path_re,
             lbl_order,
             data_eq,
-            data_wfd,
+            // data_wfd,
             considered_paths: Mutex::new(Vec::new()),
+            data_proj,
+            proj_wfd,
         }
     }
 
@@ -73,12 +84,17 @@ where
         // }
     }
 
+    // todo: allow overload of data_wfd
+    fn data_wfd(&self, data: &Data) -> bool {
+        (self.data_proj)(data) == self.proj_wfd
+    }
+
     fn cache_env(&self, path: &Path<Lbl>, mut envs: Vec<QueryResult<Lbl, Data>>) {
         if !FORWARD_ENABLE_CACHING {
             return;
         }
 
-        todo!()
+        return;
 
         // let key = CacheKey {
         //     scope: path.target(),
@@ -108,7 +124,8 @@ where
             return None;
         }
 
-        todo!()
+        return None;
+        // todo!()
 
         // let key = CacheKey {
         //     scope: path.target(),
@@ -152,7 +169,7 @@ where
             // get unique labels by using hashset
             .fold(HashSet::new(), |mut set, lbl| {
                 let mut label_vec = path.as_lbl_vec();
-                label_vec.push(&lbl);
+                label_vec.push(lbl);
                 if self.path_re.partial_match(label_vec) {
                     set.insert(LabelOrEnd::Label(lbl.clone()));
                 }
@@ -222,7 +239,7 @@ where
         match label {
             // reached end of a path
             LabelOrEnd::End => {
-                if self.path_re.is_match(path.as_lbl_vec()) && (self.data_wfd)(&scope.data) {
+                if self.path_re.is_match(path.as_lbl_vec()) && self.data_wfd(&scope.data) {
                     return vec![QueryResult {
                         path,
                         data: scope.data.clone(),
@@ -267,6 +284,6 @@ where
 
     fn scope_data_wfd(&self, s: Scope) -> bool {
         let scope = self.get_scope(s).expect("Scope not found");
-        (self.data_wfd)(&scope.data)
+        self.data_wfd(&scope.data)
     }
 }

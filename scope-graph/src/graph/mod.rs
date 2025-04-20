@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, hash::Hash};
 
 use plantuml::{Color, EdgeDirection, NodeType, PlantUmlItem};
 
@@ -42,7 +42,9 @@ where
     Lbl: ScopeGraphLabel + Clone,
 {
     // pub edges: Vec<Edge<Lbl>>,
+    /// incoming edges
     pub children: Vec<Edge<Lbl>>,
+    /// outgoing edges
     pub parents: Vec<Edge<Lbl>>,
     pub data: Data,
 }
@@ -106,6 +108,21 @@ where
     where
         DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
         DWfd: for<'da> Fn(&'da Data) -> bool;
+
+    /// 'r is lifetime of resolver
+    fn query_proj<P, DProj, DEq>(
+        &mut self,
+        scope: Scope,
+        path_regex: &RegexAutomata<Lbl>,
+        order: &LabelOrder<Lbl>,
+        data_proj: DProj,
+        proj_wfd: P,
+        data_equiv: DEq,
+    ) -> Vec<QueryResult<Lbl, Data>>
+    where
+        P: Hash + Eq,
+        DProj: for<'da> Fn(&'da Data) -> P,
+        DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool;
 
 
     fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>>;

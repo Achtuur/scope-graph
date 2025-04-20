@@ -1,4 +1,4 @@
-use std::{io::Write, sync::atomic::AtomicUsize};
+use std::{io::Write, sync::{atomic::AtomicUsize, Arc}};
 
 use plantuml::{Color, PlantUmlDiagram};
 use rand::Rng;
@@ -56,6 +56,13 @@ enum Data {
 impl Data {
     fn var(x: impl ToString, t: impl ToString) -> Self {
         Self::Variable(x.to_string(), t.to_string())
+    }
+
+    fn name(&self) -> String {
+        match self {
+            Self::NoData => "no data".to_string(),
+            Self::Variable(x, _) => x.to_string(),
+        }
     }
 }
 
@@ -257,24 +264,29 @@ fn main() {
     write_to_file("output/automata.mmd", matcher.to_mmd().as_bytes());
     write_to_file("output/automata.puml", matcher.uml_diagram().as_uml().as_bytes());
 
+    let p: Arc<str> = Arc::from("x");
+
     let start_scope = bu_graph.first_scope_without_data(5).unwrap();
     let timer = std::time::Instant::now();
-    let res_bu = bu_graph.query(
+    let res_bu = bu_graph.query_proj(
         start_scope,
         &matcher,
         &order,
+        |d| Arc::from(d.name()),
+        p.clone(),
         |d1, d2| d1 == d2,
-        |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int"),
     );
     println!("run bu {:?}", timer.elapsed());
 
     let timer = std::time::Instant::now();
-    let res_fw = forward_graph.query(
+    
+    let res_fw = forward_graph.query_proj(
         start_scope,
         &matcher,
         &order,
+        |d| Arc::from(d.name()),
+        p,
         |d1, d2| d1 == d2,
-        |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int"),
     );
     println!("run fw {:?}", timer.elapsed());
 
