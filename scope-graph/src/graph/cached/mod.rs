@@ -1,18 +1,27 @@
-use std::{collections::HashMap, sync::{Arc, Mutex, MutexGuard}};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::{Arc, Mutex, MutexGuard},
+};
 
-use plantuml::{PlantUmlItem};
-use resolve::{CachedResolver};
+use plantuml::PlantUmlItem;
+use resolve::CachedResolver;
 
 use crate::{
-    data::ScopeGraphData, graph::{BaseScopeGraph, ScopeData, ScopeMap}, label::ScopeGraphLabel, order::{LabelOrder, LabelOrderBuilder}, path::Path, regex::dfs::RegexAutomata, resolve::QueryResult, scope::Scope
+    data::ScopeGraphData,
+    graph::{BaseScopeGraph, ScopeData, ScopeMap},
+    label::ScopeGraphLabel,
+    order::{LabelOrder, LabelOrderBuilder},
+    path::Path,
+    regex::dfs::RegexAutomata,
+    resolve::QueryResult,
+    scope::Scope,
 };
 
 use super::ScopeGraph;
 
 mod resolve;
 
-
-type ProjHash = u128;
+type ProjHash = u64;
 
 /// Key for the cache.
 ///
@@ -30,7 +39,6 @@ type ParameterKey<Lbl> = (LabelOrder<Lbl>, RegexAutomata<Lbl>);
 ///
 /// This contains a cache per set of query parameters
 type ScopeGraphCache<Lbl, Data> = HashMap<ParameterKey<Lbl>, QueryCache<Lbl, Data>>;
-
 
 #[derive(Debug)]
 pub struct CachedScopeGraph<Lbl, Data>
@@ -52,7 +60,11 @@ where
         self.sg.add_edge(source, target, label.clone());
     }
 
-    fn scope_iter<'a>(&'a self) -> impl Iterator<Item = (&'a Scope, &'a ScopeData<Lbl, Data>)> where Lbl: 'a, Data: 'a {
+    fn scope_iter<'a>(&'a self) -> impl Iterator<Item = (&'a Scope, &'a ScopeData<Lbl, Data>)>
+    where
+        Lbl: 'a,
+        Data: 'a,
+    {
         self.sg.scope_iter()
     }
 
@@ -73,10 +85,10 @@ where
     }
 
     fn query<DEq, DWfd>(
-        & mut self,
+        &mut self,
         scope: Scope,
-        path_regex: & RegexAutomata<Lbl>,
-        order: & LabelOrder<Lbl>,
+        path_regex: &RegexAutomata<Lbl>,
+        order: &LabelOrder<Lbl>,
         data_equiv: DEq,
         data_wellformedness: DWfd,
     ) -> Vec<QueryResult<Lbl, Data>>
@@ -114,9 +126,11 @@ where
         DProj: for<'da> Fn(&'da Data) -> P,
         DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
     {
-        let resolver = CachedResolver::new(
+        let mut resolver = CachedResolver::new(
             &self.sg,
-            self.resolve_cache.entry((order.clone(), path_regex.clone())).or_default(),
+            self.resolve_cache
+                .entry((order.clone(), path_regex.clone()))
+                .or_default(),
             path_regex,
             order,
             &data_equiv,
@@ -128,8 +142,66 @@ where
     }
 
     fn generate_cache_uml<'a>(&'a self) -> Vec<PlantUmlItem>
-    where Lbl: 'a, Data: 'a {
-        todo!()
+    where
+        Lbl: 'a,
+        Data: 'a,
+    {
+        self.resolve_cache
+            .iter()
+            .flat_map(|(query_params, query_cache)| {
+                query_cache
+                    .iter()
+                    .filter(|(key, _)| {
+                        !self.scope_holds_data(key.2)
+                    })
+                    // map with scope as key to not have duplicate notes
+                    .fold(HashMap::new(), |mut acc, (keys, envs)| {
+                        let key = keys.2; // scope
+                        let entry: &mut HashMap<QueryCacheKey, &Vec<QueryResult<Lbl, Data>>>
+                        = acc.entry(key).or_default();
+                        entry.insert(*keys, envs);
+                        acc
+                    })
+                    .into_iter()
+                    .filter_map(|(key, envs)| {
+                        if envs.is_empty() {
+                            return None;
+                        }
+
+                        let vals = envs
+                            .iter()
+                            .map(|(keys, env)| {
+                                let cache_str = env.iter()
+                                    .map(|result| result.to_string())
+                                    .collect::<Vec<String>>()
+                                    .join("\n");
+                                format!("<b>{:?}</b>\n{}", keys, cache_str)
+                            })
+                            .collect::<Vec<String>>()
+                            .join("\n");
+
+                        let cache_str = format!("<b>{:?}</b>\n{}", key, vals);
+                        Some(PlantUmlItem::note(key.uml_id(), cache_str))
+                    })
+                    // .flat_map(|(scope, entries)| {
+                    //     entries.into_iter().filter_map(|(key, envs)| {
+                    //         if envs.is_empty() {
+                    //             return None;
+                    //         }
+
+                    //         let vals = envs
+                    //             .iter()
+                    //             .map(|env| env.to_string())
+                    //             .collect::<Vec<String>>()
+                    //             .join("\n");
+
+                    //         let cache_str = format!("<b>{:?}</b>\n{}", key, vals);
+                    //         Some(PlantUmlItem::note(key.2.uml_id(), cache_str))
+                    //     })
+                    // })
+            })
+            .collect()
+
         // self.resolve_cache
         //     .iter()
         //     .filter_map(|(key, value)| {
@@ -150,7 +222,7 @@ where
         //     })
         //     .collect::<Vec<_>>()
     }
-    
+
     fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>> {
         self.sg.get_scope(scope)
     }

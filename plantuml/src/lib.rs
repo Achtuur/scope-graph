@@ -30,7 +30,13 @@ impl<'a> PlantUmlDiagram<'a> {
 
     pub fn as_uml(&self) -> String {
         let header = format!("@startuml \"{}\"\n'skinparam linetype ortho", self.title);
-        let body = self.items.iter().map(|item| item.as_uml()).collect::<Vec<String>>().join("\n");
+        let mut items = self.items.clone();
+        items.sort();
+        let body = items
+        .iter()
+        .map(|item| item.as_uml())
+        .collect::<Vec<_>>()
+        .join("\n");
         format!("{}\n{}\n@enduml", header, body)
     }
 }

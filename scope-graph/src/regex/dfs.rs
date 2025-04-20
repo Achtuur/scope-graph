@@ -59,33 +59,6 @@ where
         automata
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.node_vec.is_empty()
-    }
-
-    pub fn get_node_mut(&mut self, regex: &Regex<Lbl>) -> Option<&mut AutomataNode<Lbl>> {
-        self.node_vec
-        .iter_mut()
-        .find(|n| n.value == *regex)
-    }
-
-    pub fn get_node_idx(&self, regex: &Regex<Lbl>) -> Option<usize> {
-        self.node_vec
-        .iter()
-        .position(|n| n.value == *regex)
-    }
-
-    pub fn is_match<'a>(&'a self, haystack: impl IntoIterator<Item = &'a Lbl>) -> bool {
-        match self.match_haystack(haystack) {
-            Some(node) => node.is_nullable(),
-            None => false,
-        }
-    }
-
-    pub fn partial_match<'a>(&'a self, haystack: impl IntoIterator<Item = &'a Lbl>) -> bool {
-        self.match_haystack(haystack).is_some()
-    }
-
     fn compile(&mut self, reg: Regex<Lbl>) {
         self.node_vec.push(AutomataNode::new(reg.clone()));
         let mut queue = vec![reg];
@@ -115,6 +88,56 @@ where
             }
         }
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.node_vec.is_empty()
+    }
+
+    pub fn get_node_mut(&mut self, regex: &Regex<Lbl>) -> Option<&mut AutomataNode<Lbl>> {
+        self.node_vec
+        .iter_mut()
+        .find(|n| n.value == *regex)
+    }
+
+    pub fn get_node_idx(&self, regex: &Regex<Lbl>) -> Option<usize> {
+        self.node_vec
+        .iter()
+        .position(|n| n.value == *regex)
+    }
+
+    pub fn is_match<'a>(&'a self, haystack: impl IntoIterator<Item = &'a Lbl>) -> bool {
+        match self.match_haystack(haystack) {
+            Some(node) => node.is_nullable(),
+            None => false,
+        }
+    }
+
+    pub fn partial_match<'a>(&'a self, haystack: impl IntoIterator<Item = &'a Lbl>) -> bool {
+        self.match_haystack(haystack).is_some()
+    }
+
+    pub fn index_of<'a>(&'a self, haystack: impl IntoIterator<Item = &'a Lbl>) -> Option<usize> {
+        if self.is_empty() {
+            return None;
+        }
+
+        let mut current_node = &self.node_vec[0];
+        let mut index = 0;
+
+        for label in haystack {
+            match current_node.get_edge(label) {
+                Some(node_idx) => {
+                    current_node = &self.node_vec[*node_idx];
+                    index += 1;
+                }
+                None => {
+                    return None;
+                }
+            }
+        }
+        Some(index)
+    }
+
 
     /// Traverses the DFA and returns the node where the search ends. If no match is found, returns None
     fn match_haystack<'a>(&'a self, haystack: impl IntoIterator<Item = &'a Lbl>) -> Option<&'a Regex<Lbl>> {

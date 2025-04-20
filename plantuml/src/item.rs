@@ -1,7 +1,7 @@
 use crate::color::Color;
 
 #[derive(Default)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EdgeDirection {
     #[default]
     Unspecified,
@@ -25,7 +25,7 @@ impl EdgeDirection {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[derive(Default)]
 pub enum LineStyle {
     #[default]
@@ -47,7 +47,7 @@ impl LineStyle {
 }
 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum NodeType {
     /// Node, used for scopes
     Node,
@@ -64,7 +64,7 @@ impl NodeType {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[derive(Default)]
 pub struct ItemAnnotation {
     line_style: Option<LineStyle>,
@@ -95,7 +95,7 @@ impl ItemAnnotation {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PlantUmlItemKind {
     Node {
         id: String,
@@ -114,7 +114,27 @@ pub enum PlantUmlItemKind {
     }
 }
 
+impl Ord for PlantUmlItemKind {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
+impl PartialOrd for PlantUmlItemKind {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.num().cmp(&other.num()))
+    }
+}
+
 impl PlantUmlItemKind {
+    fn num(&self) -> usize {
+        match self {
+            Self::Node { .. } => 0,
+            Self::Edge { .. } => 1,
+            Self::Note { .. } => 2,
+        }
+    }
+
     fn as_uml(&self, annotation_str: &str) -> String {
         match self {
             PlantUmlItemKind::Node { id, contents, node_type } => {
@@ -124,14 +144,16 @@ impl PlantUmlItemKind {
                 format!("{} -{}-> {} {} : {}", from, dir.uml_str(), to, annotation_str, label)
             },
             PlantUmlItemKind::Note { to, contents } => {
-            let note = format!("note as N_{0:}\n{1:}\nend note", to, contents);
-            format!("{note}\nN_{0:} .r. scope_{0:}", to)
+                let formatted = contents.replace("\n", "\n\t");
+                let note_key = format!("N_{0:}", to);
+                let note = format!("note as {0:}\n\t{1:}\nend note", note_key, formatted);
+                format!("{note}\n{0:} .r. {1:}", note_key, to)
             }
         }
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PlantUmlItem {
     item: PlantUmlItemKind,
     annotation: ItemAnnotation,

@@ -1,4 +1,6 @@
-use std::{collections::{HashMap, HashSet}, path::is_separator, sync::Mutex};
+use std::{collections::{HashMap, HashSet}, hash::{DefaultHasher, Hash, Hasher}, path::is_separator, sync::Mutex};
+
+use tracing_subscriber::fmt::layer;
 
 use crate::{
     data::ScopeGraphData, graph::BaseScopeGraph, label::{LabelOrEnd, ScopeGraphLabel}, order::{LabelOrder, LabelOrderBuilder}, path::Path, regex::dfs::RegexAutomata, scope::Scope, FORWARD_ENABLE_CACHING
@@ -64,7 +66,23 @@ where
         }
     }
 
-    pub fn resolve(&self, path: Path<Lbl>) -> Vec<QueryResult<Lbl, Data>> {
+    pub fn resolve(&mut self, path: Path<Lbl>) -> Vec<QueryResult<Lbl, Data>> {
+        // println!("Resolving path: {}", path);
+        // self.considered_paths.lock().unwrap().push(path.clone());
+        // let envs = self.get_env(path.clone());
+        // self.cache_env(&path, envs.clone());
+        // envs
+
+        let mut envs = self.resolve_all(path.clone());
+        // only keep envs that are well-formed
+        envs.retain(|qr| {
+            self.data_wfd(&qr.data)
+        });
+        envs
+    }
+
+    /// recursive call site for resolving
+    fn resolve_all(&mut self, path: Path<Lbl>) -> Vec<QueryResult<Lbl, Data>> {
         // println!("Resolving path: {}", path);
         self.considered_paths.lock().unwrap().push(path.clone());
         let envs = self.get_env(path.clone());
@@ -89,34 +107,35 @@ where
         (self.data_proj)(data) == self.proj_wfd
     }
 
-    fn cache_env(&self, path: &Path<Lbl>, mut envs: Vec<QueryResult<Lbl, Data>>) {
+    fn cache_key_with_data(&self, path: &Path<Lbl>, data: &Data) -> (usize, u64, Scope) {
+        let mut hasher = DefaultHasher::new();
+        (self.data_proj)(data).hash(&mut hasher);
+        let hash = hasher.finish();
+        let scope = path.target();
+        let automata_idx = self.path_re.index_of(path.as_lbl_vec()).expect("Path regex not applied previously");
+        (automata_idx, hash, scope)
+    }
+
+    fn cache_key_with_proj(&self, path: &Path<Lbl>, proj: &P) -> (usize, u64, Scope) {
+        let mut hasher = DefaultHasher::new();
+        proj.hash(&mut hasher);
+        let hash = hasher.finish();
+        let scope = path.target();
+        let automata_idx = self.path_re.index_of(path.as_lbl_vec()).expect("Path regex not applied previously");
+        (automata_idx, hash, scope)
+    }
+
+    fn cache_env(&mut self, path: &Path<Lbl>, envs: Vec<QueryResult<Lbl, Data>>) {
         if !FORWARD_ENABLE_CACHING {
             return;
         }
 
-        return;
-
-        // let key = CacheKey {
-        //     scope: path.target(),
-        //     lbl_order: self.lbl_order.clone(),
-        //     path_re: self.path_re.clone(),
-        // };
-        // // 'path' is path from start of query to current scope
-        // // envs contains the path from starting scope of query to target scope
-        // // the env should NOT contain part of the path that is in `path`
-
-        // envs.iter_mut().for_each(|env| {
-        //     env.path = env.path.clone().trim_matching_start(path);
-        // });
-
-
-        // let val = CacheValue {
-        //     envs,
-        // };
-        // // println!("path: {0:?}", path);
-        // // println!("Caching: {}: {:?}", key, val);
-
-        // self.scope_graph.resolve_cache.lock().unwrap().insert(key, val);
+        tracing::debug!("Caching envs...");
+        for qr in envs {
+            tracing::debug!("Cache env for path {}: {}", path.target(), qr);
+            let key = self.cache_key_with_data(path, &qr.data);
+            self.cache.entry(key).or_default().push(qr);
+        }
     }
 
     fn get_cached_env(&self, path: &Path<Lbl>) -> Option<Vec<QueryResult<Lbl, Data>>> {
@@ -124,41 +143,19 @@ where
             return None;
         }
 
-        return None;
-        // todo!()
+        // todo: return full cache of that scope instead of only matched data
+        let key = self.cache_key_with_proj(path, &self.proj_wfd);
+        let entry = self.cache.get(&key)?;
 
-        // let key = CacheKey {
-        //     scope: path.target(),
-        //     lbl_order: self.lbl_order.clone(),
-        //     path_re: self.path_re.clone(),
-        // };
-        // let cache = self.scope_graph.resolve_cache.lock().unwrap();
-        // let matching_envs = cache
-        // .get(&key)?
-        // .envs
-        // .iter()
-        // .filter(|qr| {
-        //     // data EQ here? how?
-        //     (self.data_wfd)(&qr.data) // data WFD should match whatever is in the cache
-        // })
-        // .map(|qr| {
-        //     // append 'path' to 'qr.env'
-        //     qr
-        // })
-        // .cloned()
-        // .collect::<Vec<_>>();
-        // match matching_envs.is_empty() {
-        //     true => None,
-        //     false => Some(matching_envs),
-        // }
+        Some(entry.to_owned())
     }
 
-    fn get_env(&self, path: Path<Lbl>) -> Vec<QueryResult<Lbl, Data>> {
+    fn get_env(&mut self, path: Path<Lbl>) -> Vec<QueryResult<Lbl, Data>> {
         // all edges where brzozowski derivative != 0
         let scope = self.get_scope(path.target()).expect("Scope not found");
 
         if let Some(env) = self.get_cached_env(&path) {
-            // println!("Cache hit for {}", path);
+            tracing::debug!("Cache hit for {}", path);
             return env;
         }
 
@@ -183,7 +180,7 @@ where
     }
 
     fn get_env_for_labels(
-        &self,
+        &mut self,
         labels: &[LabelOrEnd<Lbl>],
         // edges: &[&Edge<Lbl>],
         path: Path<Lbl>,
@@ -218,7 +215,7 @@ where
     }
 
     fn get_shadowed_env(
-        &self,
+        &mut self,
         max_lbl: &LabelOrEnd<Lbl>,
         lower_lbls: &[LabelOrEnd<Lbl>],
         path: Path<Lbl>,
@@ -231,7 +228,7 @@ where
     }
 
     fn get_env_for_label(
-        &self,
+        &mut self,
         label: &LabelOrEnd<Lbl>,
         path: Path<Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
@@ -239,7 +236,10 @@ where
         match label {
             // reached end of a path
             LabelOrEnd::End => {
-                if self.path_re.is_match(path.as_lbl_vec()) && self.data_wfd(&scope.data) {
+                if self.path_re.is_match(path.as_lbl_vec())
+                // don't check wfd here
+                // && self.data_wfd(&scope.data)
+                {
                     return vec![QueryResult {
                         path,
                         data: scope.data.clone(),
@@ -254,7 +254,7 @@ where
                     .iter()
                     .filter(|e| e.lbl() == label)
                     .map(|e| path.clone().step(e.lbl().clone(), e.target())) // create new paths
-                    .flat_map(|p| self.resolve(p)) // resolve new paths
+                    .flat_map(|p| self.resolve_all(p)) // resolve new paths
                     .collect::<Vec<_>>()
             }
         }
@@ -263,18 +263,16 @@ where
     fn shadow(
         &self,
         mut a1: Vec<QueryResult<Lbl, Data>>,
-        a2: Vec<QueryResult<Lbl, Data>>,
+        mut a2: Vec<QueryResult<Lbl, Data>>,
     ) -> Vec<QueryResult<Lbl, Data>> {
-        let mut keep_a2 = a2
-            .into_iter()
-            .filter(|qr2| {
-                !a1
+        tracing::trace!("Shadowing...");
+        a2.retain(|qr2| {
+            !a1
                 .iter()
                 .any(|qr1| (self.data_eq)(&qr1.data, &qr2.data))
-            })
-            .collect::<Vec<_>>();
+        });
 
-        a1.append(&mut keep_a2);
+        a1.append(&mut a2);
         a1
     }
 

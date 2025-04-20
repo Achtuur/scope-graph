@@ -4,7 +4,7 @@ use plantuml::{Color, PlantUmlDiagram};
 use rand::Rng;
 use scope_graph::{data::ScopeGraphData, get_color, graph::{BaseScopeGraph, CachedScopeGraph, ScopeGraph}, label::ScopeGraphLabel, order::LabelOrderBuilder, regex::{dfs::RegexAutomata, Regex}, scope::Scope, DRAW_CACHES};
 
-pub type UsedScopeGraph<'s, Lbl, Data> = BaseScopeGraph<Lbl, Data>;
+pub type UsedScopeGraph<'s, Lbl, Data> = CachedScopeGraph<Lbl, Data>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub enum Label {
@@ -173,15 +173,16 @@ fn slides_example() {
     graph.add_scope(scope6, Data::NoData);
 
     graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
-    graph.add_decl(scope4, Label::Declaration, Data::var("x", "int"));
+    graph.add_decl(scope1, Label::Declaration, Data::var("y", "int"));
+    // graph.add_decl(scope2, Label::Declaration, Data::var("x", "int"));
     graph.add_edge(scope1, root, Label::Parent);
     graph.add_edge(scope2, scope1, Label::Parent);
     graph.add_edge(scope3, scope1, Label::Parent);
     graph.add_edge(scope4, scope2, Label::Parent);
-    graph.add_edge(scope5, scope4, Label::Parent);
+    // graph.add_edge(scope5, scope4, Label::Parent);
 
-    graph.add_edge(scope6, scope2, Label::Parent);
-    graph.add_edge(scope6, scope3, Label::Parent);
+    // graph.add_edge(scope6, scope2, Label::Parent);
+    // graph.add_edge(scope6, scope3, Label::Parent);
 
     let order = LabelOrderBuilder::new()
     .push(Label::Declaration, Label::Parent)
@@ -194,10 +195,13 @@ fn slides_example() {
     );
     let matcher = RegexAutomata::from_regex(label_reg.clone());
 
+    let y_match: Arc<str> = Arc::from("y");
+    let x_match: Arc<str> = Arc::from("x");
     let query_scope_set = [
-        vec![scope6],
-        vec![scope2, scope6],
-        vec![scope2, scope6, scope5],
+        (y_match, vec![scope2]),
+        (x_match, vec![scope3]),
+        // vec![scope2, scope6],
+        // vec![scope2, scope6, scope5],
     ];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
@@ -207,13 +211,17 @@ fn slides_example() {
         );
         let mut diagram = PlantUmlDiagram::new(title.as_str());
 
-        let res_uml = set.into_iter()
-        .flat_map(|s| graph.query(
+        let p = set.0;
+        let start_scopes = set.1;
+
+        let res_uml = start_scopes.into_iter()
+        .flat_map(|s| graph.query_proj(
             s,
             &matcher,
             &order,
+            |d| Arc::from(d.name()),
+            p.clone(),
             |d1, d2| d1 == d2,
-            |d| matches!(d, Data::Variable(x, t) if x == "x" && t == "int"),
         ))
         .enumerate()
         .flat_map(|(i, r)| r.path.as_uml(get_color(i), false));
@@ -235,96 +243,96 @@ fn main() {
     .with_max_level(tracing::Level::DEBUG)
     .init();
 
-    // slides_example();
-    // return;
+    slides_example();
+    return;
 
-    let mut bu_graph = create_long_graph();
-    let mut forward_graph = CachedScopeGraph::from_base(bu_graph.clone());
+    // let mut bu_graph = create_long_graph();
+    // let mut forward_graph = CachedScopeGraph::from_base(bu_graph.clone());
 
-    let order = LabelOrderBuilder::new()
-    .push(Label::Declaration, Label::Parent)
-    .build();
+    // let order = LabelOrderBuilder::new()
+    // .push(Label::Declaration, Label::Parent)
+    // .build();
 
-    // P*D;
+    // // P*D;
+    // // let label_reg = Regex::or(
+    // //     Regex::concat(Label::A, Label::B),
+    // //     Regex::or(Label::Parent, Label::Declaration)
+    // // );
     // let label_reg = Regex::or(
-    //     Regex::concat(Label::A, Label::B),
-    //     Regex::or(Label::Parent, Label::Declaration)
+    //     Regex::concat(
+    //         Regex::or(Label::A, Label::B),
+    //         Regex::or(Regex::kleene(Label::Parent), Label::Declaration)
+    //     ),
+    //     Regex::concat(
+    //         Regex::kleene(Label::Parent),
+    //         Label::Declaration,
+    //     ));
+    // let matcher = RegexAutomata::from_regex(label_reg.clone());
+
+    // write_to_file("output/automata.mmd", matcher.to_mmd().as_bytes());
+    // write_to_file("output/automata.puml", matcher.uml_diagram().as_uml().as_bytes());
+
+    // let p: Arc<str> = Arc::from("x");
+
+    // let start_scope = bu_graph.first_scope_without_data(5).unwrap();
+    // let timer = std::time::Instant::now();
+    // let res_bu = bu_graph.query_proj(
+    //     start_scope,
+    //     &matcher,
+    //     &order,
+    //     |d| Arc::from(d.name()),
+    //     p.clone(),
+    //     |d1, d2| d1 == d2,
     // );
-    let label_reg = Regex::or(
-        Regex::concat(
-            Regex::or(Label::A, Label::B),
-            Regex::or(Regex::kleene(Label::Parent), Label::Declaration)
-        ),
-        Regex::concat(
-            Regex::kleene(Label::Parent),
-            Label::Declaration,
-        ));
-    let matcher = RegexAutomata::from_regex(label_reg.clone());
+    // println!("run bu {:?}", timer.elapsed());
 
-    write_to_file("output/automata.mmd", matcher.to_mmd().as_bytes());
-    write_to_file("output/automata.puml", matcher.uml_diagram().as_uml().as_bytes());
-
-    let p: Arc<str> = Arc::from("x");
-
-    let start_scope = bu_graph.first_scope_without_data(5).unwrap();
-    let timer = std::time::Instant::now();
-    let res_bu = bu_graph.query_proj(
-        start_scope,
-        &matcher,
-        &order,
-        |d| Arc::from(d.name()),
-        p.clone(),
-        |d1, d2| d1 == d2,
-    );
-    println!("run bu {:?}", timer.elapsed());
-
-    let timer = std::time::Instant::now();
+    // let timer = std::time::Instant::now();
     
-    let res_fw = forward_graph.query_proj(
-        start_scope,
-        &matcher,
-        &order,
-        |d| Arc::from(d.name()),
-        p,
-        |d1, d2| d1 == d2,
-    );
-    println!("run fw {:?}", timer.elapsed());
+    // let res_fw = forward_graph.query_proj(
+    //     start_scope,
+    //     &matcher,
+    //     &order,
+    //     |d| Arc::from(d.name()),
+    //     p,
+    //     |d1, d2| d1 == d2,
+    // );
+    // println!("run fw {:?}", timer.elapsed());
 
-    if res_bu.is_empty() && res_fw.is_empty() {
-        println!("No results found");
-    } else {
-        println!("bottomup: ");
-        for r in &res_bu {
-            println!("{}", r);
-        }
-        println!("fw: ");
-        for r in &res_fw {
-            println!("{}", r);
-        }
-    }
+    // if res_bu.is_empty() && res_fw.is_empty() {
+    //     println!("No results found");
+    // } else {
+    //     println!("bottomup: ");
+    //     for r in &res_bu {
+    //         println!("{}", r);
+    //     }
+    //     println!("fw: ");
+    //     for r in &res_fw {
+    //         println!("{}", r);
+    //     }
+    // }
 
-    let title = format!(
-        "Query1: {}, label_reg={}, label_order={}, data_eq=x:int",
-        start_scope, label_reg, order
-    );
-    let graph_uml = bu_graph.as_uml(DRAW_CACHES);
+    // let title = format!(
+    //     "Query1: {}, label_reg={}, label_order={}, data_eq=x:int",
+    //     start_scope, label_reg, order
+    // );
+    // let graph_uml = bu_graph.as_uml(DRAW_CACHES);
 
-    let res_a_uml = res_bu
-        .iter()
-        .flat_map(|r| r.path.as_uml(Color::Red, false));
+    // let res_a_uml = res_bu
+    //     .iter()
+    //     .flat_map(|r| r.path.as_uml(Color::Red, false));
 
-    let res_b_uml = res_fw
-        .iter()
-        .flat_map(|r| r.path.as_uml(Color::Blue, false));
+    // let res_b_uml = res_fw
+    //     .iter()
+    //     .flat_map(|r| r.path.as_uml(Color::Blue, false));
 
 
-    let mut diagram = PlantUmlDiagram::new(title.as_str());
-    diagram.extend(graph_uml);
-    diagram.extend(res_a_uml);
-    diagram.extend(res_b_uml);
-    let uml = diagram.as_uml();
+    // let mut diagram = PlantUmlDiagram::new(title.as_str());
+    // diagram.extend(graph_uml);
+    // diagram.extend(res_a_uml);
+    // diagram.extend(res_b_uml);
+    // let uml = diagram.as_uml();
 
-    write_to_file("output/output.puml", uml.as_bytes());
+    // write_to_file("output/output.puml", uml.as_bytes());
 }
 
 fn write_to_file(fname: &str, content: &[u8]) {
