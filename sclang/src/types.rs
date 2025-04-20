@@ -14,7 +14,7 @@ pub enum SclangType {
 }
 
 impl SclangType {
-    pub(crate) fn parse(input: &mut &str) -> PResult<Self> {
+    pub fn parse(input: &mut &str) -> PResult<Self> {
         alt((Self::parse_complex, Self::parse_atom)).parse_next(input)
     }
 

@@ -7,15 +7,15 @@ use crate::{
 use super::{QueryResult, ScopeData, ForwardScopeGraph};
 
 #[derive(Hash, PartialEq, Eq, Debug)]
-pub(crate) struct CacheKey<'c, Lbl>
+pub struct CacheKey<Lbl>
 where Lbl: ScopeGraphLabel,
 {
     pub(super) scope: Scope,
-    pub(super) lbl_order: &'c LabelOrder<Lbl>,
-    pub(super) path_re: &'c RegexAutomata<Lbl>,
+    pub(super) lbl_order: LabelOrder<Lbl>,
+    pub(super) path_re: RegexAutomata<Lbl>,
 }
 
-impl<Lbl> std::fmt::Display for CacheKey<'_, Lbl>
+impl<Lbl> std::fmt::Display for CacheKey<Lbl>
 where Lbl: ScopeGraphLabel
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -24,7 +24,7 @@ where Lbl: ScopeGraphLabel
 }
 
 #[derive(Debug)]
-pub(crate) struct CacheValue<Lbl, Data>
+pub struct CacheValue<Lbl, Data>
 where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
@@ -32,7 +32,7 @@ where
     pub(super) envs: Vec<QueryResult<Lbl, Data>>,
 }
 
-pub(crate) type ResolveCache<'c, Lbl, Data> = HashMap<CacheKey<'c, Lbl>, CacheValue<Lbl, Data>>;
+pub type ResolveCache<Lbl, Data> = HashMap<CacheKey<Lbl>, CacheValue<Lbl, Data>>;
 
 pub struct Resolver<'r, Lbl, Data, DEq, DWfd>
 where
@@ -43,7 +43,7 @@ where
 
 {
     // scopegraph contains cache
-    pub scope_graph: &'r ForwardScopeGraph<'r, Lbl, Data>,
+    pub scope_graph: &'r ForwardScopeGraph<Lbl, Data>,
     pub path_re: &'r RegexAutomata<Lbl>,
     pub lbl_order: &'r LabelOrder<Lbl>,
     pub data_eq: DEq,
@@ -59,7 +59,7 @@ where
     DWfd: for<'da> Fn(&'da Data) -> bool,
 {
     pub fn new(
-        scope_graph: &'r ForwardScopeGraph<'r, Lbl, Data>,
+        scope_graph: &'r ForwardScopeGraph<Lbl, Data>,
         path_re: &'r RegexAutomata<Lbl>,
         lbl_order: &'r LabelOrder<Lbl>,
         data_eq: DEq,
@@ -102,8 +102,8 @@ where
 
         let key = CacheKey {
             scope: path.target(),
-            lbl_order: self.lbl_order,
-            path_re: self.path_re,
+            lbl_order: self.lbl_order.clone(),
+            path_re: self.path_re.clone(),
         };
         // 'path' is path from start of query to current scope
         // envs contains the path from starting scope of query to target scope
@@ -130,8 +130,8 @@ where
 
         let key = CacheKey {
             scope: path.target(),
-            lbl_order: self.lbl_order,
-            path_re: self.path_re,
+            lbl_order: self.lbl_order.clone(),
+            path_re: self.path_re.clone(),
         };
         let cache = self.scope_graph.resolve_cache.lock().unwrap();
         let matching_envs = cache
@@ -164,15 +164,15 @@ where
         }
 
         let mut labels = scope
-            .edges
+            .parents()
             .iter()
-            .map(|e| e.label.clone())
+            .map(|e| e.lbl())
             // get unique labels by using hashset
             .fold(HashSet::new(), |mut set, lbl| {
                 let mut label_vec = path.as_lbl_vec();
                 label_vec.push(&lbl);
-                if self.path_re.partial_match(&label_vec) {
-                    set.insert(LabelOrEnd::Label(lbl));
+                if self.path_re.partial_match(label_vec) {
+                    set.insert(LabelOrEnd::Label(lbl.clone()));
                 }
                 set
             })
@@ -240,7 +240,7 @@ where
         match label {
             // reached end of a path
             LabelOrEnd::End => {
-                if self.path_re.is_match(&path.as_lbl_vec()) && (self.data_wfd)(&scope.data) {
+                if self.path_re.is_match(path.as_lbl_vec()) && (self.data_wfd)(&scope.data) {
                     return vec![QueryResult {
                         path,
                         data: scope.data.clone(),
@@ -251,10 +251,10 @@ where
             // not yet at end
             LabelOrEnd::Label(label) => {
                 scope
-                    .edges
+                    .parents()
                     .iter()
-                    .filter(|e| &e.label == label)
-                    .map(|e| path.clone().step(e.label.clone(), e.to)) // create new paths
+                    .filter(|e| e.lbl() == label)
+                    .map(|e| path.clone().step(e.lbl().clone(), e.target())) // create new paths
                     .flat_map(|p| self.resolve(p)) // resolve new paths
                     .collect::<Vec<_>>()
             }

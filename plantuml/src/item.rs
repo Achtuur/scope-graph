@@ -96,7 +96,7 @@ impl ItemAnnotation {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) enum PlantUmlItemKind {
+pub enum PlantUmlItemKind {
     Node {
         id: String,
         contents: String,
@@ -138,7 +138,7 @@ pub struct PlantUmlItem {
 }
 
 impl PlantUmlItem {
-    pub(crate) fn new(item: PlantUmlItemKind) -> Self {
+    pub fn new(item: PlantUmlItemKind) -> Self {
         Self {
             item,
             annotation: ItemAnnotation::default(),

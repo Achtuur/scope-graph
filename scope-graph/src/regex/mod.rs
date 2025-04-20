@@ -35,8 +35,8 @@ where
             Self::Character(c) => write!(f, "{c}"),
             Self::Concat(r, s) => write!(f, "{r}{s}"), // r dot s
             Self::KleeneStar(r) => write!(f, "{r}*"),
-            Self::Or(r, s) => write!(f, "{r} + {s}"),
-            Self::And(r, s) => write!(f, "{r} & {s}"),
+            Self::Or(r, s) => write!(f, "({r}+{s})"),
+            Self::And(r, s) => write!(f, "({r}&{s})"),
             Self::Neg(r) => write!(f, "!{r}"),
         }
     }

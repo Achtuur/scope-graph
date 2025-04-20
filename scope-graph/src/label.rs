@@ -24,7 +24,7 @@ impl ScopeGraphLabel for char {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
-pub(crate) enum LabelOrEnd<Lbl>
+pub enum LabelOrEnd<Lbl>
 {
     Label(Lbl),
     End,

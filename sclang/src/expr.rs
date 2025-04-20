@@ -12,7 +12,7 @@ use winnow::{
 
 use crate::SclangType;
 
-pub(crate) const RESERVED_KEYWORDS: [&str; 10] = [
+pub const RESERVED_KEYWORDS: [&str; 10] = [
     "let", "if", "else", "while", "return", "break", "continue", "fun", "true", "false",
 ];
 
@@ -86,7 +86,7 @@ impl SclangExpression {
         Self::from_str(contents.as_str())
     }
 
-    pub(crate) fn parse(input: &mut &str) -> PResult<Self> {
+    pub fn parse(input: &mut &str) -> PResult<Self> {
         delimited(multispace0, Self::parse_expr, eof).parse_next(input)
     }
 }
@@ -253,7 +253,7 @@ impl SclangExpression {
         alt(RESERVED_KEYWORDS).parse_next(input)
     }
 
-    pub(crate) fn parse_variable(input: &mut &str) -> PResult<String> {
+    pub fn parse_variable(input: &mut &str) -> PResult<String> {
         not(Self::parse_reserved_keyword).parse_next(input)?;
         (
             alpha1, // start part, must be 1 or more letters

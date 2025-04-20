@@ -1,71 +1,25 @@
-use std::{io::Write, os::unix::thread, sync::atomic::AtomicUsize};
+use std::{io::Write, sync::atomic::AtomicUsize};
 
-use bottomup::BottomupScopeGraph;
-use data::ScopeGraphData;
-use forward::ForwardScopeGraph;
-use graph::{BaseScopeGraph, BaseScopeGraphHaver};
-use label::ScopeGraphLabel;
-// use lbl_regex::*;
-use order::LabelOrderBuilder;
 use plantuml::{Color, PlantUmlDiagram};
 use rand::Rng;
-use regex::{dfs::RegexAutomata, Regex};
-use scope::Scope;
+use scope_graph::{data::ScopeGraphData, get_color, graph::{BottomupScopeGraph2, ForwardScopeGraph, ScopeGraph}, label::ScopeGraphLabel, order::LabelOrderBuilder, regex::{dfs::RegexAutomata, Regex}, scope::Scope, DRAW_CACHES};
 
-mod label;
-mod path;
-mod scope;
-mod forward;
-mod data;
-mod order;
-mod regex;
-pub mod resolve;
-pub mod bottomup;
-pub mod graph;
-
-
-pub(crate) const COLORS: &[Color] = &[
-    Color::Red,
-    Color::Green,
-    Color::Purple,
-    Color::Blue,
-    Color::Orange,
-];
-
-pub(crate) static COLOR_POINTER: AtomicUsize = AtomicUsize::new(0);
-
-pub fn next_color() -> Color {
-    let idx = COLOR_POINTER.load(std::sync::atomic::Ordering::Relaxed);
-    let _ = COLOR_POINTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-    COLORS[idx % COLORS.len()]
-}
-
-pub fn get_color(idx: usize) -> Color {
-    COLORS[idx % COLORS.len()]
-}
-
-/// Enable caching when doing forward resolution
-pub(crate) const FORWARD_ENABLE_CACHING: bool = true;
-
-pub(crate) const DRAW_CACHES: bool = false;
-
-pub(crate) type UsedScopeGraph<'s, Lbl, Data> = BottomupScopeGraph<'s, Lbl, Data>;
+pub type UsedScopeGraph<'s, Lbl, Data> = BottomupScopeGraph2<Lbl, Data>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
-enum Label {
+pub enum Label {
     Parent,
     Declaration,
+    A,
+    B,
+    C,
     /// Debug path that should never be taken
     NeverTake,
 }
 
 impl std::fmt::Display for Label {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Parent => write!(f, "P"),
-            Self::Declaration => write!(f, "D"),
-            Self::NeverTake => write!(f, "N"),
-        }
+        write!(f, "{}", self.char())
     }
 }
 
@@ -75,6 +29,9 @@ impl ScopeGraphLabel for Label {
             Self::Parent => 'P',
             Self::Declaration => 'D',
             Self::NeverTake => 'W',
+            Self::A => 'A',
+            Self::B => 'B',
+            Self::C => 'C',
         }
     }
 
@@ -83,6 +40,9 @@ impl ScopeGraphLabel for Label {
             Self::Parent => "Parent",
             Self::Declaration => "Declaration",
             Self::NeverTake => "NeverTake",
+            Self::A => "A",
+            Self::B => "B",
+            Self::C => "C",
         }
     }
 }
@@ -188,13 +148,14 @@ fn create_long_graph<'a>() -> UsedScopeGraph<'a, Label, Data> {
 }
 
 fn slides_example() {
-    let mut graph = UsedScopeGraph::new();
+    let mut graph = BottomupScopeGraph2::new();
     let root = Scope::new();
     let scope1 = Scope::new();
     let scope2 = Scope::new();
     let scope3 = Scope::new();
     let scope4 = Scope::new();
     let scope5 = Scope::new();
+    let scope6 = Scope::new();
     graph.add_scope(root, Data::NoData);
     graph.add_scope(scope1, Data::NoData);
     graph.add_scope(scope2, Data::NoData);
@@ -202,29 +163,34 @@ fn slides_example() {
     graph.add_scope(scope3, Data::NoData);
     graph.add_scope(scope4, Data::NoData);
     graph.add_scope(scope5, Data::NoData);
+    graph.add_scope(scope6, Data::NoData);
 
     graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
+    graph.add_decl(scope4, Label::Declaration, Data::var("x", "int"));
     graph.add_edge(scope1, root, Label::Parent);
     graph.add_edge(scope2, scope1, Label::Parent);
     graph.add_edge(scope3, scope1, Label::Parent);
     graph.add_edge(scope4, scope2, Label::Parent);
     graph.add_edge(scope5, scope4, Label::Parent);
 
+    graph.add_edge(scope6, scope2, Label::Parent);
+    graph.add_edge(scope6, scope3, Label::Parent);
+
     let order = LabelOrderBuilder::new()
     .push(Label::Declaration, Label::Parent)
     .build();
 
     // P*D;
-    let label_reg = Regex::concat(
+    let label_reg =Regex::concat(
         Regex::kleene(Label::Parent),
         Label::Declaration,
     );
     let matcher = RegexAutomata::from_regex(label_reg.clone());
 
     let query_scope_set = [
-        vec![scope2],
-        vec![scope2, scope4],
-        vec![scope2, scope4, scope5],
+        vec![scope6],
+        vec![scope2, scope6],
+        vec![scope2, scope6, scope5],
     ];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
@@ -260,24 +226,38 @@ fn slides_example() {
 
 
 fn main() {
-    slides_example();
-    return;
+    tracing_subscriber::fmt()
+    .with_max_level(tracing::Level::DEBUG)
+    .init();
+
+    // slides_example();
+    // return;
 
     let bu_graph = create_long_graph();
-    let forward_graph = ForwardScopeGraph::from_base(bu_graph.sg().clone());
+    let forward_graph = ForwardScopeGraph::from_base(bu_graph.base().clone());
 
     let order = LabelOrderBuilder::new()
     .push(Label::Declaration, Label::Parent)
     .build();
 
     // P*D;
-    let label_reg = Regex::concat(
-        Regex::kleene(Label::Parent),
-        Label::Declaration,
-    );
+    // let label_reg = Regex::or(
+    //     Regex::concat(Label::A, Label::B),
+    //     Regex::or(Label::Parent, Label::Declaration)
+    // );
+    let label_reg = Regex::or(
+        Regex::concat(
+            Regex::or(Label::A, Label::B),
+            Regex::or(Regex::kleene(Label::Parent), Label::Declaration)
+        ),
+        Regex::concat(
+            Regex::kleene(Label::Parent),
+            Label::Declaration,
+        ));
     let matcher = RegexAutomata::from_regex(label_reg.clone());
 
     write_to_file("output/automata.mmd", matcher.to_mmd().as_bytes());
+    write_to_file("output/automata.puml", matcher.uml_diagram().as_uml().as_bytes());
 
     let start_scope = bu_graph.first_scope_without_data(5).unwrap();
     let timer = std::time::Instant::now();
@@ -344,6 +324,6 @@ fn write_to_file(fname: &str, content: &[u8]) {
         .truncate(true)
         .open(fname)
         .unwrap();
-    println!("Writing to file {}", fname);
+    tracing::info!("Writing to file {}", fname);
     file.write_all(content).unwrap();
 }

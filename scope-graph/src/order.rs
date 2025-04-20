@@ -4,7 +4,7 @@ use std::{
 
 use crate::{label::{LabelOrEnd, ScopeGraphLabel}, path::Path};
 
-pub(crate) struct LabelOrderBuilder<Lbl>
+pub struct LabelOrderBuilder<Lbl>
 where
     Lbl: ScopeGraphLabel,
 {
@@ -126,8 +126,8 @@ where
 
 
 
-#[derive(Debug, Hash, PartialEq, Eq)]
-pub(crate) struct LabelOrder<Lbl>
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub struct LabelOrder<Lbl>
 where Lbl: ScopeGraphLabel,
 {
     /// Label orderings

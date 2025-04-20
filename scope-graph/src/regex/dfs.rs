@@ -3,18 +3,19 @@ use std::{
     hash::{Hash, Hasher},
 };
 
+use plantuml::{EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem};
+
 use crate::label::ScopeGraphLabel;
 
 use super::Regex;
 
-#[derive(Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct AutomataNode<Lbl>
 where
     Lbl: ScopeGraphLabel,
 {
     pub value: Regex<Lbl>,
     pub edges: Vec<(Lbl, usize)>,
-
 }
 
 impl<Lbl> AutomataNode<Lbl>
@@ -35,7 +36,7 @@ where
     }
 }
 
-#[derive(Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct RegexAutomata<Lbl>
 where
     Lbl: ScopeGraphLabel,
@@ -74,14 +75,14 @@ where
         .position(|n| n.value == *regex)
     }
 
-    pub fn is_match(&self, haystack: &[&Lbl]) -> bool {
+    pub fn is_match<'a>(&'a self, haystack: impl IntoIterator<Item = &'a Lbl>) -> bool {
         match self.match_haystack(haystack) {
             Some(node) => node.is_nullable(),
             None => false,
         }
     }
 
-    pub fn partial_match(&self, haystack: &[&Lbl]) -> bool {
+    pub fn partial_match<'a>(&'a self, haystack: impl IntoIterator<Item = &'a Lbl>) -> bool {
         self.match_haystack(haystack).is_some()
     }
 
@@ -95,16 +96,19 @@ where
             }
 
             let alfabet = key.leading_labels();
+            println!("(key, alfabet): {0:?}", (&key, &alfabet));
             for a in &alfabet {
                 let derivative = key.derivative(a).reduce();
 
                 // add new node if it doesn't exist
-                if self.get_node_mut(&derivative).is_none() {
-                    self.node_vec.push(AutomataNode::new(derivative.clone()));
+                let derivative_idx = if self.get_node_mut(&derivative).is_none() {
                     queue.push(derivative.clone());
-                }
+                    self.node_vec.push(AutomataNode::new(derivative));
+                    self.node_vec.len() - 1
+                } else {
+                    self.get_node_idx(&derivative).unwrap()
+                };
 
-                let derivative_idx = self.get_node_idx(&derivative).unwrap();
                 let node = self.get_node_mut(&key).unwrap();
                 node.edges.push(((*a).clone(), derivative_idx));
 
@@ -113,7 +117,7 @@ where
     }
 
     /// Traverses the DFA and returns the node where the search ends. If no match is found, returns None
-    fn match_haystack<'a>(&'a self, haystack: &[&Lbl]) -> Option<&'a Regex<Lbl>> {
+    fn match_haystack<'a>(&'a self, haystack: impl IntoIterator<Item = &'a Lbl>) -> Option<&'a Regex<Lbl>> {
         if self.is_empty() {
             return None;
         }
@@ -121,7 +125,6 @@ where
         let mut current_node = &self.node_vec[0];
 
         for label in haystack {
-
             match current_node.get_edge(label) {
                 Some(node_idx) => {
                     current_node = &self.node_vec[*node_idx]
@@ -143,9 +146,10 @@ where
     fn node_key(node_idx: usize) -> u64 {
         // let node_str = node.to_string();
         // node_str.replace(" ", "");
-        let mut s = std::hash::DefaultHasher::new();
-        node_idx.hash(&mut s);
-        s.finish()
+        // let mut s = std::hash::DefaultHasher::new();
+        // node_idx.hash(&mut s);
+        // s.finish()
+        node_idx as u64
     }
 
     pub fn to_mmd(&self) -> String {
@@ -154,7 +158,8 @@ where
         mmd += "flowchart LR\n";
         for (idx, node) in self.node_vec.iter().enumerate() {
             let node_key = Self::node_key(idx);
-            mmd += &format!("{0:}(({1:}))\n", node_key, node.value);
+            let node_value = node.value.to_string().replace("(", "⦅").replace(")", "⦆");
+            mmd += &format!("{0:}(({1:}))\n", node_key, node_value);
         }
 
         for (idx, node) in self.node_vec.iter().enumerate() {
@@ -164,8 +169,34 @@ where
                 mmd += &format!("{0:} ==>|\"{1:}\"| {2:}\n", node_key, lbl, target_key);
             }
         }
-
         mmd
+    }
+
+    pub fn uml_diagram(&self) -> PlantUmlDiagram {
+        let mut diagram = PlantUmlDiagram::new("Regex Automata");
+
+        let nodes = self.node_vec.iter().enumerate().map(|(idx, node)| {
+            PlantUmlItem::node(Self::node_key(idx), node.value.to_string(), NodeType::Node)
+        });
+
+        let edges = self.node_vec.iter().enumerate().flat_map(|(idx, node)| {
+            let from = Self::node_key(idx);
+            node.edges.iter().map(move |(lbl, target_idx)| {
+                let to = Self::node_key(*target_idx);
+                let dir = if from == to {
+                    EdgeDirection::Right
+                } else {
+                    EdgeDirection::Unspecified
+                };
+
+                PlantUmlItem::edge(from, to, lbl.to_string(), dir)
+            })
+        });
+
+        diagram.extend(nodes);
+        diagram.extend(edges);
+
+        diagram
     }
 }
 
@@ -220,9 +251,9 @@ mod tests {
         let automata = RegexAutomata::from_regex(regex);
         let mmd = automata.to_mmd();
         write_mmd_to_file(&mmd);
-        let haystack = vec![&'a'; 10];
+        let haystack = vec!['a'; 10];
         assert!(automata.is_match(&haystack));
-        let haystack = vec![&'b'];
+        let haystack = vec!['b'];
         assert!(!automata.is_match(&haystack));
     }
 
@@ -232,7 +263,7 @@ mod tests {
         let automata = RegexAutomata::from_regex(regex);
         let mmd = automata.to_mmd();
         write_mmd_to_file(&mmd);
-        let haystack = vec![&'P', &'P', &'D'];
+        let haystack = vec!['P', 'P', 'D'];
         assert!(automata.is_match(&haystack));
     }
 }
