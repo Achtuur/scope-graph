@@ -5,7 +5,8 @@ use crate::{label::ScopeGraphLabel, scope::Scope};
 /// Path enum "starts" at the target scope, ie its in reverse order
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Path<Lbl>
-where Lbl: ScopeGraphLabel + Clone
+where
+    Lbl: ScopeGraphLabel + Clone,
 {
     Start(Scope),
     Step {
@@ -16,7 +17,8 @@ where Lbl: ScopeGraphLabel + Clone
 }
 
 impl<Lbl: ScopeGraphLabel> Path<Lbl>
-where Lbl: ScopeGraphLabel + Clone
+where
+    Lbl: ScopeGraphLabel + Clone,
 {
     pub fn start(start: Scope) -> Self {
         Self::Start(start)
@@ -34,21 +36,21 @@ where Lbl: ScopeGraphLabel + Clone
     // step backwards (new p -> p)
     pub fn step_back(self, label: Lbl, scope: Scope) -> Self {
         match self {
-            Self::Start(s) => {
-                Self::Step {
-                    label,
-                    target: s,
-                    from: Box::new(Self::start(scope)),
-                }
-            }
+            Self::Start(s) => Self::Step {
+                label,
+                target: s,
+                from: Box::new(Self::start(scope)),
+            },
 
-            Self::Step { label: lbl, target: tgt, from } => {
-                Self::Step {
-                    label: lbl,
-                    target: tgt,
-                    from: Box::new(from.step_back(label, scope)),
-                }
-            }
+            Self::Step {
+                label: lbl,
+                target: tgt,
+                from,
+            } => Self::Step {
+                label: lbl,
+                target: tgt,
+                from: Box::new(from.step_back(label, scope)),
+            },
         }
     }
 
@@ -61,20 +63,30 @@ where Lbl: ScopeGraphLabel + Clone
 
     pub fn prepend(self, other: &Self) -> Self {
         match (self, other) {
-            (Self::Start(s), Self::Step { label, target, from}) if target.0 == s.0 => {
-                Self::Step {
-                    label: label.clone(),
-                    target: target.clone(),
-                    from: from.clone(),
-                }
-            }
-            (Self::Step { label, target, from }, o@Self::Step { .. }) => {
+            (
+                Self::Start(s),
                 Self::Step {
                     label,
                     target,
-                    from: Box::new(from.prepend(o)),
-                }
-            }
+                    from,
+                },
+            ) if target.0 == s.0 => Self::Step {
+                label: label.clone(),
+                target: *target,
+                from: from.clone(),
+            },
+            (
+                Self::Step {
+                    label,
+                    target,
+                    from,
+                },
+                o @ Self::Step { .. },
+            ) => Self::Step {
+                label,
+                target,
+                from: Box::new(from.prepend(o)),
+            },
             // rhs is Start here
             (p, _) => {
                 // prepending start just results in self
@@ -116,19 +128,25 @@ where Lbl: ScopeGraphLabel + Clone
         // other must have a start scope S
 
         match self {
-            Self::Start(s) => {
-                match other {
-                    Self::Step { label, target, from } if target == *s => {
-                        *self = Self::Step {
-                            label,
-                            target,
-                            from,
-                        }
+            Self::Start(s) => match other {
+                Self::Step {
+                    label,
+                    target,
+                    from,
+                } if target == *s => {
+                    *self = Self::Step {
+                        label,
+                        target,
+                        from,
                     }
-                    _ => panic!("unmergable paths"),
                 }
-            }
-            Self::Step { label, target, from } => {
+                _ => panic!("unmergable paths"),
+            },
+            Self::Step {
+                label,
+                target,
+                from,
+            } => {
                 from.append(other);
             }
         }
@@ -136,7 +154,16 @@ where Lbl: ScopeGraphLabel + Clone
 
     pub fn trim_matching_start(self, other: &Self) -> Self {
         match (self, other) {
-            (Self::Step { target, label, from }, Self::Step { target: target2, ..}) => {
+            (
+                Self::Step {
+                    target,
+                    label,
+                    from,
+                },
+                Self::Step {
+                    target: target2, ..
+                },
+            ) => {
                 // cut off the rest of the path
                 if &target == target2 {
                     Self::Start(target)
@@ -223,7 +250,7 @@ where Lbl: ScopeGraphLabel + Clone
                     from_scope.uml_id(),
                     to_scope.uml_id(),
                     label.char(),
-                    EdgeDirection::Norank
+                    EdgeDirection::Norank,
                 )
                 .with_line_color(color)
                 .with_line_style(LineStyle::Dashed);
@@ -265,7 +292,9 @@ where Lbl: ScopeGraphLabel + Clone
 }
 
 impl<Lbl> std::fmt::Display for Path<Lbl>
-where Lbl: ScopeGraphLabel + Clone{
+where
+    Lbl: ScopeGraphLabel + Clone,
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.display())
     }

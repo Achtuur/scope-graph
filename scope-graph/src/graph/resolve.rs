@@ -1,14 +1,23 @@
-use std::{collections::{HashMap, HashSet}, path::is_separator, sync::Mutex};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Mutex,
+};
 
 use crate::{
-    data::ScopeGraphData, label::{LabelOrEnd, ScopeGraphLabel}, order::{LabelOrder, LabelOrderBuilder}, path::Path, regex::{dfs::RegexAutomata, PartialRegex}, scope::Scope, FORWARD_ENABLE_CACHING
+    data::ScopeGraphData,
+    label::{LabelOrEnd, ScopeGraphLabel},
+    order::LabelOrder,
+    path::Path,
+    regex::{dfs::RegexAutomata, PartialRegex},
+    scope::Scope,
 };
 
 use super::{BaseScopeGraph, QueryResult, ScopeData, ScopeGraph};
 
 #[derive(Hash, PartialEq, Eq, Debug)]
 pub struct CacheKey<Lbl>
-where Lbl: ScopeGraphLabel,
+where
+    Lbl: ScopeGraphLabel,
 {
     pub(super) scope: Scope,
     pub(super) lbl_order: LabelOrder<Lbl>,
@@ -16,10 +25,15 @@ where Lbl: ScopeGraphLabel,
 }
 
 impl<Lbl> std::fmt::Display for CacheKey<Lbl>
-where Lbl: ScopeGraphLabel
+where
+    Lbl: ScopeGraphLabel,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{{{}, {}, {}}}", self.scope, self.lbl_order, self.path_re)
+        write!(
+            f,
+            "{{{}, {}, {}}}",
+            self.scope, self.lbl_order, self.path_re
+        )
     }
 }
 
@@ -40,7 +54,6 @@ where
     Data: ScopeGraphData,
     DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
     DWfd: for<'da> Fn(&'da Data) -> bool,
-
 {
     // scopegraph contains cache
     pub scope_graph: &'r BaseScopeGraph<Lbl, Data>,
@@ -80,19 +93,20 @@ where
         let reg = PartialRegex::new(self.path_re);
         let mut envs = self.resolve_all(path.clone(), reg);
         // only keep envs that are well-formed
-        envs.retain(|qr| {
-            self.data_wfd(&qr.data)
-        });
+        envs.retain(|qr| self.data_wfd(&qr.data));
         envs
     }
 
     /// recursive call site for resolving
-    fn resolve_all<'a: 'r>(&mut self, path: Path<Lbl>, reg: PartialRegex<'a, Lbl>) -> Vec<QueryResult<Lbl, Data>> {
+    fn resolve_all<'a: 'r>(
+        &mut self,
+        path: Path<Lbl>,
+        reg: PartialRegex<'a, Lbl>,
+    ) -> Vec<QueryResult<Lbl, Data>> {
         // println!("Resolving path: {}", path);
         self.considered_paths.lock().unwrap().push(path.clone());
         self.get_env(path, reg)
     }
-
 
     pub fn print_cache(&self) {
         // println!("Resolver cache:");
@@ -110,7 +124,11 @@ where
         (self.data_wfd)(data)
     }
 
-    fn get_env(&mut self, path: Path<Lbl>, reg: PartialRegex<'r, Lbl>) -> Vec<QueryResult<Lbl, Data>> {
+    fn get_env(
+        &mut self,
+        path: Path<Lbl>,
+        reg: PartialRegex<'r, Lbl>,
+    ) -> Vec<QueryResult<Lbl, Data>> {
         // all edges where brzozowski derivative != 0
         let scope = self.get_scope(path.target()).expect("Scope not found");
         let mut labels = scope
@@ -121,9 +139,7 @@ where
             .fold(HashSet::new(), |mut set, lbl| {
                 let mut this_reg = reg.clone();
                 if this_reg.step(lbl).is_some() {
-                    set.insert(LabelOrEnd::Label(
-                        (lbl.clone(), this_reg)
-                    ));
+                    set.insert(LabelOrEnd::Label((lbl.clone(), this_reg)));
                 }
                 set
             })
@@ -208,10 +224,10 @@ where
                 // path check is not necessary since we check partial matches along the way
                 // if self.path_re.is_match(path.as_lbl_vec())
                 // {
-                    // return vec![QueryResult {
-                    //     path,
-                    //     data: scope.data.clone(),
-                    // }];
+                // return vec![QueryResult {
+                //     path,
+                //     data: scope.data.clone(),
+                // }];
                 // }
                 // vec![]
             }
@@ -234,11 +250,7 @@ where
         mut a2: Vec<QueryResult<Lbl, Data>>,
     ) -> Vec<QueryResult<Lbl, Data>> {
         tracing::trace!("Shadowing...");
-        a2.retain(|qr2| {
-            !a1
-                .iter()
-                .any(|qr1| (self.data_eq)(&qr1.data, &qr2.data))
-        });
+        a2.retain(|qr2| !a1.iter().any(|qr1| (self.data_eq)(&qr1.data, &qr2.data)));
 
         a1.append(&mut a2);
         a1

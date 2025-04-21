@@ -1,7 +1,4 @@
-use std::{
-    collections::HashMap,
-    hash::{Hash, Hasher},
-};
+use std::hash::Hash;
 
 use plantuml::{EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem};
 
@@ -30,9 +27,10 @@ where
     }
 
     pub fn get_edge(&self, lbl: &Lbl) -> Option<&usize> {
-        self.edges.iter()
-        .find(|(l, _)| l == lbl)
-        .map(|(_, idx)| idx)
+        self.edges
+            .iter()
+            .find(|(l, _)| l == lbl)
+            .map(|(_, idx)| idx)
     }
 }
 
@@ -84,7 +82,6 @@ where
 
                 let node = self.get_node_mut(&key).unwrap();
                 node.edges.push(((*a).clone(), derivative_idx));
-
             }
         }
     }
@@ -98,15 +95,11 @@ where
     }
 
     pub fn get_node_mut(&mut self, regex: &Regex<Lbl>) -> Option<&mut AutomataNode<Lbl>> {
-        self.node_vec
-        .iter_mut()
-        .find(|n| n.value == *regex)
+        self.node_vec.iter_mut().find(|n| n.value == *regex)
     }
 
     pub fn get_node_idx(&self, regex: &Regex<Lbl>) -> Option<usize> {
-        self.node_vec
-        .iter()
-        .position(|n| n.value == *regex)
+        self.node_vec.iter().position(|n| n.value == *regex)
     }
 
     pub fn is_match<'a>(&'a self, haystack: impl IntoIterator<Item = &'a Lbl>) -> bool {
@@ -142,9 +135,11 @@ where
         Some(index)
     }
 
-
     /// Traverses the DFA and returns the node where the search ends. If no match is found, returns None
-    fn match_haystack<'a>(&'a self, haystack: impl IntoIterator<Item = &'a Lbl>) -> Option<&'a Regex<Lbl>> {
+    fn match_haystack<'a>(
+        &'a self,
+        haystack: impl IntoIterator<Item = &'a Lbl>,
+    ) -> Option<&'a Regex<Lbl>> {
         if self.is_empty() {
             return None;
         }
@@ -153,9 +148,7 @@ where
 
         for label in haystack {
             match current_node.get_edge(label) {
-                Some(node_idx) => {
-                    current_node = &self.node_vec[*node_idx]
-                }
+                Some(node_idx) => current_node = &self.node_vec[*node_idx],
                 None => {
                     return None;
                 }
@@ -228,7 +221,8 @@ where
 }
 
 impl<Lbl> std::fmt::Display for RegexAutomata<Lbl>
-where Lbl: ScopeGraphLabel + std::fmt::Display + Clone + Eq + Hash
+where
+    Lbl: ScopeGraphLabel + std::fmt::Display + Clone + Eq + Hash,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.raw_reg)
@@ -248,10 +242,7 @@ mod tests {
 
     #[test]
     fn test_generate() {
-        let regex = Regex::or(
-            Regex::concat('a', 'c'),
-            Regex::concat('b', 'c'),
-        );
+        let regex = Regex::or(Regex::concat('a', 'c'), Regex::concat('b', 'c'));
 
         // let regex = Regex::or(
         //     Regex::concat('a', 'c'),

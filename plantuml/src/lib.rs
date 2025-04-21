@@ -2,7 +2,6 @@ mod item;
 pub use item::*;
 
 mod theme;
-pub use theme::*;
 
 pub mod color;
 pub use color::*;
@@ -33,10 +32,10 @@ impl<'a> PlantUmlDiagram<'a> {
         let mut items = self.items.clone();
         items.sort();
         let body = items
-        .iter()
-        .map(|item| item.as_uml())
-        .collect::<Vec<_>>()
-        .join("\n");
+            .iter()
+            .map(|item| item.as_uml())
+            .collect::<Vec<_>>()
+            .join("\n");
         format!("{}\n{}\n@enduml", header, body)
     }
 }

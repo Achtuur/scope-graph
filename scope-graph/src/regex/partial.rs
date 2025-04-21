@@ -4,20 +4,19 @@ use super::dfs::RegexAutomata;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PartialRegex<'a, Lbl>
-where Lbl: ScopeGraphLabel
+where
+    Lbl: ScopeGraphLabel,
 {
     automata: &'a RegexAutomata<Lbl>,
     idx: usize,
 }
 
 impl<'a, Lbl> PartialRegex<'a, Lbl>
-where Lbl: ScopeGraphLabel
+where
+    Lbl: ScopeGraphLabel,
 {
     pub fn new(automata: &'a RegexAutomata<Lbl>) -> Self {
-        Self {
-            automata,
-            idx: 0,
-        }
+        Self { automata, idx: 0 }
     }
 
     pub fn with_index(automata: &'a RegexAutomata<Lbl>, idx: usize) -> Self {

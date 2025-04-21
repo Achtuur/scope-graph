@@ -1,8 +1,13 @@
 use std::{
-    collections::{btree_map::Entry, BTreeMap, HashMap, HashSet}, fmt::Write, hash::Hash
+    collections::{btree_map::Entry, BTreeMap, HashSet},
+    fmt::Write,
+    hash::Hash,
 };
 
-use crate::{label::{LabelOrEnd, ScopeGraphLabel}, path::Path};
+use crate::{
+    label::{LabelOrEnd, ScopeGraphLabel},
+    path::Path,
+};
 
 pub struct LabelOrderBuilder<Lbl>
 where
@@ -17,6 +22,15 @@ where
 
 // use fullwidth_lt since mmd doesnt render '<' properly
 const FULLWIDTH_LT: char = '＜';
+
+impl<Lbl> Default for LabelOrderBuilder<Lbl>
+where
+    Lbl: ScopeGraphLabel + Clone + Hash + Eq + Ord,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl<Lbl> LabelOrderBuilder<Lbl>
 where
@@ -60,9 +74,7 @@ where
             }
             orders.push((lbl.clone(), less_thans));
         }
-        LabelOrder {
-            orders
-        }
+        LabelOrder { orders }
     }
 
     /// Returns the ordering of two labels w.r.t. `label1`
@@ -124,11 +136,10 @@ where
     }
 }
 
-
-
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct LabelOrder<Lbl>
-where Lbl: ScopeGraphLabel,
+where
+    Lbl: ScopeGraphLabel,
 {
     /// Label orderings
     /// First vec contains all labels
@@ -137,7 +148,8 @@ where Lbl: ScopeGraphLabel,
 }
 
 impl<Lbl> LabelOrder<Lbl>
-where Lbl: ScopeGraphLabel
+where
+    Lbl: ScopeGraphLabel,
 {
     /// Less, so HIGHER priority
     pub fn is_less(&self, label1: &LabelOrEnd<Lbl>, label2: &LabelOrEnd<Lbl>) -> bool {
@@ -145,7 +157,9 @@ where Lbl: ScopeGraphLabel
             (LabelOrEnd::End(_), LabelOrEnd::End(_)) => false,
             (LabelOrEnd::End(_), LabelOrEnd::Label(_)) => true,
             (LabelOrEnd::Label(_), LabelOrEnd::End(_)) => false,
-            (LabelOrEnd::Label((l1, _)), LabelOrEnd::Label((l2, _))) => self.is_less_internal(l1, l2),
+            (LabelOrEnd::Label((l1, _)), LabelOrEnd::Label((l2, _))) => {
+                self.is_less_internal(l1, l2)
+            }
         }
     }
 
@@ -160,7 +174,6 @@ where Lbl: ScopeGraphLabel
         }
     }
 
-
     // sort data using label order
     // p1 < p2 if all labels in p1 < all labels in p2
     pub fn path_is_less(&self, path1: &Path<Lbl>, path2: &Path<Lbl>) -> bool {
@@ -168,10 +181,10 @@ where Lbl: ScopeGraphLabel
         let lbl2 = path2.as_lbl_vec();
 
         lbl1.iter()
-        .zip(lbl2.iter())
-        // if labels are equal, continue. We only care about the part of paths that is different.
-        .skip_while(|(l1, l2)| l1 == l2)
-        .all(|(l1, l2)| self.is_less_internal(l1, l2))
+            .zip(lbl2.iter())
+            // if labels are equal, continue. We only care about the part of paths that is different.
+            .skip_while(|(l1, l2)| l1 == l2)
+            .all(|(l1, l2)| self.is_less_internal(l1, l2))
     }
 
     // returns true if lbl 1 is less than label2 (so higher priority)
@@ -189,24 +202,21 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = self
-        .orders
-        .iter()
-        .map(|(lbl, less_thans)| {
-            let less_than_str = less_thans.iter()
-            .fold(String::new(), |mut s, lt| {
-                write!(&mut s, "{} {} {}, ", lbl, FULLWIDTH_LT, lt)
-                .expect("Failed to write string");
-                s
-            });
-            less_than_str.trim_end_matches(", ").to_string()
-        })
-        .collect::<String>();
-
+            .orders
+            .iter()
+            .map(|(lbl, less_thans)| {
+                let less_than_str = less_thans.iter().fold(String::new(), |mut s, lt| {
+                    write!(&mut s, "{} {} {}, ", lbl, FULLWIDTH_LT, lt)
+                        .expect("Failed to write string");
+                    s
+                });
+                less_than_str.trim_end_matches(", ").to_string()
+            })
+            .collect::<String>();
 
         write!(f, "{}", s.trim_end_matches(" "))
     }
 }
-
 
 #[cfg(test)]
 mod tests {

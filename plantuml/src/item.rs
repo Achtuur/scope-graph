@@ -1,7 +1,6 @@
 use crate::color::Color;
 
-#[derive(Default)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EdgeDirection {
     #[default]
     Unspecified,
@@ -25,8 +24,7 @@ impl EdgeDirection {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum LineStyle {
     #[default]
     Solid,
@@ -46,7 +44,6 @@ impl LineStyle {
     }
 }
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum NodeType {
     /// Node, used for scopes
@@ -64,8 +61,7 @@ impl NodeType {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct ItemAnnotation {
     line_style: Option<LineStyle>,
     text_color: Option<Color>,
@@ -111,7 +107,7 @@ pub enum PlantUmlItemKind {
     Note {
         to: String,
         contents: String,
-    }
+    },
 }
 
 impl Ord for PlantUmlItemKind {
@@ -137,12 +133,34 @@ impl PlantUmlItemKind {
 
     fn as_uml(&self, annotation_str: &str) -> String {
         match self {
-            PlantUmlItemKind::Node { id, contents, node_type } => {
-                format!("{} \"{}\" as {} {}", node_type.uml_str(), contents, id, annotation_str)
-            },
-            PlantUmlItemKind::Edge { from, to, label, dir,} => {
-                format!("{} -{}-> {} {} : {}", from, dir.uml_str(), to, annotation_str, label)
-            },
+            PlantUmlItemKind::Node {
+                id,
+                contents,
+                node_type,
+            } => {
+                format!(
+                    "{} \"{}\" as {} {}",
+                    node_type.uml_str(),
+                    contents,
+                    id,
+                    annotation_str
+                )
+            }
+            PlantUmlItemKind::Edge {
+                from,
+                to,
+                label,
+                dir,
+            } => {
+                format!(
+                    "{} -{}-> {} {} : {}",
+                    from,
+                    dir.uml_str(),
+                    to,
+                    annotation_str,
+                    label
+                )
+            }
             PlantUmlItemKind::Note { to, contents } => {
                 let formatted = contents.replace("\n", "\n\t");
                 let note_key = format!("N_{0:}", to);
@@ -176,7 +194,12 @@ impl PlantUmlItem {
         })
     }
 
-    pub fn edge(from: impl ToString, to: impl ToString, label: impl ToString, dir: EdgeDirection) -> Self {
+    pub fn edge(
+        from: impl ToString,
+        to: impl ToString,
+        label: impl ToString,
+        dir: EdgeDirection,
+    ) -> Self {
         Self::new(PlantUmlItemKind::Edge {
             from: from.to_string(),
             to: to.to_string(),

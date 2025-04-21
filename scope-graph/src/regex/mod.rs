@@ -7,7 +7,8 @@ use crate::label::ScopeGraphLabel;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Regex<Lbl>
-where Lbl: ScopeGraphLabel
+where
+    Lbl: ScopeGraphLabel,
 {
     /// `eps`
     EmptyString,

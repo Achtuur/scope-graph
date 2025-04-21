@@ -1,12 +1,21 @@
-use std::{collections::{HashMap, HashSet}, hash::{DefaultHasher, Hash, Hasher}, path::is_separator, sync::Mutex};
-
-use tracing_subscriber::fmt::layer;
-
-use crate::{
-    data::ScopeGraphData, graph::BaseScopeGraph, label::{LabelOrEnd, ScopeGraphLabel}, order::{LabelOrder, LabelOrderBuilder}, path::Path, regex::{dfs::RegexAutomata, PartialRegex}, scope::Scope, FORWARD_ENABLE_CACHING
+use std::{
+    collections::HashSet,
+    hash::{DefaultHasher, Hash, Hasher},
+    sync::Mutex,
 };
 
-use super::{CachedScopeGraph, QueryCache, QueryResult, ScopeData};
+use crate::{
+    data::ScopeGraphData,
+    graph::BaseScopeGraph,
+    label::{LabelOrEnd, ScopeGraphLabel},
+    order::LabelOrder,
+    path::Path,
+    regex::{dfs::RegexAutomata, PartialRegex},
+    scope::Scope,
+    FORWARD_ENABLE_CACHING,
+};
+
+use super::{QueryCache, QueryResult, ScopeData};
 
 // todo: reuse code from Resolver
 pub struct CachedResolver<'r, Lbl, Data, DEq, P, DProj>
@@ -70,14 +79,22 @@ where
     }
 
     pub fn resolve(&mut self, path: Path<Lbl>) -> Vec<QueryResult<Lbl, Data>> {
-        tracing::info!("Resolving query: {}, {}, {}", path, self.path_re, self.lbl_order);
+        tracing::info!(
+            "Resolving query: {}, {}, {}",
+            path,
+            self.path_re,
+            self.lbl_order
+        );
         let reg = PartialRegex::new(self.path_re);
         let mut envs = self.resolve_all(path.clone(), reg);
         // only keep envs that are well-formed
-        envs.retain(|qr| {
-            self.data_wfd(&qr.data)
-        });
-        tracing::info!("Resolved query: {}, {}, {}, found:", path, self.path_re, self.lbl_order);
+        envs.retain(|qr| self.data_wfd(&qr.data));
+        tracing::info!(
+            "Resolved query: {}, {}, {}, found:",
+            path,
+            self.path_re,
+            self.lbl_order
+        );
         for qr in &envs {
             tracing::info!("\t{}", qr);
         }
@@ -85,7 +102,11 @@ where
     }
 
     /// recursive call site for resolving
-    fn resolve_all<'a: 'r>(&mut self, path: Path<Lbl>, reg: PartialRegex<'a, Lbl>) -> Vec<QueryResult<Lbl, Data>> {
+    fn resolve_all<'a: 'r>(
+        &mut self,
+        path: Path<Lbl>,
+        reg: PartialRegex<'a, Lbl>,
+    ) -> Vec<QueryResult<Lbl, Data>> {
         tracing::trace!("Resolving path: {}", path);
         self.considered_paths.lock().unwrap().push(path.clone());
         self.get_env(path, reg)
@@ -96,7 +117,12 @@ where
         (self.data_proj)(data) == self.proj_wfd
     }
 
-    fn cache_key_with_data(&self, path: &Path<Lbl>, reg: &PartialRegex<'_, Lbl>, data: &Data) -> (usize, u64, Scope) {
+    fn cache_key_with_data(
+        &self,
+        path: &Path<Lbl>,
+        reg: &PartialRegex<'_, Lbl>,
+        data: &Data,
+    ) -> (usize, u64, Scope) {
         let mut hasher = DefaultHasher::new();
         (self.data_proj)(data).hash(&mut hasher);
         let hash = hasher.finish();
@@ -105,7 +131,12 @@ where
         (automata_idx, hash, scope)
     }
 
-    fn cache_env(&mut self, path: &Path<Lbl>, reg: PartialRegex<'_, Lbl>, envs: Vec<QueryResult<Lbl, Data>>) {
+    fn cache_env(
+        &mut self,
+        path: &Path<Lbl>,
+        reg: PartialRegex<'_, Lbl>,
+        envs: Vec<QueryResult<Lbl, Data>>,
+    ) {
         if !FORWARD_ENABLE_CACHING {
             return;
         }
@@ -131,21 +162,22 @@ where
             return None;
         }
 
-        let envs = self.cache.iter()
-        .filter(|(k, _)| k.2 == path.target()) // get all envs for the scope
-        .flat_map(|(_, v)| {
-            v
+        let envs = self
+            .cache
             .iter()
-            .cloned() // todo: remove or soften this clone
-            .map(|mut qr| {
-                // prepend 'path' to qr so we connect the path to the env in the cache entry
-                // ie if path is 1 -> 2 -> 3 and qr is 3 -> 4, we want to return 1 -> 2 -> 3 -> 4
-                tracing::trace!("Prepending path {} to cached env {}", path, qr);
-                qr.path = qr.path.prepend(path);
-                qr
+            .filter(|(k, _)| k.2 == path.target()) // get all envs for the scope
+            .flat_map(|(_, v)| {
+                v.iter()
+                    .cloned() // todo: remove or soften this clone
+                    .map(|mut qr| {
+                        // prepend 'path' to qr so we connect the path to the env in the cache entry
+                        // ie if path is 1 -> 2 -> 3 and qr is 3 -> 4, we want to return 1 -> 2 -> 3 -> 4
+                        tracing::trace!("Prepending path {} to cached env {}", path, qr);
+                        qr.path = qr.path.prepend(path);
+                        qr
+                    })
             })
-        })
-        .collect::<Vec<_>>();
+            .collect::<Vec<_>>();
 
         match envs.len() {
             0 => None,
@@ -153,7 +185,11 @@ where
         }
     }
 
-    fn get_env(&mut self, path: Path<Lbl>, reg: PartialRegex<'r, Lbl>) -> Vec<QueryResult<Lbl, Data>> {
+    fn get_env(
+        &mut self,
+        path: Path<Lbl>,
+        reg: PartialRegex<'r, Lbl>,
+    ) -> Vec<QueryResult<Lbl, Data>> {
         // all edges where brzozowski derivative != 0
         let scope = self.get_scope(path.target()).expect("Scope not found");
 
@@ -171,9 +207,7 @@ where
             .fold(HashSet::new(), |mut set, lbl| {
                 let mut this_reg = reg.clone();
                 if this_reg.step(lbl).is_some() {
-                    set.insert(LabelOrEnd::Label(
-                        (lbl.clone(), this_reg)
-                    ));
+                    set.insert(LabelOrEnd::Label((lbl.clone(), this_reg)));
                 }
                 set
             })
@@ -261,8 +295,7 @@ where
     ) -> Vec<QueryResult<Lbl, Data>> {
         tracing::trace!("Shadowing...");
         a2.retain(|qr2| {
-            !a1
-                .iter()
+            !a1.iter()
                 .inspect(|qr1| {
                     let res = (self.data_eq)(&qr1.data, &qr2.data);
                     tracing::trace!("Comparing {} with {}, shadowed?{}", qr1, qr2, res);

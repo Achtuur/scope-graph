@@ -1,8 +1,17 @@
-use std::{io::Write, sync::{atomic::AtomicUsize, Arc}};
+use std::{io::Write, sync::Arc};
 
-use plantuml::{Color, PlantUmlDiagram};
+use plantuml::PlantUmlDiagram;
 use rand::Rng;
-use scope_graph::{data::ScopeGraphData, get_color, graph::{BaseScopeGraph, CachedScopeGraph, ScopeGraph}, label::ScopeGraphLabel, order::LabelOrderBuilder, regex::{dfs::RegexAutomata, Regex}, scope::Scope, DRAW_CACHES};
+use scope_graph::{
+    data::ScopeGraphData,
+    get_color,
+    graph::{CachedScopeGraph, ScopeGraph},
+    label::ScopeGraphLabel,
+    order::LabelOrderBuilder,
+    regex::{dfs::RegexAutomata, Regex},
+    scope::Scope,
+    DRAW_CACHES,
+};
 
 pub type UsedScopeGraph<'s, Lbl, Data> = CachedScopeGraph<Lbl, Data>;
 
@@ -103,8 +112,6 @@ fn create_example_graph<'a>() -> UsedScopeGraph<'a, Label, Data> {
     graph.add_scope(scope2, Data::NoData);
     graph.add_scope(scope3, Data::NoData);
 
-
-
     for _ in 0..1 {
         graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
     }
@@ -185,14 +192,11 @@ fn slides_example() {
     graph.add_edge(scope6, scope3, Label::Parent);
 
     let order = LabelOrderBuilder::new()
-    .push(Label::Declaration, Label::Parent)
-    .build();
+        .push(Label::Declaration, Label::Parent)
+        .build();
 
     // P*D;
-    let label_reg =Regex::concat(
-        Regex::kleene(Label::Parent),
-        Label::Declaration,
-    );
+    let label_reg = Regex::concat(Regex::kleene(Label::Parent), Label::Declaration);
     let matcher = RegexAutomata::from_regex(label_reg.clone());
 
     let y_match: Arc<str> = Arc::from("y");
@@ -214,17 +218,20 @@ fn slides_example() {
         let p = set.0;
         let start_scopes = set.1;
 
-        let res_uml = start_scopes.into_iter()
-        .flat_map(|s| graph.query_proj(
-            s,
-            &matcher,
-            &order,
-            |d| Arc::from(d.name()),
-            p.clone(),
-            |d1, d2| d1 == d2,
-        ))
-        .enumerate()
-        .flat_map(|(i, r)| r.path.as_uml(get_color(i), false));
+        let res_uml = start_scopes
+            .into_iter()
+            .flat_map(|s| {
+                graph.query_proj(
+                    s,
+                    &matcher,
+                    &order,
+                    |d| Arc::from(d.name()),
+                    p.clone(),
+                    |d1, d2| d1 == d2,
+                )
+            })
+            .enumerate()
+            .flat_map(|(i, r)| r.path.as_uml(get_color(i), false));
         diagram.extend(res_uml);
 
         let graph_uml = graph.as_uml(DRAW_CACHES);
@@ -234,17 +241,14 @@ fn slides_example() {
         let fname = format!("output/output{}.puml", idx);
         write_to_file(&fname, uml.as_bytes());
     }
-
 }
-
 
 fn main() {
     tracing_subscriber::fmt()
-    .with_max_level(tracing::Level::TRACE)
-    .init();
+        .with_max_level(tracing::Level::TRACE)
+        .init();
 
     slides_example();
-    return;
 
     // let mut bu_graph = create_long_graph();
     // let mut forward_graph = CachedScopeGraph::from_base(bu_graph.clone());
@@ -287,7 +291,7 @@ fn main() {
     // println!("run bu {:?}", timer.elapsed());
 
     // let timer = std::time::Instant::now();
-    
+
     // let res_fw = forward_graph.query_proj(
     //     start_scope,
     //     &matcher,
@@ -324,7 +328,6 @@ fn main() {
     // let res_b_uml = res_fw
     //     .iter()
     //     .flat_map(|r| r.path.as_uml(Color::Blue, false));
-
 
     // let mut diagram = PlantUmlDiagram::new(title.as_str());
     // diagram.extend(graph_uml);

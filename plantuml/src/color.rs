@@ -1,5 +1,4 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum Color {
     #[default]
     Black,
@@ -13,14 +12,18 @@ pub enum Color {
 
 impl std::fmt::Display for Color {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", match self {
-            Self::Black => "black",
-            Self::Red => "red",
-            Self::Blue => "blue",
-            Self::Green => "green",
-            Self::Purple => "purple",
-            Self::Yellow => "yellow",
-            Self::Orange => "orange",
-        })
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Black => "black",
+                Self::Red => "red",
+                Self::Blue => "blue",
+                Self::Green => "green",
+                Self::Purple => "purple",
+                Self::Yellow => "yellow",
+                Self::Orange => "orange",
+            }
+        )
     }
 }

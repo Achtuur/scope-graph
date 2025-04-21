@@ -50,11 +50,10 @@ const OUTPUT_DIR: &str = "output/";
 
 macro_rules! path {
     ($dir: expr, $name:ident . $ext: ident) => {{
-        let mut path = PathBuf::from_str($dir).unwrap()
-        .join(stringify!($name));
+        let mut path = PathBuf::from_str($dir).unwrap().join(stringify!($name));
         path.set_extension(stringify!($ext));
         path
-    }}
+    }};
 }
 
 fn main() {
@@ -78,8 +77,7 @@ fn main() {
 
     println!("Rendering scope graph...");
     let path = path!(OUTPUT_DIR, first_example.mmd);
-    sg.render_to(path, RenderSettings::default())
-        .unwrap();
+    sg.render_to(path, RenderSettings::default()).unwrap();
     println!("Done!");
 }
 

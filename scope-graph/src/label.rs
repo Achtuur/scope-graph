@@ -3,13 +3,7 @@ use std::hash::Hash;
 use crate::regex::PartialRegex;
 
 pub trait ScopeGraphLabel:
-    PartialEq
-    + Clone
-    + std::fmt::Debug
-    + std::fmt::Display
-    + Eq
-    + Ord
-    + Hash
+    PartialEq + Clone + std::fmt::Debug + std::fmt::Display + Eq + Ord + Hash
 {
     fn char(&self) -> char;
     fn str(&self) -> &'static str;
@@ -27,7 +21,8 @@ impl ScopeGraphLabel for char {
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum LabelOrEnd<'a, Lbl>
-where Lbl: ScopeGraphLabel
+where
+    Lbl: ScopeGraphLabel,
 {
     Label((Lbl, PartialRegex<'a, Lbl>)),
     End(PartialRegex<'a, Lbl>),

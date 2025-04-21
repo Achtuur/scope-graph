@@ -1,11 +1,5 @@
 pub trait ScopeGraphData:
-    PartialEq
-    + Clone
-    + std::fmt::Debug
-    + std::fmt::Display
-    + Eq
-    + Ord
-    + std::hash::Hash
+    PartialEq + Clone + std::fmt::Debug + std::fmt::Display + Eq + Ord + std::hash::Hash
 {
     /// Returns true if the variant has data.
     ///

@@ -1,7 +1,4 @@
-use std::{
-    collections::{HashMap, HashSet},
-    sync::{Arc, Mutex, MutexGuard},
-};
+use std::collections::HashMap;
 
 use plantuml::PlantUmlItem;
 use resolve::CachedResolver;
@@ -10,7 +7,7 @@ use crate::{
     data::ScopeGraphData,
     graph::{BaseScopeGraph, ScopeData, ScopeMap},
     label::ScopeGraphLabel,
-    order::{LabelOrder, LabelOrderBuilder},
+    order::LabelOrder,
     path::Path,
     regex::dfs::RegexAutomata,
     resolve::QueryResult,
@@ -151,14 +148,12 @@ where
             .flat_map(|(query_params, query_cache)| {
                 query_cache
                     .iter()
-                    .filter(|(key, _)| {
-                        !self.scope_holds_data(key.2)
-                    })
+                    .filter(|(key, _)| !self.scope_holds_data(key.2))
                     // map with scope as key to not have duplicate notes
                     .fold(HashMap::new(), |mut acc, (keys, envs)| {
                         let key = keys.2; // scope
-                        let entry: &mut HashMap<QueryCacheKey, &Vec<QueryResult<Lbl, Data>>>
-                        = acc.entry(key).or_default();
+                        let entry: &mut HashMap<QueryCacheKey, &Vec<QueryResult<Lbl, Data>>> =
+                            acc.entry(key).or_default();
                         entry.insert(*keys, envs);
                         acc
                     })
@@ -171,7 +166,8 @@ where
                         let vals = envs
                             .iter()
                             .map(|(keys, env)| {
-                                let cache_str = env.iter()
+                                let cache_str = env
+                                    .iter()
                                     .map(|result| result.to_string())
                                     .collect::<Vec<String>>()
                                     .join("\n");
@@ -186,11 +182,20 @@ where
                     })
             })
             .collect()
-
     }
 
     fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>> {
         self.sg.get_scope(scope)
+    }
+}
+
+impl<'s, Lbl, Data> Default for CachedScopeGraph<Lbl, Data>
+where
+    Lbl: ScopeGraphLabel,
+    Data: ScopeGraphData,
+{
+    fn default() -> Self {
+        Self::new()
     }
 }
 
