@@ -1,10 +1,10 @@
 use std::{collections::{HashMap, HashSet}, path::is_separator, sync::Mutex};
 
 use crate::{
-    data::ScopeGraphData, label::{LabelOrEnd, ScopeGraphLabel}, order::{LabelOrder, LabelOrderBuilder}, path::Path, regex::dfs::RegexAutomata, scope::Scope, FORWARD_ENABLE_CACHING
+    data::ScopeGraphData, label::{LabelOrEnd, ScopeGraphLabel}, order::{LabelOrder, LabelOrderBuilder}, path::Path, regex::{dfs::RegexAutomata, PartialRegex}, scope::Scope, FORWARD_ENABLE_CACHING
 };
 
-use super::{BaseScopeGraph, QueryResult, ScopeData};
+use super::{BaseScopeGraph, QueryResult, ScopeData, ScopeGraph};
 
 #[derive(Hash, PartialEq, Eq, Debug)]
 pub struct CacheKey<Lbl>
@@ -75,39 +75,74 @@ where
         }
     }
 
-    pub fn resolve(&self, path: Path<Lbl>) -> Vec<QueryResult<Lbl, Data>> {
-        // println!("Resolving path: {}", path);
-        self.considered_paths.lock().unwrap().push(path.clone());
-        self.get_env(path)
+    pub fn resolve(&mut self, path: Path<Lbl>) -> Vec<QueryResult<Lbl, Data>> {
+        tracing::info!("Resolving path: {}", path);
+        let reg = PartialRegex::new(self.path_re);
+        let mut envs = self.resolve_all(path.clone(), reg);
+        // only keep envs that are well-formed
+        envs.retain(|qr| {
+            self.data_wfd(&qr.data)
+        });
+        envs
     }
 
-    fn get_env(&self, path: Path<Lbl>) -> Vec<QueryResult<Lbl, Data>> {
+    /// recursive call site for resolving
+    fn resolve_all<'a: 'r>(&mut self, path: Path<Lbl>, reg: PartialRegex<'a, Lbl>) -> Vec<QueryResult<Lbl, Data>> {
+        // println!("Resolving path: {}", path);
+        self.considered_paths.lock().unwrap().push(path.clone());
+        self.get_env(path, reg)
+    }
+
+
+    pub fn print_cache(&self) {
+        // println!("Resolver cache:");
+        // for (k, v) in self.scope_graph.resolve_cache.lock().unwrap().iter() {
+        //     println!("{}: [", k);
+        //     for qr in &v.envs {
+        //         println!("\t{}", qr);
+        //     }
+        //     println!("]");
+        // }
+    }
+
+    // todo: allow overload of data_wfd
+    fn data_wfd(&self, data: &Data) -> bool {
+        (self.data_wfd)(data)
+    }
+
+    fn get_env(&mut self, path: Path<Lbl>, reg: PartialRegex<'r, Lbl>) -> Vec<QueryResult<Lbl, Data>> {
         // all edges where brzozowski derivative != 0
         let scope = self.get_scope(path.target()).expect("Scope not found");
-
         let mut labels = scope
             .parents()
             .iter()
             .map(|e| e.lbl())
             // get unique labels by using hashset
             .fold(HashSet::new(), |mut set, lbl| {
-                let mut label_vec = path.as_lbl_vec();
-                label_vec.push(&lbl);
-                if self.path_re.partial_match(label_vec) {
-                    set.insert(LabelOrEnd::Label(lbl.clone()));
+                let mut this_reg = reg.clone();
+                if this_reg.step(lbl).is_some() {
+                    set.insert(LabelOrEnd::Label(
+                        (lbl.clone(), this_reg)
+                    ));
                 }
                 set
             })
             .into_iter()
             .collect::<Vec<_>>();
-        labels.push(LabelOrEnd::End);
+
+        if labels.is_empty() {
+            // if no labels are found, we are at the end of the path
+            labels.push(LabelOrEnd::End(reg));
+        }
+        // labels.push(LabelOrEnd::End);
 
         self.get_env_for_labels(&labels, path)
     }
 
-    fn get_env_for_labels(
-        &self,
-        labels: &[LabelOrEnd<Lbl>],
+    fn get_env_for_labels<'a>(
+        &mut self,
+        labels: &'a [LabelOrEnd<'r, Lbl>],
+        // reg: PartialRegex<'r, Lbl>,
         // edges: &[&Edge<Lbl>],
         path: Path<Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
@@ -140,10 +175,10 @@ where
         results
     }
 
-    fn get_shadowed_env(
-        &self,
-        max_lbl: &LabelOrEnd<Lbl>,
-        lower_lbls: &[LabelOrEnd<Lbl>],
+    fn get_shadowed_env<'a>(
+        &mut self,
+        max_lbl: &'a LabelOrEnd<'r, Lbl>,
+        lower_lbls: &'a [LabelOrEnd<'r, Lbl>],
         path: Path<Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
         let lower_paths = self.get_env_for_labels(lower_lbls, path.clone());
@@ -153,31 +188,41 @@ where
         self.shadow(lower_paths, max_path)
     }
 
-    fn get_env_for_label(
-        &self,
-        label: &LabelOrEnd<Lbl>,
+    fn get_env_for_label<'a>(
+        &mut self,
+        label: &'a LabelOrEnd<'r, Lbl>,
         path: Path<Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
         let scope = self.get_scope(path.target()).unwrap().clone();
         match label {
             // reached end of a path
-            LabelOrEnd::End => {
-                if self.path_re.is_match(path.as_lbl_vec()) && (self.data_wfd)(&scope.data) {
-                    return vec![QueryResult {
+            LabelOrEnd::End(reg) => {
+                // don't check wfd here
+                match reg.is_accepting() {
+                    true => vec![QueryResult {
                         path,
                         data: scope.data.clone(),
-                    }];
+                    }],
+                    false => Vec::new(),
                 }
-                vec![]
+                // path check is not necessary since we check partial matches along the way
+                // if self.path_re.is_match(path.as_lbl_vec())
+                // {
+                    // return vec![QueryResult {
+                    //     path,
+                    //     data: scope.data.clone(),
+                    // }];
+                // }
+                // vec![]
             }
             // not yet at end
-            LabelOrEnd::Label(label) => {
+            LabelOrEnd::Label((label, partial_reg)) => {
                 scope
                     .parents()
                     .iter()
                     .filter(|e| e.lbl() == label)
                     .map(|e| path.clone().step(e.lbl().clone(), e.target())) // create new paths
-                    .flat_map(|p| self.resolve(p)) // resolve new paths
+                    .flat_map(|p| self.resolve_all(p, partial_reg.clone())) // resolve new paths
                     .collect::<Vec<_>>()
             }
         }
@@ -186,18 +231,16 @@ where
     fn shadow(
         &self,
         mut a1: Vec<QueryResult<Lbl, Data>>,
-        a2: Vec<QueryResult<Lbl, Data>>,
+        mut a2: Vec<QueryResult<Lbl, Data>>,
     ) -> Vec<QueryResult<Lbl, Data>> {
-        let mut keep_a2 = a2
-            .into_iter()
-            .filter(|qr2| {
-                !a1
+        tracing::trace!("Shadowing...");
+        a2.retain(|qr2| {
+            !a1
                 .iter()
                 .any(|qr1| (self.data_eq)(&qr1.data, &qr2.data))
-            })
-            .collect::<Vec<_>>();
+        });
 
-        a1.append(&mut keep_a2);
+        a1.append(&mut a2);
         a1
     }
 
@@ -207,6 +250,6 @@ where
 
     fn scope_data_wfd(&self, s: Scope) -> bool {
         let scope = self.get_scope(s).expect("Scope not found");
-        (self.data_wfd)(&scope.data)
+        self.data_wfd(&scope.data)
     }
 }

@@ -147,7 +147,8 @@ impl PlantUmlItemKind {
                 let formatted = contents.replace("\n", "\n\t");
                 let note_key = format!("N_{0:}", to);
                 let note = format!("note as {0:}\n\t{1:}\nend note", note_key, formatted);
-                format!("{note}\n{0:} .r. {1:}", note_key, to)
+                let dir = EdgeDirection::Left;
+                format!("{note}\n{} .{}. {}", note_key, dir.uml_str(), to)
             }
         }
     }

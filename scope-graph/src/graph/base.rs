@@ -80,7 +80,7 @@ where Lbl: ScopeGraphLabel + Clone,
     where
         DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
         DWfd: for<'da> Fn(&'da Data) -> bool {
-        let resolver = Resolver::new(
+        let mut resolver = Resolver::new(
             self,
             path_regex,
             order,
@@ -106,7 +106,7 @@ where Lbl: ScopeGraphLabel + Clone,
         let data_wfd = |data: &Data| {
             data_proj(data) == proj_wfd
         };
-        let resolver = Resolver::new(
+        let mut resolver = Resolver::new(
             self,
             path_regex,
             order,

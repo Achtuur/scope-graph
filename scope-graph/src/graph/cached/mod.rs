@@ -175,6 +175,7 @@ where
                                     .map(|result| result.to_string())
                                     .collect::<Vec<String>>()
                                     .join("\n");
+                                // cache_str
                                 format!("<b>{:?}</b>\n{}", keys, cache_str)
                             })
                             .collect::<Vec<String>>()
@@ -183,44 +184,9 @@ where
                         let cache_str = format!("<b>{:?}</b>\n{}", key, vals);
                         Some(PlantUmlItem::note(key.uml_id(), cache_str))
                     })
-                    // .flat_map(|(scope, entries)| {
-                    //     entries.into_iter().filter_map(|(key, envs)| {
-                    //         if envs.is_empty() {
-                    //             return None;
-                    //         }
-
-                    //         let vals = envs
-                    //             .iter()
-                    //             .map(|env| env.to_string())
-                    //             .collect::<Vec<String>>()
-                    //             .join("\n");
-
-                    //         let cache_str = format!("<b>{:?}</b>\n{}", key, vals);
-                    //         Some(PlantUmlItem::note(key.2.uml_id(), cache_str))
-                    //     })
-                    // })
             })
             .collect()
 
-        // self.resolve_cache
-        //     .iter()
-        //     .filter_map(|(key, value)| {
-        //         if value.envs.is_empty() {
-        //             return None;
-        //         }
-
-        //         let vals = value.envs.iter().map(|env| {
-        //             env.to_string()
-        //         })
-        //         .collect::<Vec<String>>()
-        //         .join("\n");
-
-        //         let cache_str = format!("<b>{}</b>\n{}", key, vals);
-        //         Some(
-        //             PlantUmlItem::note(key.scope.0, cache_str)
-        //         )
-        //     })
-        //     .collect::<Vec<_>>()
     }
 
     fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>> {

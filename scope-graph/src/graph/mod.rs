@@ -205,8 +205,8 @@ where
                 false => NodeType::Node,
             };
             let contents = match d.data.variant_has_data() {
-                true => d.data.render_string(),
-                false => s.0.to_string(),
+                true => format!("{} > {}", s, d.data.render_string()),
+                false => s.to_string(),
             };
             PlantUmlItem::node(s.uml_id(), contents, node_type)
         });

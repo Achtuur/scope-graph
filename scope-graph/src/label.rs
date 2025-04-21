@@ -1,5 +1,7 @@
 use std::hash::Hash;
 
+use crate::regex::PartialRegex;
+
 pub trait ScopeGraphLabel:
     PartialEq
     + Clone
@@ -24,8 +26,9 @@ impl ScopeGraphLabel for char {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
-pub enum LabelOrEnd<Lbl>
+pub enum LabelOrEnd<'a, Lbl>
+where Lbl: ScopeGraphLabel
 {
-    Label(Lbl),
-    End,
+    Label((Lbl, PartialRegex<'a, Lbl>)),
+    End(PartialRegex<'a, Lbl>),
 }

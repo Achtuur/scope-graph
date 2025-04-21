@@ -179,10 +179,10 @@ fn slides_example() {
     graph.add_edge(scope2, scope1, Label::Parent);
     graph.add_edge(scope3, scope1, Label::Parent);
     graph.add_edge(scope4, scope2, Label::Parent);
-    // graph.add_edge(scope5, scope4, Label::Parent);
+    graph.add_edge(scope5, scope4, Label::Parent);
 
-    // graph.add_edge(scope6, scope2, Label::Parent);
-    // graph.add_edge(scope6, scope3, Label::Parent);
+    graph.add_edge(scope6, scope2, Label::Parent);
+    graph.add_edge(scope6, scope3, Label::Parent);
 
     let order = LabelOrderBuilder::new()
     .push(Label::Declaration, Label::Parent)
@@ -198,8 +198,8 @@ fn slides_example() {
     let y_match: Arc<str> = Arc::from("y");
     let x_match: Arc<str> = Arc::from("x");
     let query_scope_set = [
-        (y_match, vec![scope2]),
-        (x_match, vec![scope3]),
+        (y_match, vec![scope6]),
+        (x_match, vec![scope6]),
         // vec![scope2, scope6],
         // vec![scope2, scope6, scope5],
     ];
@@ -240,7 +240,7 @@ fn slides_example() {
 
 fn main() {
     tracing_subscriber::fmt()
-    .with_max_level(tracing::Level::DEBUG)
+    .with_max_level(tracing::Level::TRACE)
     .init();
 
     slides_example();

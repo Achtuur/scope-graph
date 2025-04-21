@@ -93,6 +93,10 @@ where
         self.node_vec.is_empty()
     }
 
+    pub fn get_node(&self, idx: usize) -> Option<&AutomataNode<Lbl>> {
+        self.node_vec.get(idx)
+    }
+
     pub fn get_node_mut(&mut self, regex: &Regex<Lbl>) -> Option<&mut AutomataNode<Lbl>> {
         self.node_vec
         .iter_mut()
@@ -106,10 +110,10 @@ where
     }
 
     pub fn is_match<'a>(&'a self, haystack: impl IntoIterator<Item = &'a Lbl>) -> bool {
-        match self.match_haystack(haystack) {
-            Some(node) => node.is_nullable(),
-            None => false,
-        }
+        let Some(node) = self.match_haystack(haystack) else {
+            return false;
+        };
+        node.is_nullable()
     }
 
     pub fn partial_match<'a>(&'a self, haystack: impl IntoIterator<Item = &'a Lbl>) -> bool {

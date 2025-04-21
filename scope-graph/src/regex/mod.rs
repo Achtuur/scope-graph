@@ -1,4 +1,7 @@
 pub mod dfs;
+mod partial;
+
+pub use partial::PartialRegex;
 
 use crate::label::ScopeGraphLabel;
 

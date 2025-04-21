@@ -52,6 +52,37 @@ where Lbl: ScopeGraphLabel + Clone
         }
     }
 
+    pub fn without_target(&self) -> Option<&Self> {
+        match self {
+            Self::Start(_) => None,
+            Self::Step { from, .. } => Some(from),
+        }
+    }
+
+    pub fn prepend(self, other: &Self) -> Self {
+        match (self, other) {
+            (Self::Start(s), Self::Step { label, target, from}) if target.0 == s.0 => {
+                Self::Step {
+                    label: label.clone(),
+                    target: target.clone(),
+                    from: from.clone(),
+                }
+            }
+            (Self::Step { label, target, from }, o@Self::Step { .. }) => {
+                Self::Step {
+                    label,
+                    target,
+                    from: Box::new(from.prepend(o)),
+                }
+            }
+            // rhs is Start here
+            (p, _) => {
+                // prepending start just results in self
+                p
+            }
+        }
+    }
+
     pub fn target(&self) -> Scope {
         match self {
             Self::Start(s) => *s,
