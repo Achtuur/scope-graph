@@ -1,4 +1,6 @@
 mod item;
+use std::{fs, io::{self, Write}, path::PathBuf, str::FromStr};
+
 pub use item::*;
 
 mod theme;
@@ -37,5 +39,20 @@ impl<'a> PlantUmlDiagram<'a> {
             .collect::<Vec<_>>()
             .join("\n");
         format!("{}\n{}\n@enduml", header, body)
+    }
+
+    pub fn write_to_file(&self, path: &str) -> Result<(), io::Error> {
+        let path = PathBuf::from_str(path).unwrap();
+        let dir = path.parent().unwrap();
+        fs::create_dir_all(dir)?;
+        let content = self.as_uml();
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&path)
+            .unwrap();
+        file.write_all(content.as_bytes())?;
+        Ok(())
     }
 }

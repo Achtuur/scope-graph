@@ -108,17 +108,6 @@ where
         self.get_env(path, reg)
     }
 
-    pub fn print_cache(&self) {
-        // println!("Resolver cache:");
-        // for (k, v) in self.scope_graph.resolve_cache.lock().unwrap().iter() {
-        //     println!("{}: [", k);
-        //     for qr in &v.envs {
-        //         println!("\t{}", qr);
-        //     }
-        //     println!("]");
-        // }
-    }
-
     // todo: allow overload of data_wfd
     fn data_wfd(&self, data: &Data) -> bool {
         (self.data_wfd)(data)
@@ -221,15 +210,6 @@ where
                     }],
                     false => Vec::new(),
                 }
-                // path check is not necessary since we check partial matches along the way
-                // if self.path_re.is_match(path.as_lbl_vec())
-                // {
-                // return vec![QueryResult {
-                //     path,
-                //     data: scope.data.clone(),
-                // }];
-                // }
-                // vec![]
             }
             // not yet at end
             LabelOrEnd::Label((label, partial_reg)) => {

@@ -1,6 +1,6 @@
 use std::{collections::HashMap, hash::Hash};
 
-use plantuml::{Color, EdgeDirection, NodeType, PlantUmlItem};
+use plantuml::{Color, EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem};
 
 use crate::{
     data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, regex::dfs::RegexAutomata,
@@ -81,10 +81,10 @@ where
 
 pub type ScopeMap<Lbl, Data> = HashMap<Scope, ScopeData<Lbl, Data>>;
 
-pub trait ScopeGraph<Lbl, Data>
+pub trait ScopeGraph<Lbl, Data> : std::fmt::Debug
 where
     Lbl: ScopeGraphLabel,
-    Data: ScopeGraphData,
+    Data: ScopeGraphData
 {
     fn add_scope(&mut self, scope: Scope, data: Data);
     fn add_edge(&mut self, source: Scope, target: Scope, label: Lbl);
@@ -183,6 +183,15 @@ where
             }
         }
         mmd
+    }
+
+    fn as_uml_diagram<'a>(&'a self, display_cache: bool) -> PlantUmlDiagram
+    where Lbl: 'a, Data: 'a
+    {
+        let items = self.as_uml(display_cache);
+        let mut diagram = PlantUmlDiagram::new("scope graph");
+        diagram.extend(items);
+        diagram
     }
 
     fn as_uml<'a>(&'a self, display_cache: bool) -> Vec<PlantUmlItem>

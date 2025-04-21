@@ -19,6 +19,10 @@ impl Scope {
     pub fn uml_id(&self) -> String {
         format!("scope_{}", self.0)
     }
+
+    pub fn reset_counter() {
+        SCOPE_COUNTER.fetch_and(0, Ordering::Relaxed);
+    }
 }
 
 impl std::fmt::Display for Scope {

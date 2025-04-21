@@ -5,7 +5,7 @@ use rand::Rng;
 use scope_graph::{
     data::ScopeGraphData,
     get_color,
-    graph::{CachedScopeGraph, ScopeGraph},
+    graph::{BaseScopeGraph, CachedScopeGraph, ScopeGraph},
     label::ScopeGraphLabel,
     order::LabelOrderBuilder,
     regex::{dfs::RegexAutomata, Regex},
@@ -13,7 +13,7 @@ use scope_graph::{
     DRAW_CACHES,
 };
 
-pub type UsedScopeGraph<'s, Lbl, Data> = CachedScopeGraph<Lbl, Data>;
+pub type UsedScopeGraph<'s, Lbl, Data> = BaseScopeGraph<Lbl, Data>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub enum Label {

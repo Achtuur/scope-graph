@@ -11,6 +11,7 @@ tracing-subscriber = "0.3.19"
 
 [dev-dependencies]
 criterion = "0.5.1"
+scopegraphs = "0.3.3"
 
 [[bench]]
 name = "sg-construction"
