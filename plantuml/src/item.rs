@@ -1,4 +1,4 @@
-use crate::color::Color;
+use crate::theme::{Color, LineStyle};
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EdgeDirection {
@@ -24,25 +24,6 @@ impl EdgeDirection {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
-pub enum LineStyle {
-    #[default]
-    Solid,
-    Dashed,
-    Dotted,
-    Bold,
-}
-
-impl LineStyle {
-    fn uml_str(&self) -> &'static str {
-        match self {
-            LineStyle::Solid => "",
-            LineStyle::Dashed => "line.dashed",
-            LineStyle::Dotted => "line.dotted",
-            LineStyle::Bold => "line.bold",
-        }
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum NodeType {
@@ -61,7 +42,7 @@ impl NodeType {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct ItemAnnotation {
     line_style: Option<LineStyle>,
     text_color: Option<Color>,
@@ -79,9 +60,9 @@ impl ItemAnnotation {
         }
 
         let s = [
-            self.line_style.unwrap_or_default().uml_str().to_string(),
-            format!("text:{}", self.text_color.unwrap_or_default()),
-            format!("line:{}", self.line_color.unwrap_or_default()),
+            self.line_style.unwrap_or_default().inline_uml_str().to_string(),
+            format!("text:{}", self.text_color.unwrap_or_default().as_css()),
+            format!("line:{}", self.line_color.unwrap_or_default().as_css()),
         ]
         .into_iter()
         .filter(|s| !s.is_empty())
@@ -131,7 +112,7 @@ impl PlantUmlItemKind {
         }
     }
 
-    fn as_uml(&self, annotation_str: &str) -> String {
+    fn as_uml(&self, class: &str) -> String {
         match self {
             PlantUmlItemKind::Node {
                 id,
@@ -143,7 +124,7 @@ impl PlantUmlItemKind {
                     node_type.uml_str(),
                     contents,
                     id,
-                    annotation_str
+                    class,
                 )
             }
             PlantUmlItemKind::Edge {
@@ -157,14 +138,14 @@ impl PlantUmlItemKind {
                     from,
                     dir.uml_str(),
                     to,
-                    annotation_str,
+                    class,
                     label
                 )
             }
             PlantUmlItemKind::Note { to, contents } => {
                 let formatted = contents.replace("\n", "\n\t");
                 let note_key = format!("N_{0:}", to);
-                let note = format!("note as {0:}\n\t{1:}\nend note", note_key, formatted);
+                let note = format!("note as {} {}\n\t{}\nend note", note_key, class, formatted);
                 let dir = EdgeDirection::Left;
                 format!("{note}\n{} .{}. {}", note_key, dir.uml_str(), to)
             }
@@ -172,16 +153,30 @@ impl PlantUmlItemKind {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PlantUmlItem {
     item: PlantUmlItemKind,
+    class: Option<String>,
     annotation: ItemAnnotation,
+}
+
+impl PartialOrd for PlantUmlItem {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.item.cmp(&other.item))
+    }
+}
+
+impl Ord for PlantUmlItem {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.partial_cmp(other).unwrap()
+    }
 }
 
 impl PlantUmlItem {
     pub fn new(item: PlantUmlItemKind) -> Self {
         Self {
             item,
+            class: None,
             annotation: ItemAnnotation::default(),
         }
     }
@@ -215,12 +210,17 @@ impl PlantUmlItem {
         })
     }
 
+    pub fn with_class(mut self, class: impl ToString) -> Self {
+        self.class = Some(class.to_string());
+        self
+    }
+
     pub fn with_line_style(mut self, style: LineStyle) -> Self {
         self.annotation.line_style = Some(style);
         self
     }
 
-    pub fn with_text_color(mut self, color: crate::Color) -> Self {
+    pub fn with_text_color(mut self, color: Color) -> Self {
         self.annotation.text_color = Some(color);
         self
     }
@@ -231,8 +231,8 @@ impl PlantUmlItem {
     }
 
     pub fn as_uml(&self) -> String {
-        let annotation_str = self.annotation.as_uml();
-        let s = self.item.as_uml(&annotation_str);
+        let class = self.class.as_ref().map(|c| format!("<<{}>>", c)).unwrap_or_default();
+        let s = self.item.as_uml(&class);
         s.trim_end().to_string()
     }
 }

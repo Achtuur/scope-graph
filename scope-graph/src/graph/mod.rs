@@ -1,6 +1,6 @@
 use std::{collections::HashMap, hash::Hash};
 
-use plantuml::{Color, EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem};
+use plantuml::{theme::{Color, ElementCss, StyleSheet}, EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem};
 
 use crate::{
     data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, regex::dfs::RegexAutomata,
@@ -185,19 +185,33 @@ where
         mmd
     }
 
-    fn as_uml_diagram<'a>(&'a self, display_cache: bool) -> PlantUmlDiagram
-    where Lbl: 'a, Data: 'a
+    fn as_uml_diagram(&self, display_cache: bool) -> PlantUmlDiagram
     {
+        let style_sheet: StyleSheet = [
+            ElementCss::new()
+            .background_color(Color::new_rgb(242, 232, 230))
+            .as_selector("element"),
+            ElementCss::new()
+            .line_color(Color::BLACK)
+            .as_selector("arrow"),
+            ElementCss::new()
+            .as_class("scope"),
+            ElementCss::new()
+            .round_corner(10)
+            .background_color(Color::new_rgb(242, 232, 175))
+            .as_class("data_scope"),
+            ElementCss::new()
+            .as_class("scope_edge"),
+        ].into();
+
         let items = self.as_uml(display_cache);
         let mut diagram = PlantUmlDiagram::new("scope graph");
         diagram.extend(items);
+        diagram.set_style_sheet(style_sheet);
         diagram
     }
 
-    fn as_uml<'a>(&'a self, display_cache: bool) -> Vec<PlantUmlItem>
-    where
-        Lbl: 'a,
-        Data: 'a,
+    fn as_uml(&self, display_cache: bool) -> Vec<PlantUmlItem>
     {
         let mut items = self.generate_graph_uml();
         match display_cache {
@@ -219,15 +233,19 @@ where
 
     fn generate_graph_uml(&self) -> Vec<PlantUmlItem> {
         let scope_nodes = self.scope_iter().map(|(s, d)| {
-            let node_type = match d.data.variant_has_data() {
-                true => NodeType::Card,
-                false => NodeType::Node,
+            let (node_type, class, contents) = match d.data.variant_has_data() {
+                true => (
+                        NodeType::Card,
+                        "data_scope",
+                        format!("{} > {}", s, d.data.render_string()),
+                ),
+                false => (
+                        NodeType::Node,
+                        "scope",
+                        s.to_string(),
+                ),
             };
-            let contents = match d.data.variant_has_data() {
-                true => format!("{} > {}", s, d.data.render_string()),
-                false => s.to_string(),
-            };
-            PlantUmlItem::node(s.uml_id(), contents, node_type)
+            PlantUmlItem::node(s.uml_id(), contents, node_type).with_class(class)
         });
 
         let edges = self.scope_iter().flat_map(move |(s, d)| {
@@ -238,7 +256,8 @@ where
                 };
 
                 PlantUmlItem::edge(s.uml_id(), edge.target().uml_id(), edge.lbl().str(), dir)
-                    .with_line_color(Color::Black)
+                    .with_line_color(Color::BLACK)
+                    .with_class("scope_edge")
             })
         });
 

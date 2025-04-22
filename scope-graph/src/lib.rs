@@ -1,6 +1,6 @@
 use std::sync::atomic::AtomicUsize;
 
-use plantuml::Color;
+use plantuml::theme::Color;
 
 pub mod label;
 pub mod path;
@@ -13,11 +13,11 @@ pub mod regex;
 pub mod resolve;
 
 pub const COLORS: &[Color] = &[
-    Color::Red,
-    Color::Green,
-    Color::Purple,
-    Color::Blue,
-    Color::Orange,
+    Color::RED,
+    Color::GREEN,
+    Color::PURPLE,
+    Color::BLUE,
+    Color::ORANGE,
 ];
 
 pub static COLOR_POINTER: AtomicUsize = AtomicUsize::new(0);

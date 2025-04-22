@@ -13,7 +13,7 @@ use scope_graph::{
     DRAW_CACHES,
 };
 
-pub type UsedScopeGraph<'s, Lbl, Data> = BaseScopeGraph<Lbl, Data>;
+pub type UsedScopeGraph<'s, Lbl, Data> = CachedScopeGraph<Lbl, Data>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub enum Label {
@@ -71,6 +71,13 @@ impl Data {
         match self {
             Self::NoData => "no data".to_string(),
             Self::Variable(x, _) => x.to_string(),
+        }
+    }
+
+    fn name_type(&self) -> String {
+        match self {
+            Self::NoData => "no data".to_string(),
+            Self::Variable(x, t) => format!("{}: {}", x, t),
         }
     }
 }
@@ -180,6 +187,7 @@ fn slides_example() {
     graph.add_scope(scope6, Data::NoData);
 
     graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
+    graph.add_decl(scope1, Label::Declaration, Data::var("x", "bool"));
     graph.add_decl(scope1, Label::Declaration, Data::var("y", "int"));
     // graph.add_decl(scope2, Label::Declaration, Data::var("x", "int"));
     graph.add_edge(scope1, root, Label::Parent);
@@ -202,10 +210,8 @@ fn slides_example() {
     let y_match: Arc<str> = Arc::from("y");
     let x_match: Arc<str> = Arc::from("x");
     let query_scope_set = [
-        (y_match, vec![scope6]),
-        (x_match, vec![scope6]),
-        // vec![scope2, scope6],
-        // vec![scope2, scope6, scope5],
+        (y_match, vec![scope3]),
+        (x_match, vec![scope3, scope5, scope4]),
     ];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
@@ -213,7 +219,7 @@ fn slides_example() {
             "Query1: {}, label_reg={}, label_order={}, data_eq=x:int",
             0, label_reg, order
         );
-        let mut diagram = PlantUmlDiagram::new(title.as_str());
+        let mut diagram = graph.as_uml_diagram(DRAW_CACHES);
 
         let p = set.0;
         let start_scopes = set.1;
@@ -234,8 +240,6 @@ fn slides_example() {
             .flat_map(|(i, r)| r.path.as_uml(get_color(i), false));
         diagram.extend(res_uml);
 
-        let graph_uml = graph.as_uml(DRAW_CACHES);
-        diagram.extend(graph_uml);
         let uml = diagram.as_uml();
 
         let fname = format!("output/output{}.puml", idx);

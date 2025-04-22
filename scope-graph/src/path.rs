@@ -1,4 +1,4 @@
-use plantuml::{Color, EdgeDirection, LineStyle, PlantUmlItem};
+use plantuml::{theme::Color, EdgeDirection, theme::LineStyle, PlantUmlItem};
 
 use crate::{label::ScopeGraphLabel, scope::Scope};
 

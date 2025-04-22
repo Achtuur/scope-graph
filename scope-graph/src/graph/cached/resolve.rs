@@ -36,8 +36,6 @@ where
     lbl_order: &'r LabelOrder<Lbl>,
     data_eq: DEq,
     // data_wfd: DWfd,
-    considered_paths: Mutex<Vec<Path<Lbl>>>,
-
     /// Data projection function
     data_proj: DProj,
     /// DProj output that results in well-formed data
@@ -72,7 +70,6 @@ where
             lbl_order,
             data_eq,
             // data_wfd,
-            considered_paths: Mutex::new(Vec::new()),
             data_proj,
             proj_wfd,
         }
@@ -108,81 +105,7 @@ where
         reg: PartialRegex<'a, Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
         tracing::trace!("Resolving path: {}", path);
-        self.considered_paths.lock().unwrap().push(path.clone());
         self.get_env(path, reg)
-    }
-
-    // todo: allow overload of data_wfd
-    fn data_wfd(&self, data: &Data) -> bool {
-        (self.data_proj)(data) == self.proj_wfd
-    }
-
-    fn cache_key_with_data(
-        &self,
-        path: &Path<Lbl>,
-        reg: &PartialRegex<'_, Lbl>,
-        data: &Data,
-    ) -> (usize, u64, Scope) {
-        let mut hasher = DefaultHasher::new();
-        (self.data_proj)(data).hash(&mut hasher);
-        let hash = hasher.finish();
-        let scope = path.target();
-        let automata_idx = reg.index();
-        (automata_idx, hash, scope)
-    }
-
-    fn cache_env(
-        &mut self,
-        path: &Path<Lbl>,
-        reg: PartialRegex<'_, Lbl>,
-        envs: Vec<QueryResult<Lbl, Data>>,
-    ) {
-        if !FORWARD_ENABLE_CACHING {
-            return;
-        }
-
-        tracing::debug!("Caching envs...");
-        for mut qr in envs {
-            tracing::debug!("Cache env for path {}: {}", path.target(), qr);
-            // todo: consider shadowing here?
-            let key = self.cache_key_with_data(path, &reg, &qr.data);
-            let entry = self.cache.entry(key).or_default();
-            // todo: use different representation for path
-            // with arcs and starting from the target
-            qr.path = qr.path.trim_matching_start(path);
-            // todo: remove this linear search by not adding duplicates to cache in the first place
-            if !entry.contains(&qr) {
-                entry.push(qr);
-            }
-        }
-    }
-
-    fn get_cached_env(&self, path: &Path<Lbl>) -> Option<Vec<QueryResult<Lbl, Data>>> {
-        if !FORWARD_ENABLE_CACHING {
-            return None;
-        }
-
-        let envs = self
-            .cache
-            .iter()
-            .filter(|(k, _)| k.2 == path.target()) // get all envs for the scope
-            .flat_map(|(_, v)| {
-                v.iter()
-                    .cloned() // todo: remove or soften this clone
-                    .map(|mut qr| {
-                        // prepend 'path' to qr so we connect the path to the env in the cache entry
-                        // ie if path is 1 -> 2 -> 3 and qr is 3 -> 4, we want to return 1 -> 2 -> 3 -> 4
-                        tracing::trace!("Prepending path {} to cached env {}", path, qr);
-                        qr.path = qr.path.prepend(path);
-                        qr
-                    })
-            })
-            .collect::<Vec<_>>();
-
-        match envs.len() {
-            0 => None,
-            _ => Some(envs),
-        }
     }
 
     fn get_env(
@@ -309,5 +232,79 @@ where
 
     fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>> {
         self.scope_graph.scopes().get(&scope)
+    }
+
+    
+    // todo: allow overload of data_wfd
+    fn data_wfd(&self, data: &Data) -> bool {
+        (self.data_proj)(data) == self.proj_wfd
+    }
+
+    fn cache_key_with_data(
+        &self,
+        path: &Path<Lbl>,
+        reg: &PartialRegex<'_, Lbl>,
+        data: &Data,
+    ) -> (usize, u64, Scope) {
+        let mut hasher = DefaultHasher::new();
+        (self.data_proj)(data).hash(&mut hasher);
+        let hash = hasher.finish();
+        let scope = path.target();
+        let automata_idx = reg.index();
+        (automata_idx, hash, scope)
+    }
+
+    fn cache_env(
+        &mut self,
+        path: &Path<Lbl>,
+        reg: PartialRegex<'_, Lbl>,
+        envs: Vec<QueryResult<Lbl, Data>>,
+    ) {
+        if !FORWARD_ENABLE_CACHING {
+            return;
+        }
+
+        tracing::debug!("Caching envs...");
+        for mut qr in envs {
+            tracing::debug!("Cache env for path {}: {}", path.target(), qr);
+            // todo: consider shadowing here?
+            let key = self.cache_key_with_data(path, &reg, &qr.data);
+            let entry = self.cache.entry(key).or_default();
+            // todo: use different representation for path
+            // with arcs and starting from the target
+            qr.path = qr.path.trim_matching_start(path);
+            // todo: remove this linear search by not adding duplicates to cache in the first place
+            if !entry.contains(&qr) {
+                entry.push(qr);
+            }
+        }
+    }
+
+    fn get_cached_env(&self, path: &Path<Lbl>) -> Option<Vec<QueryResult<Lbl, Data>>> {
+        if !FORWARD_ENABLE_CACHING {
+            return None;
+        }
+
+        let envs = self
+            .cache
+            .iter()
+            .filter(|(k, _)| k.2 == path.target()) // get all envs for the scope
+            .flat_map(|(_, v)| {
+                v.iter()
+                    .cloned() // todo: remove or soften this clone
+                    .map(|mut qr| {
+                        // prepend 'path' to qr so we connect the path to the env in the cache entry
+                        // ie if path is 1 -> 2 -> 3 and qr is 3 -> 4, we want to return 1 -> 2 -> 3 -> 4
+                        tracing::trace!("Prepending path {} to cached env {}", path, qr);
+                        qr.path = qr.path.prepend(path);
+                        qr
+                    })
+            })
+            .collect::<Vec<_>>();
+
+        match envs.len() {
+            0 => None,
+            _ => Some(envs),
+        }
     }
 }

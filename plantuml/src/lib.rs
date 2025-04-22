@@ -2,23 +2,34 @@ mod item;
 use std::{fs, io::{self, Write}, path::PathBuf, str::FromStr};
 
 pub use item::*;
+use theme::StyleSheet;
 
-mod theme;
+pub mod theme;
 
-pub mod color;
-pub use color::*;
+const HEADER_SECTION: &str = r#"
+'skinparam linetype ortho
 
-pub struct PlantUmlDiagram<'a> {
+' this hides the <<class>> from nodes
+hide stereotype"#;
+
+
+pub struct PlantUmlDiagram {
+    style: StyleSheet,
     items: Vec<PlantUmlItem>,
-    title: &'a str,
+    title: String,
 }
 
-impl<'a> PlantUmlDiagram<'a> {
-    pub fn new(title: &'a str) -> Self {
+impl PlantUmlDiagram {
+    pub fn new(title: impl ToString) -> Self {
         Self {
+            style: StyleSheet::new(),
             items: Vec::new(),
-            title,
+            title: title.to_string(),
         }
+    }
+
+    pub fn set_style_sheet(&mut self, style: StyleSheet) {
+        self.style = style;
     }
 
     pub fn push(&mut self, item: PlantUmlItem) {
@@ -30,7 +41,8 @@ impl<'a> PlantUmlDiagram<'a> {
     }
 
     pub fn as_uml(&self) -> String {
-        let header = format!("@startuml \"{}\"\n'skinparam linetype ortho", self.title);
+        let css = &self.style.as_css();
+        let header = format!("@startuml \"{}\"{}\n{}", self.title, HEADER_SECTION, css);
         let mut items = self.items.clone();
         items.sort();
         let body = items
