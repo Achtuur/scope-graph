@@ -2,10 +2,11 @@ pub mod dfs;
 mod partial;
 
 pub use partial::PartialRegex;
+use serde::{Deserialize, Serialize};
 
 use crate::label::ScopeGraphLabel;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Regex<Lbl>
 where
     Lbl: ScopeGraphLabel,

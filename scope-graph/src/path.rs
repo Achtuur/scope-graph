@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use plantuml::{theme::Color, EdgeDirection, theme::LineStyle, PlantUmlItem};
+use plantuml::{theme::Color, theme::LineStyle, EdgeDirection, PlantUmlItem};
 
 use crate::{label::ScopeGraphLabel, scope::Scope};
 
@@ -121,8 +121,14 @@ where
                 label,
                 target,
             } => {
-            let addr = Rc::as_ptr(from);
-            format!("{} -{}-> {} ({:?})", from.display_with_mem_addr(), label.char(), target, addr)
+                let addr = Rc::as_ptr(from);
+                format!(
+                    "{} -{}-> {} ({:?})",
+                    from.display_with_mem_addr(),
+                    label.char(),
+                    target,
+                    addr
+                )
             }
         }
     }
@@ -146,16 +152,21 @@ where
 /// Internally, this is the exact same structure, however the "start scope" now refers to the tail instead
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ReversePath<Lbl>(Path<Lbl>)
-where Lbl: ScopeGraphLabel + Clone;
+where
+    Lbl: ScopeGraphLabel + Clone;
 
 impl<Lbl> From<Path<Lbl>> for ReversePath<Lbl>
-where Lbl: ScopeGraphLabel + Clone
+where
+    Lbl: ScopeGraphLabel + Clone,
 {
     fn from(value: Path<Lbl>) -> Self {
         let rev_path = match value {
-            p@ Path::Start(_) => p,
-            Path::Step { label, target, from } => {
-
+            p @ Path::Start(_) => p,
+            Path::Step {
+                label,
+                target,
+                from,
+            } => {
                 // what we have: from -L> target
                 // what we want: target <L- from
 
@@ -174,7 +185,8 @@ where Lbl: ScopeGraphLabel + Clone
 }
 
 impl<Lbl> From<&Path<Lbl>> for ReversePath<Lbl>
-where Lbl: ScopeGraphLabel + Clone
+where
+    Lbl: ScopeGraphLabel + Clone,
 {
     fn from(value: &Path<Lbl>) -> Self {
         value.clone().into()
@@ -190,7 +202,6 @@ where
     }
 }
 
-
 impl<Lbl> std::fmt::Display for ReversePath<Lbl>
 where
     Lbl: ScopeGraphLabel + Clone,
@@ -202,9 +213,8 @@ where
 
 impl<Lbl> ReversePath<Lbl>
 where
-    Lbl: ScopeGraphLabel + Clone
+    Lbl: ScopeGraphLabel + Clone,
 {
-
     pub fn start(scope: Scope) -> Self {
         Self(Path::start(scope))
     }
@@ -229,7 +239,9 @@ mod tests {
 
     #[test]
     fn test_rev() {
-        let path = Path::Start(Scope(1)).step('c', Scope(2)).step('d', Scope(3));
+        let path = Path::Start(Scope(1))
+            .step('c', Scope(2))
+            .step('d', Scope(3));
         println!("{}", path);
         let rev = ReversePath::from(path);
         println!("{}", rev);

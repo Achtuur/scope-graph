@@ -1,21 +1,24 @@
-use std::{io::Write, sync::Arc};
+use std::{
+    io::{stdin, Write},
+    sync::Arc,
+};
 
-use plantuml::PlantUmlDiagram;
 use rand::Rng;
 use scope_graph::{
     data::ScopeGraphData,
     get_color,
-    graph::{BaseScopeGraph, CachedScopeGraph, ScopeGraph},
+    graph::{CachedScopeGraph, ScopeGraph},
     label::ScopeGraphLabel,
     order::LabelOrderBuilder,
     regex::{dfs::RegexAutomata, Regex},
     scope::Scope,
-    DRAW_CACHES,
+    DRAW_CACHES, SAVE_GRAPH,
 };
+use serde::{Deserialize, Serialize};
 
 pub type UsedScopeGraph<'s, Lbl, Data> = CachedScopeGraph<Lbl, Data>;
 
-#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Label {
     Parent,
     Declaration,
@@ -56,7 +59,7 @@ impl ScopeGraphLabel for Label {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
 enum Data {
     NoData,
     Variable(String, String),
@@ -67,10 +70,10 @@ impl Data {
         Self::Variable(x.to_string(), t.to_string())
     }
 
-    fn name(&self) -> String {
+    fn name(&self) -> &str {
         match self {
-            Self::NoData => "no data".to_string(),
-            Self::Variable(x, _) => x.to_string(),
+            Self::NoData => "no data",
+            Self::Variable(x, _) => x,
         }
     }
 
@@ -164,7 +167,7 @@ fn create_long_graph<'a>() -> UsedScopeGraph<'a, Label, Data> {
     graph.add_decl(scope1, Label::Declaration, Data::var("x", "bool"));
     graph.add_edge(scope1, root, Label::Parent);
 
-    recurse_add_scopes(&mut graph, scope1, 3);
+    recurse_add_scopes(&mut graph, scope1, 4);
     graph
 }
 
@@ -252,14 +255,81 @@ fn slides_example() {
     }
 }
 
+fn query_test(graph: &mut UsedScopeGraph<Label, Data>) {
+    let order = LabelOrderBuilder::new()
+        .push(Label::Declaration, Label::Parent)
+        .build();
+
+    // P*D;
+    let label_reg = Regex::concat(Regex::kleene(Label::Parent), Label::Declaration);
+    let matcher = RegexAutomata::from_regex(label_reg.clone());
+
+    let scope = graph.first_scope_without_data(15).unwrap();
+    let y_match: Arc<str> = Arc::from("x");
+    let x_match: Arc<str> = Arc::from("x");
+    let query_scope_set = [
+        (y_match, vec![scope]),
+        // (x_match.clone(), vec![Scope(1)]),
+        // (x_match, vec![Scope(1)]),
+    ];
+
+    for (idx, set) in query_scope_set.into_iter().enumerate() {
+        let title = format!(
+            "Query1: {}, label_reg={}, label_order={}, data_eq=x",
+            0, label_reg, order
+        );
+        // let mut diagram = graph.as_uml_diagram(DRAW_CACHES);
+        // println!("diagram: {0:?}", diagram);
+
+        let p = set.0;
+        let start_scopes = set.1;
+
+        let res_uml = start_scopes
+            .into_iter()
+            .flat_map(|s| {
+                graph.query_proj(
+                    s,
+                    &matcher,
+                    &order,
+                    |d| Arc::from(d.name()),
+                    p.clone(),
+                    |d1, d2| d1.name() == d2.name(),
+                )
+            })
+            .enumerate()
+            .flat_map(|(i, r)| r.path.as_uml(get_color(i), false))
+            .collect::<Vec<_>>();
+
+        let mut diagram = graph.as_uml_diagram(DRAW_CACHES);
+        diagram.extend(res_uml);
+
+        let uml = diagram.as_uml();
+
+        let fname = format!("output/output{}.puml", idx);
+        write_to_file(&fname, uml.as_bytes());
+    }
+}
+
 fn main() {
     tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::DEBUG)
+        .with_max_level(tracing::Level::INFO)
         .init();
 
-    slides_example();
+    // slides_example();
 
-    // let mut bu_graph = create_long_graph();
+    let mut graph = create_long_graph();
+    query_test(&mut graph);
+
+    if SAVE_GRAPH {
+        println!("Type s or save to save the graph...");
+        let mut input = String::new();
+        stdin().read_line(&mut input).unwrap();
+        if input.trim() == "s" || input.trim() == "save" {
+            save_graph(&graph, "output/graph.json");
+            println!("saved!");
+        }
+    }
+
     // let mut forward_graph = CachedScopeGraph::from_base(bu_graph.clone());
 
     // let order = LabelOrderBuilder::new()
@@ -356,4 +426,15 @@ fn write_to_file(fname: &str, content: &[u8]) {
         .unwrap();
     tracing::info!("Writing to file {}", fname);
     file.write_all(content).unwrap();
+}
+
+fn save_graph(graph: &UsedScopeGraph<Label, Data>, fname: &str) {
+    let file = std::fs::OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(fname)
+        .unwrap();
+    tracing::info!("Writing to file {}", fname);
+    serde_json::to_writer(file, graph).unwrap();
 }

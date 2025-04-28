@@ -9,13 +9,48 @@ pub struct Color {
 }
 
 impl Color {
-    pub const BLACK: Self = Self { r: 0, g: 0, b: 0, a: 255 };
-    pub const RED: Self = Self { r: 255, g: 0, b: 0, a: 255 };
-    pub const BLUE: Self = Self { r: 0, g: 0, b: 255, a: 255 };
-    pub const GREEN: Self = Self { r: 0, g: 200, b: 0, a: 255 };
-    pub const PURPLE: Self = Self { r: 128, g: 0, b: 128, a: 255 };
-    pub const ORANGE: Self = Self { r: 255, g: 165, b: 0, a: 255 };
-    pub const YELLOW: Self = Self { r: 255, g: 255, b: 0, a: 255 };
+    pub const BLACK: Self = Self {
+        r: 0,
+        g: 0,
+        b: 0,
+        a: 255,
+    };
+    pub const RED: Self = Self {
+        r: 255,
+        g: 0,
+        b: 0,
+        a: 255,
+    };
+    pub const BLUE: Self = Self {
+        r: 0,
+        g: 0,
+        b: 255,
+        a: 255,
+    };
+    pub const GREEN: Self = Self {
+        r: 0,
+        g: 200,
+        b: 0,
+        a: 255,
+    };
+    pub const PURPLE: Self = Self {
+        r: 128,
+        g: 0,
+        b: 128,
+        a: 255,
+    };
+    pub const ORANGE: Self = Self {
+        r: 255,
+        g: 165,
+        b: 0,
+        a: 255,
+    };
+    pub const YELLOW: Self = Self {
+        r: 255,
+        g: 255,
+        b: 0,
+        a: 255,
+    };
 
     pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
         Self { r, g, b, a }

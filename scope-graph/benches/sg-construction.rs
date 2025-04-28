@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use plantuml::PlantUmlDiagram;
 use rand::Rng;
 use scope_graph::{
     data::ScopeGraphData,
@@ -11,11 +10,12 @@ use scope_graph::{
     regex::{dfs::RegexAutomata, Regex},
     scope::Scope,
 };
+use serde::{Deserialize, Serialize};
 
 const MAX_CHILDREN: usize = 2;
 const GEN_DEPTH: usize = 10;
 
-#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Label {
     Parent,
     Declaration,
@@ -43,7 +43,7 @@ impl ScopeGraphLabel for Label {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
 enum Data {
     NoData,
     Variable(String, String),
@@ -87,11 +87,7 @@ impl ScopeGraphData for Data {
     }
 }
 
-fn recurse_add_scopes<Sg: ScopeGraph<Label, Data>>(
-    graph: &mut Sg,
-    parent: Scope,
-    depth: usize,
-) {
+fn recurse_add_scopes<Sg: ScopeGraph<Label, Data>>(graph: &mut Sg, parent: Scope, depth: usize) {
     if depth == 0 {
         return;
     }
@@ -122,7 +118,6 @@ fn create_long_graph<Sg: ScopeGraph<Label, Data>>(graph: &mut Sg) {
 }
 
 fn create_diamond_graph<Sg: ScopeGraph<Label, Data>>(graph: &mut Sg) {
-
     // diamond: (tailN -> tail0) -> (diamond0..diamondN) -> (root -> rootN)
 
     const ROOT_SIZE: usize = 10;
@@ -169,10 +164,7 @@ where
 
     let mut thread_rng = rand::rng();
 
-    let matches: &[Arc<str>] = &[
-        Arc::from("x"),
-        Arc::from("y")
-    ];
+    let matches: &[Arc<str>] = &[Arc::from("x"), Arc::from("y")];
 
     for _ in 0..num_queries {
         // let r = thread_rng.random_range(1..=MAX_SCOPE_NUM);
@@ -207,7 +199,10 @@ where
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let graph = bench_graph(BaseScopeGraph::new(), 0);
-    graph.as_uml_diagram(false).write_to_file("output/bench/graph.puml").unwrap();
+    graph
+        .as_uml_diagram(false)
+        .write_to_file("output/bench/graph.puml")
+        .unwrap();
 
     let mut group = c.benchmark_group("diamonds");
     group.sample_size(100);
@@ -227,10 +222,8 @@ pub fn criterion_benchmark(c: &mut Criterion) {
 criterion_group!(benches, criterion_benchmark);
 criterion_main!(benches);
 
-
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_query() {

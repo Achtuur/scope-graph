@@ -36,4 +36,6 @@ pub const FORWARD_ENABLE_CACHING: bool = true;
 
 pub const DRAW_CACHES: bool = true;
 
-pub const DRAW_MEM_ADDR: bool = true;
+pub const DRAW_MEM_ADDR: bool = false;
+
+pub const SAVE_GRAPH: bool = false;

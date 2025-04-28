@@ -1,6 +1,4 @@
-use derive_more::derive;
-
-use super::{Color};
+use super::Color;
 
 mod props;
 pub use props::*;
@@ -144,12 +142,18 @@ impl ElementCss {
         self
     }
 
-    pub const fn hyperlink_underline_style(mut self, hyperlink_underline_style: HyperlinkUnderlineStyle) -> Self {
+    pub const fn hyperlink_underline_style(
+        mut self,
+        hyperlink_underline_style: HyperlinkUnderlineStyle,
+    ) -> Self {
         self.hyperlink_underline_style = Some(hyperlink_underline_style);
         self
     }
 
-    pub const fn hyperlink_underline_thickness(mut self, hyper_link_underline_thickness: usize) -> Self {
+    pub const fn hyperlink_underline_thickness(
+        mut self,
+        hyper_link_underline_thickness: usize,
+    ) -> Self {
         self.hyperlink_underline_thickness = Some(hyper_link_underline_thickness);
         self
     }
@@ -165,7 +169,7 @@ impl ElementCss {
         macro_rules! format_css {
             ($key:literal, $prop:expr) => {
                 $prop.map(|x| format!("{}: {};", $key, x.as_css()))
-            }
+            };
         }
 
         [
@@ -185,7 +189,10 @@ impl ElementCss {
             format_css!("Shadowing", self.shadowing),
             format_css!("HyperLinkColor", self.hyper_link_color),
             format_css!("HyperLinkUnderlineStyle", self.hyperlink_underline_style),
-            format_css!("HyperLinkUnderlineThickness", self.hyperlink_underline_thickness),
+            format_css!(
+                "HyperLinkUnderlineThickness",
+                self.hyperlink_underline_thickness
+            ),
             format_css!("HorizontalAlignment", self.horizontal_alignment),
         ]
         .into_iter()
@@ -233,7 +240,6 @@ impl CssClass {
     }
 }
 
-
 #[derive(Default, Clone, Debug)]
 pub struct StyleSheet {
     classes: Vec<CssClass>,
@@ -255,7 +261,9 @@ impl From<Vec<CssClass>> for StyleSheet {
 
 impl<const N: usize> From<[CssClass; N]> for StyleSheet {
     fn from(value: [CssClass; N]) -> Self {
-        StyleSheet { classes: value.to_vec() }
+        StyleSheet {
+            classes: value.to_vec(),
+        }
     }
 }
 
@@ -275,11 +283,12 @@ impl StyleSheet {
     }
 
     pub fn as_css(&self) -> String {
-        let classes = self.classes
-        .iter()
-        .map(|c| c.as_css())
-        .collect::<Vec<_>>()
-        .join("\n");
+        let classes = self
+            .classes
+            .iter()
+            .map(|c| c.as_css())
+            .collect::<Vec<_>>()
+            .join("\n");
         format!("<style>\n{}\n</style>", classes)
     }
 }

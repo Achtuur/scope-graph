@@ -1,9 +1,11 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+use serde::{Deserialize, Serialize};
+
 static SCOPE_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 /// A single scope in the scope graph. Each scope is assigned an incrementing id.
-#[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Scope(pub usize);
 
 impl Scope {

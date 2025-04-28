@@ -1,7 +1,11 @@
 use std::{collections::HashMap, hash::Hash};
 
-use plantuml::{theme::{Color, ElementCss, StyleSheet}, EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem};
+use plantuml::{
+    theme::{Color, ElementCss, StyleSheet},
+    EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem,
+};
 use resolve::QueryResult;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, regex::dfs::RegexAutomata,
@@ -16,7 +20,7 @@ pub use base::*;
 pub use cached::*;
 
 /// Bi-directional edge between two scopes
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Edge<Lbl>
 where
     Lbl: ScopeGraphLabel,
@@ -38,10 +42,11 @@ impl<Lbl: ScopeGraphLabel> Edge<Lbl> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ScopeData<Lbl, Data>
 where
     Lbl: ScopeGraphLabel + Clone,
+    Data: ScopeGraphData,
 {
     // pub edges: Vec<Edge<Lbl>>,
     /// incoming edges
@@ -54,6 +59,7 @@ where
 impl<Lbl, Data> ScopeData<Lbl, Data>
 where
     Lbl: ScopeGraphLabel + Clone,
+    Data: ScopeGraphData,
 {
     pub fn new(data: Data) -> Self {
         Self {
@@ -82,10 +88,10 @@ where
 
 pub type ScopeMap<Lbl, Data> = HashMap<Scope, ScopeData<Lbl, Data>>;
 
-pub trait ScopeGraph<Lbl, Data> : std::fmt::Debug
+pub trait ScopeGraph<Lbl, Data>: std::fmt::Debug
 where
     Lbl: ScopeGraphLabel,
-    Data: ScopeGraphData
+    Data: ScopeGraphData,
 {
     fn add_scope(&mut self, scope: Scope, data: Data);
     fn add_edge(&mut self, source: Scope, target: Scope, label: Lbl);
@@ -146,12 +152,13 @@ where
     }
     /// Finds a scope without data, is here for debugging
     fn first_scope_without_data(&self, scope_num: usize) -> Option<Scope> {
-        self.scope_iter().find_map(|(s, d)| {
-            if d.data.variant_has_data() {
-                return None;
-            }
-            (s.0 >= scope_num).then_some(*s)
-        })
+        let mut non_data_scopes = self
+            .scope_iter()
+            .filter(|(s, d)| s.0 >= scope_num && !d.data.variant_has_data())
+            .map(|(s, _)| *s)
+            .collect::<Vec<_>>();
+        non_data_scopes.sort_by_key(|s| s.0);
+        non_data_scopes.first().copied()
     }
 
     fn scope_holds_data(&self, scope: Scope) -> bool;
@@ -186,25 +193,24 @@ where
         mmd
     }
 
-    fn as_uml_diagram(&self, display_cache: bool) -> PlantUmlDiagram
-    {
+    fn as_uml_diagram(&self, display_cache: bool) -> PlantUmlDiagram {
         let style_sheet: StyleSheet = [
             ElementCss::new()
-            .background_color(Color::new_rgb(242, 232, 230))
-            .as_selector("element"),
+                .background_color(Color::new_rgb(242, 232, 230))
+                .as_selector("element"),
             ElementCss::new()
-            .line_color(Color::BLACK)
-            .as_selector("arrow"),
+                .line_color(Color::BLACK)
+                .as_selector("arrow"),
+            ElementCss::new().as_class("scope"),
             ElementCss::new()
-            .as_class("scope"),
+                .round_corner(10)
+                .background_color(Color::new_rgb(242, 232, 175))
+                .as_class("data_scope"),
             ElementCss::new()
-            .round_corner(10)
-            .background_color(Color::new_rgb(242, 232, 175))
-            .as_class("data_scope"),
-            ElementCss::new()
-            .line_thickness(1.25)
-            .as_class("scope_edge"),
-        ].into();
+                .line_thickness(1.25)
+                .as_class("scope_edge"),
+        ]
+        .into();
 
         let items = self.as_uml(display_cache);
         let mut diagram = PlantUmlDiagram::new("scope graph");
@@ -213,8 +219,7 @@ where
         diagram
     }
 
-    fn as_uml(&self, display_cache: bool) -> Vec<PlantUmlItem>
-    {
+    fn as_uml(&self, display_cache: bool) -> Vec<PlantUmlItem> {
         let mut items = self.generate_graph_uml();
         match display_cache {
             true => {
@@ -237,15 +242,11 @@ where
         let scope_nodes = self.scope_iter().map(|(s, d)| {
             let (node_type, class, contents) = match d.data.variant_has_data() {
                 true => (
-                        NodeType::Card,
-                        "data_scope",
-                        format!("{} > {}", s, d.data.render_string()),
+                    NodeType::Card,
+                    "data_scope",
+                    format!("{} > {}", s, d.data.render_string()),
                 ),
-                false => (
-                        NodeType::Node,
-                        "scope",
-                        s.to_string(),
-                ),
+                false => (NodeType::Node, "scope", s.to_string()),
             };
             PlantUmlItem::node(s.uml_id(), contents, node_type).with_class(class)
         });

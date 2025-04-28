@@ -3,7 +3,8 @@ pub trait CssProperty {
 }
 
 impl<T> CssProperty for T
-where T: std::fmt::Display
+where
+    T: std::fmt::Display,
 {
     fn as_css(&self) -> String {
         format!("{}", self)
@@ -26,7 +27,8 @@ impl CssProperty for LineStyle {
             LineStyle::Dotted => "1",
             LineStyle::Dashed => "4",
             LineStyle::LongDashed => "8",
-        }.to_string()
+        }
+        .to_string()
     }
 }
 

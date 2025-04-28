@@ -1,7 +1,4 @@
-use std::{
-    collections::{HashMap, HashSet},
-    sync::Mutex,
-};
+use std::{collections::HashSet, sync::Mutex};
 
 use crate::{
     data::ScopeGraphData,
@@ -9,7 +6,8 @@ use crate::{
     order::LabelOrder,
     path::{Path, ReversePath},
     regex::{dfs::RegexAutomata, PartialRegex},
-    scope::Scope, DRAW_MEM_ADDR,
+    scope::Scope,
+    DRAW_MEM_ADDR,
 };
 
 use super::{BaseScopeGraph, ScopeData};
@@ -31,7 +29,12 @@ where
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match DRAW_MEM_ADDR {
             true => {
-                write!(f, "{} > {}", self.data.render_string(), self.path.as_mem_addr())
+                write!(
+                    f,
+                    "{} > {}",
+                    self.data.render_string(),
+                    self.path.as_mem_addr()
+                )
             }
             false => {
                 write!(f, "{} > {}", self.data.render_string(), self.path)
@@ -39,7 +42,6 @@ where
         }
     }
 }
-
 
 pub struct Resolver<'r, Lbl, Data, DEq, DWfd>
 where

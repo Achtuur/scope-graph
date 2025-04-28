@@ -1,7 +1,6 @@
 use std::{
     collections::HashSet,
     hash::{DefaultHasher, Hash, Hasher},
-    sync::Mutex,
 };
 
 use crate::{
@@ -178,7 +177,7 @@ where
 
         // push the current max_lbl to the path, as that path is actually resolved here.
         if let LabelOrEnd::Label((l, _)) = max_lbl {
-        for qr in max_path.iter_mut() {
+            for qr in max_path.iter_mut() {
                 qr.path = qr.path.step(l.clone(), path.target())
             }
         }

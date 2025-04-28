@@ -1,18 +1,23 @@
 use std::collections::HashMap;
 
+use serde::{Deserialize, Serialize};
+
 use crate::{
     data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, path::Path,
     regex::dfs::RegexAutomata, scope::Scope,
 };
 
-use super::{resolve::{QueryResult, Resolver}, Edge, ScopeData, ScopeGraph, ScopeMap};
+use super::{
+    resolve::{QueryResult, Resolver},
+    Edge, ScopeData, ScopeGraph, ScopeMap,
+};
 
 /// Base scope graph behaviour
 ///
 /// Creation of scopes, does not implement query/caching logic
 ///
 /// saves some duplication, to test faster
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct BaseScopeGraph<Lbl, Data>
 where
     Lbl: ScopeGraphLabel + Clone,

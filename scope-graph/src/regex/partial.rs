@@ -39,7 +39,7 @@ where
 
     pub fn is_accepting(&self) -> bool {
         self.automata
-        .get_node(self.idx)
-        .is_some_and(|node| node.value.is_nullable())
+            .get_node(self.idx)
+            .is_some_and(|node| node.value.is_nullable())
     }
 }

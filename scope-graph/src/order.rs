@@ -4,10 +4,7 @@ use std::{
     hash::Hash,
 };
 
-use crate::{
-    label::{LabelOrEnd, ScopeGraphLabel},
-    path::Path,
-};
+use crate::label::{LabelOrEnd, ScopeGraphLabel};
 
 pub struct LabelOrderBuilder<Lbl>
 where

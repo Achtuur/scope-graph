@@ -1,5 +1,10 @@
 mod item;
-use std::{fs, io::{self, Write}, path::PathBuf, str::FromStr};
+use std::{
+    fs,
+    io::{self, Write},
+    path::PathBuf,
+    str::FromStr,
+};
 
 pub use item::*;
 use theme::StyleSheet;
@@ -11,7 +16,6 @@ const HEADER_SECTION: &str = r#"
 
 ' this hides the <<class>> from nodes
 hide stereotype"#;
-
 
 #[derive(Clone, Debug)]
 pub struct PlantUmlDiagram {
@@ -43,9 +47,9 @@ impl PlantUmlDiagram {
 
     pub fn as_uml(mut self) -> String {
         self.items
-        .iter_mut()
-        .filter_map(|i| i.class_def())
-        .for_each(|c| self.style.push(c));
+            .iter_mut()
+            .filter_map(|i| i.class_def())
+            .for_each(|c| self.style.push(c));
 
         let css = &self.style.as_css();
         let header = format!("@startuml \"{}\"{}\n{}", self.title, HEADER_SECTION, css);

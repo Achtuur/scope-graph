@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use plantuml::PlantUmlItem;
 use resolve::CachedResolver;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     data::ScopeGraphData,
@@ -36,7 +37,7 @@ type ParameterKey<Lbl> = (LabelOrder<Lbl>, RegexAutomata<Lbl>);
 /// This contains a cache per set of query parameters
 type ScopeGraphCache<Lbl, Data> = HashMap<ParameterKey<Lbl>, QueryCache<Lbl, Data>>;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CachedScopeGraph<Lbl, Data>
 where
     Lbl: ScopeGraphLabel,
@@ -44,6 +45,7 @@ where
 {
     sg: BaseScopeGraph<Lbl, Data>,
     // pub scopes: HashMap<Scope, ScopeData<Lbl, Data>>,
+    #[serde(skip)]
     resolve_cache: ScopeGraphCache<Lbl, Data>,
 }
 

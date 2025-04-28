@@ -28,7 +28,6 @@ impl EdgeDirection {
     }
 }
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum NodeType {
     /// Node, used for scopes
@@ -140,20 +139,13 @@ impl PlantUmlItemKind {
                 label,
                 dir,
             } => {
-                format!(
-                    "{} -{}-> {} {} : {}",
-                    from,
-                    dir.uml_str(),
-                    to,
-                    class,
-                    label
-                )
+                format!("{} -{}-> {} {} : {}", from, dir.uml_str(), to, class, label)
             }
             PlantUmlItemKind::Note { to, contents } => {
                 let formatted = contents.replace("\n", "\n\t");
                 let note_key = format!("N_{0:}", to);
                 let note = format!("note as {} {}\n\t{}\nend note", note_key, class, formatted);
-                let dir = EdgeDirection::Left;
+                let dir = EdgeDirection::Right;
                 format!("{note}\n{} .{}. {}", note_key, dir.uml_str(), to)
             }
         }
@@ -252,8 +244,10 @@ impl PlantUmlItem {
 
     pub fn as_uml(&self) -> String {
         let class = self
-        .class
-        .as_ref().map(|c| format!("<<{}>>", c)).unwrap_or_default();
+            .class
+            .as_ref()
+            .map(|c| format!("<<{}>>", c))
+            .unwrap_or_default();
         let s = self.item.as_uml(&class);
         s.trim_end().to_string()
     }
