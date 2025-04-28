@@ -1,8 +1,12 @@
+use std::rc::Rc;
+
 use plantuml::{theme::Color, EdgeDirection, theme::LineStyle, PlantUmlItem};
 
 use crate::{label::ScopeGraphLabel, scope::Scope};
 
 /// Path enum "starts" at the target scope, ie its in reverse order
+///
+/// This holds a path using a pointer to the head path segment.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Path<Lbl>
 where
@@ -12,7 +16,7 @@ where
     Step {
         label: Lbl,
         target: Scope,
-        from: Box<Self>,
+        from: Rc<Self>,
     },
 }
 
@@ -25,73 +29,11 @@ where
     }
 
     /// Step forward (p -> new p)
-    pub fn step(self, label: Lbl, scope: Scope) -> Self {
+    pub fn step(&self, label: Lbl, scope: Scope) -> Self {
         Self::Step {
             label,
             target: scope,
-            from: Box::new(self),
-        }
-    }
-
-    // step backwards (new p -> p)
-    pub fn step_back(self, label: Lbl, scope: Scope) -> Self {
-        match self {
-            Self::Start(s) => Self::Step {
-                label,
-                target: s,
-                from: Box::new(Self::start(scope)),
-            },
-
-            Self::Step {
-                label: lbl,
-                target: tgt,
-                from,
-            } => Self::Step {
-                label: lbl,
-                target: tgt,
-                from: Box::new(from.step_back(label, scope)),
-            },
-        }
-    }
-
-    pub fn without_target(&self) -> Option<&Self> {
-        match self {
-            Self::Start(_) => None,
-            Self::Step { from, .. } => Some(from),
-        }
-    }
-
-    pub fn prepend(self, other: &Self) -> Self {
-        match (self, other) {
-            (
-                Self::Start(s),
-                Self::Step {
-                    label,
-                    target,
-                    from,
-                },
-            ) if target.0 == s.0 => Self::Step {
-                label: label.clone(),
-                target: *target,
-                from: from.clone(),
-            },
-            (
-                Self::Step {
-                    label,
-                    target,
-                    from,
-                },
-                o @ Self::Step { .. },
-            ) => Self::Step {
-                label,
-                target,
-                from: Box::new(from.prepend(o)),
-            },
-            // rhs is Start here
-            (p, _) => {
-                // prepending start just results in self
-                p
-            }
+            from: Rc::new(self.clone()),
         }
     }
 
@@ -99,111 +41,6 @@ where
         match self {
             Self::Start(s) => *s,
             Self::Step { target, .. } => *target,
-        }
-    }
-
-    pub fn as_lbl_vec(&self) -> Vec<&Lbl> {
-        let mut v = Vec::new();
-        let mut current = self;
-        while let Path::Step { from, label, .. } = current {
-            v.push(label);
-            current = from;
-        }
-        v.reverse();
-        v
-    }
-
-    pub fn extend(&mut self, extension: Self) {
-        let mut current = self;
-        while let Path::Step { from, .. } = current {
-            current = from;
-        }
-        *current = extension;
-    }
-
-    pub fn append(&mut self, other: Self) {
-        // keep going deeper into from, start
-
-        // self must end with a step to scope S
-        // other must have a start scope S
-
-        match self {
-            Self::Start(s) => match other {
-                Self::Step {
-                    label,
-                    target,
-                    from,
-                } if target == *s => {
-                    *self = Self::Step {
-                        label,
-                        target,
-                        from,
-                    }
-                }
-                _ => panic!("unmergable paths"),
-            },
-            Self::Step {
-                label,
-                target,
-                from,
-            } => {
-                from.append(other);
-            }
-        }
-    }
-
-    pub fn trim_matching_start(self, other: &Self) -> Self {
-        match (self, other) {
-            (
-                Self::Step {
-                    target,
-                    label,
-                    from,
-                },
-                Self::Step {
-                    target: target2, ..
-                },
-            ) => {
-                // cut off the rest of the path
-                if &target == target2 {
-                    Self::Start(target)
-                } else {
-                    Self::Step {
-                        label,
-                        target,
-                        from: Box::new(from.trim_matching_start(other)),
-                    }
-                }
-            }
-
-            (x, _) => x,
-        }
-    }
-
-    pub fn mem_size(&self) -> usize {
-        match self {
-            Self::Start(_) => std::mem::size_of::<Self>(),
-            Self::Step { from, .. } => std::mem::size_of::<Self>() + from.mem_size(),
-        }
-    }
-
-    pub fn as_mmd_debug(&self, mut mmd: String) -> String {
-        match self {
-            Self::Start(_) => mmd,
-            Self::Step {
-                from,
-                label,
-                target,
-            } => {
-                mmd += "\n";
-                mmd += &format!(
-                    "scope_{} -..-> scope_{}",
-                    from.scope_num(),
-                    // label.char(),
-                    target.0
-                );
-                from.as_mmd_debug(mmd)
-            }
         }
     }
 
@@ -218,7 +55,7 @@ where
                 mmd += "\n";
                 mmd += &format!(
                     "scope_{} --{}--> scope_{}",
-                    from.scope_num(),
+                    from.target().0,
                     label.char(),
                     target.0
                 );
@@ -233,7 +70,7 @@ where
     ///
     /// * `color` - The color of the arrow
     /// * `reverse` - If true, the arrow will be reversed
-    pub fn as_uml<'a>(&self, color: Color, reverse: bool) -> Vec<PlantUmlItem> {
+    pub fn as_uml(&self, color: Color, reverse: bool) -> Vec<PlantUmlItem> {
         match self {
             Self::Start(_) => Vec::new(),
             Self::Step {
@@ -242,8 +79,8 @@ where
                 target,
             } => {
                 let (from_scope, to_scope) = match reverse {
-                    false => (from.scope(), target),
-                    true => (target, from.scope()),
+                    false => (from.target(), *target),
+                    true => (*target, from.target()),
                 };
 
                 let item = PlantUmlItem::edge(
@@ -276,17 +113,17 @@ where
         }
     }
 
-    fn scope_num(&self) -> usize {
+    pub fn display_with_mem_addr(&self) -> String {
         match self {
-            Self::Start(s) => s.0,
-            Self::Step { target, .. } => target.0,
-        }
-    }
-
-    fn scope(&self) -> &Scope {
-        match self {
-            Self::Start(s) => s,
-            Self::Step { target, .. } => target,
+            Self::Start(s) => format!("{}", s),
+            Self::Step {
+                from,
+                label,
+                target,
+            } => {
+            let addr = Rc::as_ptr(from);
+            format!("{} -{}-> {} ({:?})", from.display_with_mem_addr(), label.char(), target, addr)
+            }
         }
     }
 }
@@ -297,5 +134,104 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.display())
+    }
+}
+
+/// Path enum "starts" at the target scope, ie its in reverse order
+///
+/// Compared to `Path`, this is stored in reverse.
+/// The pointer refers to the tail segment instead.
+/// This is more efficient for the cache
+///
+/// Internally, this is the exact same structure, however the "start scope" now refers to the tail instead
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReversePath<Lbl>(Path<Lbl>)
+where Lbl: ScopeGraphLabel + Clone;
+
+impl<Lbl> From<Path<Lbl>> for ReversePath<Lbl>
+where Lbl: ScopeGraphLabel + Clone
+{
+    fn from(value: Path<Lbl>) -> Self {
+        let rev_path = match value {
+            p@ Path::Start(_) => p,
+            Path::Step { label, target, from } => {
+
+                // what we have: from -L> target
+                // what we want: target <L- from
+
+                let mut rp = Path::Start(target);
+                rp = rp.step(label, from.target());
+                let mut current = from.as_ref();
+                while let Path::Step { label, from, .. } = current {
+                    rp = rp.step(label.clone(), from.target());
+                    current = from;
+                }
+                rp
+            }
+        };
+        ReversePath(rev_path)
+    }
+}
+
+impl<Lbl> From<&Path<Lbl>> for ReversePath<Lbl>
+where Lbl: ScopeGraphLabel + Clone
+{
+    fn from(value: &Path<Lbl>) -> Self {
+        value.clone().into()
+    }
+}
+
+impl<Lbl> AsRef<Path<Lbl>> for ReversePath<Lbl>
+where
+    Lbl: ScopeGraphLabel + Clone,
+{
+    fn as_ref(&self) -> &Path<Lbl> {
+        &self.0
+    }
+}
+
+
+impl<Lbl> std::fmt::Display for ReversePath<Lbl>
+where
+    Lbl: ScopeGraphLabel + Clone,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0.display())
+    }
+}
+
+impl<Lbl> ReversePath<Lbl>
+where
+    Lbl: ScopeGraphLabel + Clone
+{
+
+    pub fn start(scope: Scope) -> Self {
+        Self(Path::start(scope))
+    }
+
+    /// Step forward (p -> new p)
+    pub fn step(&self, label: Lbl, scope: Scope) -> Self {
+        Self(self.0.step(label, scope))
+    }
+
+    pub fn as_uml(&self, color: Color, reverse: bool) -> Vec<PlantUmlItem> {
+        self.0.as_uml(color, reverse)
+    }
+
+    pub fn as_mem_addr(&self) -> String {
+        self.0.display_with_mem_addr()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_rev() {
+        let path = Path::Start(Scope(1)).step('c', Scope(2)).step('d', Scope(3));
+        println!("{}", path);
+        let rev = ReversePath::from(path);
+        println!("{}", rev);
     }
 }

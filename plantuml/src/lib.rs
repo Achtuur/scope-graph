@@ -13,6 +13,7 @@ const HEADER_SECTION: &str = r#"
 hide stereotype"#;
 
 
+#[derive(Clone, Debug)]
 pub struct PlantUmlDiagram {
     style: StyleSheet,
     items: Vec<PlantUmlItem>,
@@ -40,7 +41,12 @@ impl PlantUmlDiagram {
         self.items.extend(items);
     }
 
-    pub fn as_uml(&self) -> String {
+    pub fn as_uml(mut self) -> String {
+        self.items
+        .iter_mut()
+        .filter_map(|i| i.class_def())
+        .for_each(|c| self.style.push(c));
+
         let css = &self.style.as_css();
         let header = format!("@startuml \"{}\"{}\n{}", self.title, HEADER_SECTION, css);
         let mut items = self.items.clone();
@@ -53,7 +59,7 @@ impl PlantUmlDiagram {
         format!("{}\n{}\n@enduml", header, body)
     }
 
-    pub fn write_to_file(&self, path: &str) -> Result<(), io::Error> {
+    pub fn write_to_file(self, path: &str) -> Result<(), io::Error> {
         let path = PathBuf::from_str(path).unwrap();
         let dir = path.parent().unwrap();
         fs::create_dir_all(dir)?;

@@ -10,11 +10,10 @@ use crate::{
     order::LabelOrder,
     path::Path,
     regex::dfs::RegexAutomata,
-    resolve::QueryResult,
     scope::Scope,
 };
 
-use super::ScopeGraph;
+use super::{resolve::QueryResult, ScopeGraph};
 
 mod resolve;
 

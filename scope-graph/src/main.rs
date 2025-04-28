@@ -187,9 +187,9 @@ fn slides_example() {
     graph.add_scope(scope6, Data::NoData);
 
     graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
-    graph.add_decl(scope1, Label::Declaration, Data::var("x", "bool"));
+    // graph.add_decl(scope1, Label::Declaration, Data::var("x", "bool"));
     graph.add_decl(scope1, Label::Declaration, Data::var("y", "int"));
-    // graph.add_decl(scope2, Label::Declaration, Data::var("x", "int"));
+    graph.add_decl(scope2, Label::Declaration, Data::var("x", "int"));
     graph.add_edge(scope1, root, Label::Parent);
     graph.add_edge(scope2, scope1, Label::Parent);
     graph.add_edge(scope3, scope1, Label::Parent);
@@ -210,8 +210,9 @@ fn slides_example() {
     let y_match: Arc<str> = Arc::from("y");
     let x_match: Arc<str> = Arc::from("x");
     let query_scope_set = [
-        (y_match, vec![scope3]),
-        (x_match, vec![scope3, scope5, scope4]),
+        (y_match, vec![scope6]),
+        (x_match.clone(), vec![scope5]),
+        (x_match, vec![scope5]),
     ];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
@@ -219,7 +220,8 @@ fn slides_example() {
             "Query1: {}, label_reg={}, label_order={}, data_eq=x:int",
             0, label_reg, order
         );
-        let mut diagram = graph.as_uml_diagram(DRAW_CACHES);
+        // let mut diagram = graph.as_uml_diagram(DRAW_CACHES);
+        // println!("diagram: {0:?}", diagram);
 
         let p = set.0;
         let start_scopes = set.1;
@@ -237,7 +239,10 @@ fn slides_example() {
                 )
             })
             .enumerate()
-            .flat_map(|(i, r)| r.path.as_uml(get_color(i), false));
+            .flat_map(|(i, r)| r.path.as_uml(get_color(i), false))
+            .collect::<Vec<_>>();
+
+        let mut diagram = graph.as_uml_diagram(DRAW_CACHES);
         diagram.extend(res_uml);
 
         let uml = diagram.as_uml();
@@ -249,7 +254,7 @@ fn slides_example() {
 
 fn main() {
     tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
+        .with_max_level(tracing::Level::DEBUG)
         .init();
 
     slides_example();

@@ -1,10 +1,11 @@
 use std::{collections::HashMap, hash::Hash};
 
 use plantuml::{theme::{Color, ElementCss, StyleSheet}, EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem};
+use resolve::QueryResult;
 
 use crate::{
     data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, regex::dfs::RegexAutomata,
-    resolve::QueryResult, scope::Scope,
+    scope::Scope,
 };
 
 mod base;
@@ -201,6 +202,7 @@ where
             .background_color(Color::new_rgb(242, 232, 175))
             .as_class("data_scope"),
             ElementCss::new()
+            .line_thickness(1.25)
             .as_class("scope_edge"),
         ].into();
 

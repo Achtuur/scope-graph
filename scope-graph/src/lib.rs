@@ -10,7 +10,6 @@ pub mod data;
 pub mod graph;
 pub mod order;
 pub mod regex;
-pub mod resolve;
 
 pub const COLORS: &[Color] = &[
     Color::RED,
@@ -36,3 +35,5 @@ pub fn get_color(idx: usize) -> Color {
 pub const FORWARD_ENABLE_CACHING: bool = true;
 
 pub const DRAW_CACHES: bool = true;
+
+pub const DRAW_MEM_ADDR: bool = true;

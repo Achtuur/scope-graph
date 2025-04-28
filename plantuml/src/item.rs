@@ -1,4 +1,8 @@
-use crate::theme::{Color, LineStyle};
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+use crate::theme::{Color, CssClass, ElementCss, LineStyle};
+
+static CLASS_CTR: AtomicUsize = AtomicUsize::new(0);
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EdgeDirection {
@@ -49,26 +53,29 @@ pub struct ItemAnnotation {
     line_color: Option<Color>,
 }
 
+impl From<ItemAnnotation> for ElementCss {
+    fn from(value: ItemAnnotation) -> Self {
+        let mut el = ElementCss::new();
+        if let Some(x) = value.line_style {
+            el = el.line_style(x);
+        }
+        if let Some(x) = value.text_color {
+            el = el.font_color(x);
+        }
+        if let Some(x) = value.line_color {
+            el = el.line_color(x);
+        }
+        el
+    }
+}
+
 impl ItemAnnotation {
     fn is_default(&self) -> bool {
         self.line_style.is_none() && self.text_color.is_none() && self.line_color.is_none()
     }
 
-    pub fn as_uml(&self) -> String {
-        if self.is_default() {
-            return String::new();
-        }
-
-        let s = [
-            self.line_style.unwrap_or_default().inline_uml_str().to_string(),
-            format!("text:{}", self.text_color.unwrap_or_default().as_css()),
-            format!("line:{}", self.line_color.unwrap_or_default().as_css()),
-        ]
-        .into_iter()
-        .filter(|s| !s.is_empty())
-        .collect::<Vec<String>>()
-        .join(";");
-        format!("#{}", s.trim_end())
+    pub fn as_css(&self) -> ElementCss {
+        ElementCss::from(*self)
     }
 }
 
@@ -230,8 +237,23 @@ impl PlantUmlItem {
         self
     }
 
+    /// Returns a CssClass if this object was not given a class and contains annotations
+    pub(crate) fn class_def(&mut self) -> Option<CssClass> {
+        if self.annotation.is_default() || self.class.is_some() {
+            return None;
+        }
+
+        let class_name = format!("gen-class-{}", CLASS_CTR.fetch_add(1, Ordering::Relaxed));
+        self.class = Some(class_name.clone());
+        let el = self.annotation.into();
+        let class = CssClass::new_class(class_name, el);
+        Some(class)
+    }
+
     pub fn as_uml(&self) -> String {
-        let class = self.class.as_ref().map(|c| format!("<<{}>>", c)).unwrap_or_default();
+        let class = self
+        .class
+        .as_ref().map(|c| format!("<<{}>>", c)).unwrap_or_default();
         let s = self.item.as_uml(&class);
         s.trim_end().to_string()
     }

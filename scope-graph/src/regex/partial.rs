@@ -38,9 +38,8 @@ where
     }
 
     pub fn is_accepting(&self) -> bool {
-        let Some(node) = self.automata.get_node(self.idx) else {
-            return false;
-        };
-        node.value.is_nullable()
+        self.automata
+        .get_node(self.idx)
+        .is_some_and(|node| node.value.is_nullable())
     }
 }

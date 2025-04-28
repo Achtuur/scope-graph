@@ -7,46 +7,39 @@ use crate::{
     data::ScopeGraphData,
     label::{LabelOrEnd, ScopeGraphLabel},
     order::LabelOrder,
-    path::Path,
+    path::{Path, ReversePath},
     regex::{dfs::RegexAutomata, PartialRegex},
-    scope::Scope,
+    scope::Scope, DRAW_MEM_ADDR,
 };
 
-use super::{BaseScopeGraph, QueryResult, ScopeData, ScopeGraph};
-
-#[derive(Hash, PartialEq, Eq, Debug)]
-pub struct CacheKey<Lbl>
+use super::{BaseScopeGraph, ScopeData};
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct QueryResult<Lbl, Data>
 where
-    Lbl: ScopeGraphLabel,
+    Lbl: ScopeGraphLabel + Clone,
+    Data: ScopeGraphData,
 {
-    pub(super) scope: Scope,
-    pub(super) lbl_order: LabelOrder<Lbl>,
-    pub(super) path_re: RegexAutomata<Lbl>,
+    pub path: ReversePath<Lbl>,
+    pub data: Data,
 }
 
-impl<Lbl> std::fmt::Display for CacheKey<Lbl>
-where
-    Lbl: ScopeGraphLabel,
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{{{}, {}, {}}}",
-            self.scope, self.lbl_order, self.path_re
-        )
-    }
-}
-
-#[derive(Debug)]
-pub struct CacheValue<Lbl, Data>
+impl<Lbl, Data> std::fmt::Display for QueryResult<Lbl, Data>
 where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
 {
-    pub(super) envs: Vec<QueryResult<Lbl, Data>>,
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match DRAW_MEM_ADDR {
+            true => {
+                write!(f, "{} > {}", self.data.render_string(), self.path.as_mem_addr())
+            }
+            false => {
+                write!(f, "{} > {}", self.data.render_string(), self.path)
+            }
+        }
+    }
 }
 
-pub type ResolveCache<Lbl, Data> = HashMap<CacheKey<Lbl>, CacheValue<Lbl, Data>>;
 
 pub struct Resolver<'r, Lbl, Data, DEq, DWfd>
 where
@@ -66,7 +59,7 @@ where
 
 impl<'r, Lbl, Data, DEq, DWfd> Resolver<'r, Lbl, Data, DEq, DWfd>
 where
-    Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + std::fmt::Display + Eq + std::hash::Hash + Ord,
+    Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
     DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
     DWfd: for<'da> Fn(&'da Data) -> bool,
@@ -152,7 +145,6 @@ where
         path: Path<Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
         let mut results = Vec::new();
-        // println!("Resolving edges: {0:?}", labels);
 
         // 'max' labels ie all labels with lowest priority
         // max refers to the numerical worth, ie a < b, b would be max
@@ -161,8 +153,6 @@ where
             .filter(|l1| !labels.iter().any(|l2| self.lbl_order.is_less(l1, l2)))
             .collect::<Vec<_>>();
 
-        // println!("max: {0:?}", max);
-
         for max_lbl in max {
             // all labels that are lower priority than `lbl`
             let lower_labels = labels
@@ -170,8 +160,6 @@ where
                 .filter(|l| self.lbl_order.is_less(l, max_lbl))
                 .cloned()
                 .collect::<Vec<_>>();
-
-            // println!("lower: {0:?}", lower_labels);
 
             let env = self.get_shadowed_env(max_lbl, &lower_labels, path.clone());
             results.extend(env.into_iter());
@@ -205,7 +193,7 @@ where
                 // don't check wfd here
                 match reg.is_accepting() {
                     true => vec![QueryResult {
-                        path,
+                        path: ReversePath::from(path),
                         data: scope.data.clone(),
                     }],
                     false => Vec::new(),

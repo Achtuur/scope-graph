@@ -9,7 +9,7 @@ use crate::{
     graph::BaseScopeGraph,
     label::{LabelOrEnd, ScopeGraphLabel},
     order::LabelOrder,
-    path::Path,
+    path::{Path, ReversePath},
     regex::{dfs::RegexAutomata, PartialRegex},
     scope::Scope,
     FORWARD_ENABLE_CACHING,
@@ -162,7 +162,7 @@ where
                     .cloned()
                     .collect::<Vec<_>>();
 
-                self.get_shadowed_env(max_lbl, &lower_labels, &path)
+                self.get_shadowed_env(max_lbl, &lower_labels, path.clone())
             })
             .collect::<Vec<_>>()
     }
@@ -171,19 +171,24 @@ where
         &mut self,
         max_lbl: &'a LabelOrEnd<'r, Lbl>,
         lower_lbls: &'a [LabelOrEnd<'r, Lbl>],
-        path: &Path<Lbl>,
+        path: Path<Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
         let lower_paths = self.get_env_for_labels(lower_lbls, path.clone());
-        let max_path = self.get_env_for_label(max_lbl, path);
-        // println!("lower_paths: {0:?}", lower_paths);
-        // println!("max_path: {0:?}", max_path);
+        let mut max_path = self.get_env_for_label(max_lbl, path.clone());
+
+        // push the current max_lbl to the path, as that path is actually resolved here.
+        if let LabelOrEnd::Label((l, _)) = max_lbl {
+        for qr in max_path.iter_mut() {
+                qr.path = qr.path.step(l.clone(), path.target())
+            }
+        }
         self.shadow(lower_paths, max_path)
     }
 
     fn get_env_for_label<'a>(
         &mut self,
         label: &'a LabelOrEnd<'r, Lbl>,
-        path: &Path<Lbl>,
+        path: Path<Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
         let scope = self.get_scope(path.target()).unwrap().clone();
         match label {
@@ -192,7 +197,8 @@ where
                 // don't check wfd here
                 match reg.is_accepting() {
                     true => vec![QueryResult {
-                        path: path.clone(),
+                        // path: ReversePath::from(path),
+                        path: ReversePath::start(path.target()),
                         data: scope.data.clone(),
                     }],
                     false => Vec::new(),
@@ -204,7 +210,7 @@ where
                     .parents()
                     .iter()
                     .filter(|e| e.lbl() == label)
-                    .map(|e| path.clone().step(e.lbl().clone(), e.target())) // create new paths
+                    .map(|e| path.step(e.lbl().clone(), e.target())) // create new paths
                     .flat_map(|p| self.resolve_all(p, partial_reg.clone())) // resolve new paths
                     .collect::<Vec<_>>()
             }
@@ -234,8 +240,6 @@ where
         self.scope_graph.scopes().get(&scope)
     }
 
-    
-    // todo: allow overload of data_wfd
     fn data_wfd(&self, data: &Data) -> bool {
         (self.data_proj)(data) == self.proj_wfd
     }
@@ -265,18 +269,11 @@ where
         }
 
         tracing::debug!("Caching envs...");
-        for mut qr in envs {
-            tracing::debug!("Cache env for path {}: {}", path.target(), qr);
-            // todo: consider shadowing here?
+        for qr in envs {
+            tracing::trace!("Cache env for path {}: {}", path.target(), qr);
             let key = self.cache_key_with_data(path, &reg, &qr.data);
             let entry = self.cache.entry(key).or_default();
-            // todo: use different representation for path
-            // with arcs and starting from the target
-            qr.path = qr.path.trim_matching_start(path);
-            // todo: remove this linear search by not adding duplicates to cache in the first place
-            if !entry.contains(&qr) {
-                entry.push(qr);
-            }
+            entry.push(qr);
         }
     }
 
@@ -290,15 +287,7 @@ where
             .iter()
             .filter(|(k, _)| k.2 == path.target()) // get all envs for the scope
             .flat_map(|(_, v)| {
-                v.iter()
-                    .cloned() // todo: remove or soften this clone
-                    .map(|mut qr| {
-                        // prepend 'path' to qr so we connect the path to the env in the cache entry
-                        // ie if path is 1 -> 2 -> 3 and qr is 3 -> 4, we want to return 1 -> 2 -> 3 -> 4
-                        tracing::trace!("Prepending path {} to cached env {}", path, qr);
-                        qr.path = qr.path.prepend(path);
-                        qr
-                    })
+                v.clone() // remove this clone?
             })
             .collect::<Vec<_>>();
 

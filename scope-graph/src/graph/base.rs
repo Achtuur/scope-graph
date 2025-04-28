@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use crate::{
     data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, path::Path,
-    regex::dfs::RegexAutomata, resolve::QueryResult, scope::Scope,
+    regex::dfs::RegexAutomata, scope::Scope,
 };
 
-use super::{resolve::Resolver, Edge, ScopeData, ScopeGraph, ScopeMap};
+use super::{resolve::{QueryResult, Resolver}, Edge, ScopeData, ScopeGraph, ScopeMap};
 
 /// Base scope graph behaviour
 ///

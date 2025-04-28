@@ -163,30 +163,6 @@ where
         }
     }
 
-    pub fn cmp_path(&self, path1: &Path<Lbl>, path2: &Path<Lbl>) -> std::cmp::Ordering {
-        if path1 == path2 {
-            return std::cmp::Ordering::Equal;
-        }
-
-        match self.path_is_less(path1, path2) {
-            true => std::cmp::Ordering::Less,
-            false => std::cmp::Ordering::Greater,
-        }
-    }
-
-    // sort data using label order
-    // p1 < p2 if all labels in p1 < all labels in p2
-    pub fn path_is_less(&self, path1: &Path<Lbl>, path2: &Path<Lbl>) -> bool {
-        let lbl1 = path1.as_lbl_vec();
-        let lbl2 = path2.as_lbl_vec();
-
-        lbl1.iter()
-            .zip(lbl2.iter())
-            // if labels are equal, continue. We only care about the part of paths that is different.
-            .skip_while(|(l1, l2)| l1 == l2)
-            .all(|(l1, l2)| self.is_less_internal(l1, l2))
-    }
-
     // returns true if lbl 1 is less than label2 (so higher priority)
     fn is_less_internal(&self, lbl1: &Lbl, lbl2: &Lbl) -> bool {
         let Some((_, less_thans)) = self.orders.iter().find(|(l, _)| l == lbl1) else {
