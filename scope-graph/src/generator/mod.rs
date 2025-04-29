@@ -25,24 +25,20 @@ pub enum GraphPattern {
     ///
     /// Each child of this tree will follow the rest of the path
     Tree(usize),
+    /// Join all children into a single node
+    Join,
     Decl(SgData),
 }
 
 impl GraphPattern {
-    pub fn add<G>(&self, graph: &mut G, mut child_scopes: Vec<Scope>) -> Vec<Scope>
+    pub fn add<G>(&self, graph: &mut G, child_scopes: Vec<Scope>) -> Vec<Scope>
     where
         G: ScopeGraph<SgLabel, SgData>,
     {
-        let mut new_child_scopes = Vec::new();
-
-        if child_scopes.is_empty() {
-            let root = graph.add_scope(Scope::new(), SgData::NoData);
-            child_scopes.push(root);
-        }
-
-        for child in child_scopes {
-            match self {
-                Self::Linear(length) => {
+        match self {
+            Self::Linear(length) => {
+                let mut new_child_scopes = Vec::new();
+                for child in child_scopes {
                     let mut cur_scope = child;
                     for _ in 0..*length {
                         let child_scope = graph.add_scope(Scope::new(), SgData::NoData);
@@ -50,32 +46,40 @@ impl GraphPattern {
                         cur_scope = child_scope
                     }
                     new_child_scopes.push(cur_scope);
-                },
-                Self::Diamond(diamond_size) => {
-                    let top_scope = child;
-                    let bottom_scope = graph.add_scope(Scope::new(), SgData::NoData);
-                    for _ in 0..*diamond_size {
-                        let diamond_scope = graph.add_scope(Scope::new(), SgData::NoData);
-                        graph.add_edge(diamond_scope, top_scope, SgLabel::Parent);
-                        graph.add_edge(bottom_scope, diamond_scope, SgLabel::Parent);
-                    }
-                    new_child_scopes.push(bottom_scope)
-                },
-                Self::Tree(n_child) => {
+                }
+                new_child_scopes
+            }
+            Self::Diamond(diamond_size) => {
+                let new_child_scopes = Self::Tree(*diamond_size).add(graph, child_scopes);
+                Self::Join.add(graph, new_child_scopes)
+            }
+            Self::Decl(data) => {
+                for child in &child_scopes {
+                    let _ = graph.add_decl(*child, SgLabel::Declaration, data.clone());
+                }
+                child_scopes
+            }
+            Self::Tree(n_child) => {
+                let mut new_child_scopes = Vec::new();
+                for child in child_scopes {
                     let root = child;
                     for _ in 0..*n_child {
                         let child_scope = graph.add_scope(Scope::new(), SgData::NoData);
                         graph.add_edge(child_scope, root, SgLabel::Parent);
                         new_child_scopes.push(child_scope);
                     }
-                },
-                Self::Decl(data) => {
-                    let _ = graph.add_decl(child, SgLabel::Declaration, data.clone());
-                    new_child_scopes.push(child);
                 }
+                new_child_scopes
+            }
+
+            Self::Join => {
+                let tail = graph.add_scope(Scope::new(), SgData::NoData);
+                for child in child_scopes {
+                    graph.add_edge(tail, child, SgLabel::Parent);
+                }
+                vec![tail]
             }
         }
-        new_child_scopes
     }
 }
 
@@ -113,7 +117,8 @@ where
     }
 
     pub fn build(mut self) -> G {
-        let mut child_scopes = Vec::new();
+        let root = self.graph.add_scope(Scope::new(), SgData::NoData);
+        let mut child_scopes = vec![root];
         for pattern in self.patterns {
             child_scopes = pattern.add(&mut self.graph, child_scopes);
         }

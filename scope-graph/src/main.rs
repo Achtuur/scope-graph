@@ -101,18 +101,16 @@ fn graph_builder<'a>() -> UsedScopeGraph<'a, SgLabel, SgData> {
     let patterns = [
         GraphPattern::Linear(1),
         GraphPattern::Decl(SgData::var("x", "int")),
-        GraphPattern::Decl(SgData::var("z", "int")),
-        GraphPattern::Decl(SgData::var("a", "int")),
-        GraphPattern::Decl(SgData::var("b", "int")),
-        GraphPattern::Decl(SgData::var("c", "int")),
-        GraphPattern::Decl(SgData::var("d", "int")),
+        // GraphPattern::Decl(SgData::var("z", "int")),
         // GraphPattern::Linear(1),
-        GraphPattern::Tree(2),
-        GraphPattern::Decl(SgData::var("y", "int")),
-        // GraphPattern::Diamond(2),
-        GraphPattern::Decl(SgData::var("x", "int")),
-        GraphPattern::Tree(2),
+        // GraphPattern::Tree(2),
+        GraphPattern::Decl(SgData::var("z", "int")),
+        // GraphPattern::Join,
+        GraphPattern::Diamond(3),
+        // GraphPattern::Decl(SgData::var("x", "int")),
+        // GraphPattern::Tree(2),
         GraphPattern::Linear(2),
+        GraphPattern::Linear(6),
 
     ];
     let graph = GraphGenerator::new(graph)
@@ -137,7 +135,7 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
     let y_match: Arc<str> = Arc::from("y");
     let x_match: Arc<str> = Arc::from("x");
     let query_scope_set = [
-        (y_match.clone(), vec![21, 23]),
+        (x_match.clone(), vec![14]),
     ];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
@@ -168,8 +166,8 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
 
         
         let mut diagram = graph.as_uml_diagram(DRAW_CACHES);
+        let cache_path = graph.cache_path(14);
         diagram.extend(res_uml);
-        // let cache_path = graph.cache_path(13);
         // diagram.extend(cache_path);
 
         let uml = diagram.as_uml();
