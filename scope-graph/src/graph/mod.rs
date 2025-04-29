@@ -1,15 +1,14 @@
 use std::{collections::HashMap, hash::Hash};
 
 use plantuml::{
-    theme::{Color, ElementCss, StyleSheet},
+    theme::{Color, ElementCss, FontStyle, HorizontalAlignment, LineStyle, StyleSheet},
     EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem,
 };
 use resolve::QueryResult;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, regex::dfs::RegexAutomata,
-    scope::Scope,
+    data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, regex::dfs::RegexAutomata, scope::Scope, BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor
 };
 
 mod base;
@@ -93,7 +92,12 @@ where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
 {
-    fn add_scope(&mut self, scope: Scope, data: Data);
+    /// Add a scope to the graph with the given data.
+    ///
+    /// # Returns
+    ///
+    /// returns the scope that was added
+    fn add_scope(&mut self, scope: Scope, data: Data) -> Scope;
     fn add_edge(&mut self, source: Scope, target: Scope, label: Lbl);
 
     fn add_decl(&mut self, source: Scope, label: Lbl, data: Data) -> Scope {
@@ -194,23 +198,47 @@ where
     }
 
     fn as_uml_diagram(&self, display_cache: bool) -> PlantUmlDiagram {
-        let style_sheet: StyleSheet = [
+        let mut style_sheet: StyleSheet = [
             ElementCss::new()
                 .background_color(Color::new_rgb(242, 232, 230))
                 .as_selector("element"),
             ElementCss::new()
                 .line_color(Color::BLACK)
                 .as_selector("arrow"),
-            ElementCss::new().as_class("scope"),
             ElementCss::new()
+                .font_size(16)
+                .font_style(FontStyle::Bold)
+                .round_corner(0)
+                .horizontal_alignment(HorizontalAlignment::Center)
+                .as_class("scope"),
+            ElementCss::new()
+                .font_size(18)
+                .font_style(FontStyle::Bold)
                 .round_corner(10)
+                .shadowing(1)
                 .background_color(Color::new_rgb(242, 232, 175))
-                .as_class("data_scope"),
+                .as_class("data-scope"),
             ElementCss::new()
                 .line_thickness(1.25)
-                .as_class("scope_edge"),
+                .as_class("scope-edge"),
+            ElementCss::new()
+                .line_style(LineStyle::Dashed)
+                .as_class("query-edge"),
+            ElementCss::new()
+                .line_style(LineStyle::Dotted)
+                .line_color(Color::LIGHT_GRAY)
+                .as_class("cache-edge"),
+            ElementCss::new()
+                .font_size(11)
+                .as_class("cache-entry")
         ]
         .into();
+        let fg = ForeGroundColor::stylesheet();
+        let bg = BackgroundColor::stylesheet();
+        let bg_line = BackGroundEdgeColor::stylesheet();
+        style_sheet.merge(fg);
+        style_sheet.merge(bg);
+        style_sheet.merge(bg_line);
 
         let items = self.as_uml(display_cache);
         let mut diagram = PlantUmlDiagram::new("scope graph");
@@ -243,12 +271,14 @@ where
             let (node_type, class, contents) = match d.data.variant_has_data() {
                 true => (
                     NodeType::Card,
-                    "data_scope",
+                    "data-scope",
                     format!("{} > {}", s, d.data.render_string()),
                 ),
                 false => (NodeType::Node, "scope", s.to_string()),
             };
-            PlantUmlItem::node(s.uml_id(), contents, node_type).with_class(class)
+            PlantUmlItem::node(s.uml_id(), contents, node_type)
+            .add_class(class)
+            .add_class(BackgroundColor::get_class_name(s.0))
         });
 
         let edges = self.scope_iter().flat_map(move |(s, d)| {
@@ -259,8 +289,7 @@ where
                 };
 
                 PlantUmlItem::edge(s.uml_id(), edge.target().uml_id(), edge.lbl().str(), dir)
-                    .with_line_color(Color::BLACK)
-                    .with_class("scope_edge")
+                    .add_class("scope_edge")
             })
         });
 

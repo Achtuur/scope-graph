@@ -5,13 +5,7 @@ use resolve::CachedResolver;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    data::ScopeGraphData,
-    graph::{BaseScopeGraph, ScopeData, ScopeMap},
-    label::ScopeGraphLabel,
-    order::LabelOrder,
-    path::Path,
-    regex::dfs::RegexAutomata,
-    scope::Scope,
+    data::ScopeGraphData, graph::{BaseScopeGraph, ScopeData, ScopeMap}, label::ScopeGraphLabel, order::LabelOrder, path::Path, regex::dfs::RegexAutomata, scope::Scope, BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor
 };
 
 use super::{resolve::QueryResult, ScopeGraph};
@@ -78,8 +72,8 @@ where
         self.sg.first_scope_without_data(scope_num)
     }
 
-    fn add_scope(&mut self, scope: Scope, data: Data) {
-        self.sg.add_scope(scope, data);
+    fn add_scope(&mut self, scope: Scope, data: Data) -> Scope {
+        self.sg.add_scope(scope, data)
     }
 
     fn query<DEq, DWfd>(
@@ -126,6 +120,7 @@ where
     {
         let mut resolver = CachedResolver::new(
             &self.sg,
+            // todo: fix key to not have to clone
             self.resolve_cache
                 .entry((order.clone(), path_regex.clone()))
                 .or_default(),
@@ -172,14 +167,20 @@ where
                                     .map(|result| result.to_string())
                                     .collect::<Vec<String>>()
                                     .join("\n");
-                                // cache_str
-                                format!("<b>{:?}</b>\n{}", keys, cache_str)
+                                format!(
+                                    "<b>(p{}, {:08x}, s{})</b>\n{}",
+                                keys.0, keys.1, keys.2,
+                                cache_str
+                            )
                             })
                             .collect::<Vec<String>>()
                             .join("\n");
 
                         let cache_str = format!("<b>{:?}</b>\n{}", key, vals);
-                        Some(PlantUmlItem::note(key.uml_id(), cache_str))
+                        let item = PlantUmlItem::note(key.uml_id(), cache_str)
+                        .add_class("cache-entry")
+                        .add_class(BackgroundColor::get_class_name(key.0));
+                        Some(item)
                     })
             })
             .collect()
@@ -221,5 +222,26 @@ where
 
     pub fn scopes(&self) -> &ScopeMap<Lbl, Data> {
         self.sg.scopes()
+    }
+
+    /// draw the path to the data in the cache for a specific scope
+    pub fn cache_path(&self, scope_num: usize) -> Vec<PlantUmlItem> {
+        self.resolve_cache
+        .iter()
+        .flat_map(|(_, query_cache)| {
+            query_cache
+            .iter()
+            .filter(|(k, _)| k.2 == Scope(scope_num))
+            .flat_map(|(_, envs)| {
+                envs
+                .iter()
+                .flat_map(|qr| {
+                    qr.path
+                    .as_uml(ForeGroundColor::next_class(), false)
+                })
+            })
+        })
+        .map(|x| x.add_class("cache-edge"))
+        .collect::<Vec<_>>()
     }
 }

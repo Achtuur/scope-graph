@@ -9,85 +9,14 @@ use scope_graph::{
     order::LabelOrderBuilder,
     regex::{dfs::RegexAutomata, Regex},
     scope::Scope,
+    SgLabel, SgData,
 };
 use serde::{Deserialize, Serialize};
 
 const MAX_CHILDREN: usize = 2;
 const GEN_DEPTH: usize = 10;
 
-#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub enum Label {
-    Parent,
-    Declaration,
-}
-
-impl std::fmt::Display for Label {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.char())
-    }
-}
-
-impl ScopeGraphLabel for Label {
-    fn char(&self) -> char {
-        match self {
-            Self::Parent => 'P',
-            Self::Declaration => 'D',
-        }
-    }
-
-    fn str(&self) -> &'static str {
-        match self {
-            Self::Parent => "Parent",
-            Self::Declaration => "Declaration",
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
-enum Data {
-    NoData,
-    Variable(String, String),
-}
-
-impl Data {
-    fn var(x: impl ToString, t: impl ToString) -> Self {
-        Self::Variable(x.to_string(), t.to_string())
-    }
-
-    fn name(&self) -> String {
-        match self {
-            Self::NoData => "no data".to_string(),
-            Self::Variable(x, _) => x.to_string(),
-        }
-    }
-}
-
-impl std::fmt::Display for Data {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::NoData => write!(f, "no data"),
-            Self::Variable(x, t) => write!(f, "{x}: {t}"),
-        }
-    }
-}
-
-impl ScopeGraphData for Data {
-    fn variant_has_data(&self) -> bool {
-        match self {
-            Self::NoData => false,
-            Self::Variable(_, _) => true,
-        }
-    }
-
-    fn render_string(&self) -> String {
-        match self {
-            Self::NoData => "".to_string(),
-            Self::Variable(x, t) => format!("{}: {}", x, t),
-        }
-    }
-}
-
-fn recurse_add_scopes<Sg: ScopeGraph<Label, Data>>(graph: &mut Sg, parent: Scope, depth: usize) {
+fn recurse_add_scopes<Sg: ScopeGraph<SgLabel, SgData>>(graph: &mut Sg, parent: Scope, depth: usize) {
     if depth == 0 {
         return;
     }
@@ -95,29 +24,29 @@ fn recurse_add_scopes<Sg: ScopeGraph<Label, Data>>(graph: &mut Sg, parent: Scope
     let r = thread_rng.random_range(1..=MAX_CHILDREN);
     for _ in 0..r {
         let scope = Scope::new();
-        graph.add_scope(scope, Data::NoData);
+        graph.add_scope(scope, SgData::NoData);
         if thread_rng.random_bool(0.2) {
-            graph.add_decl(scope, Label::Declaration, Data::var("x", "int"));
+            graph.add_decl(scope, SgLabel::Declaration, SgData::var("x", "int"));
         }
-        graph.add_edge(scope, parent, Label::Parent);
+        graph.add_edge(scope, parent, SgLabel::Parent);
         recurse_add_scopes(graph, scope, depth - 1);
     }
 }
 
 // graph with 1 decl near the root and a lot of children
-fn create_long_graph<Sg: ScopeGraph<Label, Data>>(graph: &mut Sg) {
+fn create_long_graph<Sg: ScopeGraph<SgLabel, SgData>>(graph: &mut Sg) {
     let root = Scope::new();
     let scope1 = Scope::new();
-    graph.add_scope(root, Data::NoData);
-    graph.add_scope(scope1, Data::NoData);
-    graph.add_decl(scope1, Label::Declaration, Data::var("x", "int"));
-    graph.add_decl(scope1, Label::Declaration, Data::var("x", "bool"));
-    graph.add_edge(scope1, root, Label::Parent);
+    graph.add_scope(root, SgData::NoData);
+    graph.add_scope(scope1, SgData::NoData);
+    graph.add_decl(scope1, SgLabel::Declaration, SgData::var("x", "int"));
+    graph.add_decl(scope1, SgLabel::Declaration, SgData::var("x", "bool"));
+    graph.add_edge(scope1, root, SgLabel::Parent);
 
     recurse_add_scopes(graph, scope1, GEN_DEPTH);
 }
 
-fn create_diamond_graph<Sg: ScopeGraph<Label, Data>>(graph: &mut Sg) {
+fn create_diamond_graph<Sg: ScopeGraph<SgLabel, SgData>>(graph: &mut Sg) {
     // diamond: (tailN -> tail0) -> (diamond0..diamondN) -> (root -> rootN)
 
     const ROOT_SIZE: usize = 10;
@@ -125,41 +54,41 @@ fn create_diamond_graph<Sg: ScopeGraph<Label, Data>>(graph: &mut Sg) {
     const DIAMOND_SIZE: usize = 40;
 
     let mut root = Scope::new();
-    graph.add_scope(root, Data::NoData);
-    graph.add_decl(root, Label::Declaration, Data::var("x", "int"));
-    graph.add_decl(root, Label::Declaration, Data::var("y", "int"));
+    graph.add_scope(root, SgData::NoData);
+    graph.add_decl(root, SgLabel::Declaration, SgData::var("x", "int"));
+    graph.add_decl(root, SgLabel::Declaration, SgData::var("y", "int"));
     let mut tail = Scope::new();
-    graph.add_scope(tail, Data::NoData);
+    graph.add_scope(tail, SgData::NoData);
     for _ in 0..ROOT_SIZE {
         let new_root = Scope::new();
-        graph.add_scope(new_root, Data::NoData);
-        graph.add_edge(new_root, root, Label::Parent);
+        graph.add_scope(new_root, SgData::NoData);
+        graph.add_edge(new_root, root, SgLabel::Parent);
         root = new_root;
 
         let new_tail = Scope::new();
-        graph.add_scope(new_tail, Data::NoData);
-        graph.add_edge(tail, new_tail, Label::Parent);
+        graph.add_scope(new_tail, SgData::NoData);
+        graph.add_edge(tail, new_tail, SgLabel::Parent);
         tail = new_tail;
     }
 
     for _ in 0..DIAMOND_SIZE {
         let scope = Scope::new();
-        graph.add_scope(scope, Data::NoData);
-        graph.add_edge(scope, root, Label::Parent);
-        graph.add_edge(tail, scope, Label::Parent);
+        graph.add_scope(scope, SgData::NoData);
+        graph.add_edge(scope, root, SgLabel::Parent);
+        graph.add_edge(tail, scope, SgLabel::Parent);
     }
 }
 
 fn query_graph<Sg>(mut graph: Sg, num_queries: usize) -> Sg
 where
-    Sg: ScopeGraph<Label, Data>,
+    Sg: ScopeGraph<SgLabel, SgData>,
 {
     let order = LabelOrderBuilder::new()
-        .push(Label::Declaration, Label::Parent)
+        .push(SgLabel::Declaration, SgLabel::Parent)
         .build();
 
     // P*D;
-    let label_reg = Regex::concat(Regex::kleene(Label::Parent), Label::Declaration);
+    let label_reg = Regex::concat(Regex::kleene(SgLabel::Parent), SgLabel::Declaration);
     let matcher = RegexAutomata::from_regex(label_reg.clone());
 
     let mut thread_rng = rand::rng();
@@ -190,7 +119,7 @@ where
 
 fn bench_graph<Sg>(mut graph: Sg, num_queries: usize) -> Sg
 where
-    Sg: ScopeGraph<Label, Data>,
+    Sg: ScopeGraph<SgLabel, SgData>,
 {
     create_diamond_graph(&mut graph);
     Scope::reset_counter(); // so we can always select the same scope number

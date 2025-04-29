@@ -282,6 +282,10 @@ impl StyleSheet {
         self.classes.extend(classes);
     }
 
+    pub fn merge(&mut self, other: StyleSheet) {
+        self.classes.extend(other.classes);
+    }
+
     pub fn as_css(&self) -> String {
         let classes = self
             .classes

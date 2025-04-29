@@ -143,10 +143,8 @@ impl PlantUmlItemKind {
             }
             PlantUmlItemKind::Note { to, contents } => {
                 let formatted = contents.replace("\n", "\n\t");
-                let note_key = format!("N_{0:}", to);
-                let note = format!("note as {} {}\n\t{}\nend note", note_key, class, formatted);
-                let dir = EdgeDirection::Right;
-                format!("{note}\n{} .{}. {}", note_key, dir.uml_str(), to)
+                let note = format!("note left of {} {}\n\t{}\nend note", to, class, formatted);
+                note
             }
         }
     }
@@ -155,7 +153,7 @@ impl PlantUmlItemKind {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PlantUmlItem {
     item: PlantUmlItemKind,
-    class: Option<String>,
+    class: Vec<String>,
     annotation: ItemAnnotation,
 }
 
@@ -175,7 +173,7 @@ impl PlantUmlItem {
     pub fn new(item: PlantUmlItemKind) -> Self {
         Self {
             item,
-            class: None,
+            class: Vec::new(),
             annotation: ItemAnnotation::default(),
         }
     }
@@ -209,8 +207,8 @@ impl PlantUmlItem {
         })
     }
 
-    pub fn with_class(mut self, class: impl ToString) -> Self {
-        self.class = Some(class.to_string());
+    pub fn add_class(mut self, class: impl ToString) -> Self {
+        self.class.push(class.to_string());
         self
     }
 
@@ -231,12 +229,12 @@ impl PlantUmlItem {
 
     /// Returns a CssClass if this object was not given a class and contains annotations
     pub(crate) fn class_def(&mut self) -> Option<CssClass> {
-        if self.annotation.is_default() || self.class.is_some() {
+        if self.annotation.is_default() {
             return None;
         }
 
         let class_name = format!("gen-class-{}", CLASS_CTR.fetch_add(1, Ordering::Relaxed));
-        self.class = Some(class_name.clone());
+        self.class.push(class_name.clone());
         let el = self.annotation.into();
         let class = CssClass::new_class(class_name, el);
         Some(class)
@@ -245,9 +243,10 @@ impl PlantUmlItem {
     pub fn as_uml(&self) -> String {
         let class = self
             .class
-            .as_ref()
+            .iter()
             .map(|c| format!("<<{}>>", c))
-            .unwrap_or_default();
+            .collect::<Vec<_>>()
+            .join("");
         let s = self.item.as_uml(&class);
         s.trim_end().to_string()
     }

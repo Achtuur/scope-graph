@@ -47,9 +47,10 @@ where
     Lbl: ScopeGraphLabel + Clone,
     Data: ScopeGraphData + Clone,
 {
-    fn add_scope(&mut self, scope: Scope, data: Data) {
+    fn add_scope(&mut self, scope: Scope, data: Data) -> Scope {
         tracing::trace!("Adding scope: {} with data: {}", scope, data);
         self.scopes.insert(scope, ScopeData::new(data));
+        scope
     }
 
     fn add_edge(&mut self, source: Scope, target: Scope, label: Lbl) {

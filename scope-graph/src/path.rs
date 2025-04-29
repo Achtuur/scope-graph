@@ -70,7 +70,7 @@ where
     ///
     /// * `color` - The color of the arrow
     /// * `reverse` - If true, the arrow will be reversed
-    pub fn as_uml(&self, color: Color, reverse: bool) -> Vec<PlantUmlItem> {
+    pub fn as_uml(&self, class: String, reverse: bool) -> Vec<PlantUmlItem> {
         match self {
             Self::Start(_) => Vec::new(),
             Self::Step {
@@ -89,10 +89,10 @@ where
                     label.char(),
                     EdgeDirection::Norank,
                 )
-                .with_line_color(color)
-                .with_line_style(LineStyle::Dashed);
+                .add_class(class.clone())
+                .add_class("query-edge");
 
-                let mut from_items = from.as_uml(color, reverse);
+                let mut from_items = from.as_uml(class, reverse);
                 from_items.push(item);
                 from_items
             }
@@ -224,8 +224,8 @@ where
         Self(self.0.step(label, scope))
     }
 
-    pub fn as_uml(&self, color: Color, reverse: bool) -> Vec<PlantUmlItem> {
-        self.0.as_uml(color, reverse)
+    pub fn as_uml(&self, class: String, reverse: bool) -> Vec<PlantUmlItem> {
+        self.0.as_uml(class, reverse)
     }
 
     pub fn as_mem_addr(&self) -> String {
