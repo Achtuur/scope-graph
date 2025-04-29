@@ -1,9 +1,9 @@
 use std::{collections::HashMap, hash::Hash};
 
-use plantuml::{
-    theme::{Color, ElementCss, FontStyle, HorizontalAlignment, LineStyle, StyleSheet},
+use graphing::{plantuml::{
+    theme::{ElementCss, FontStyle, HorizontalAlignment, LineStyle, StyleSheet},
     EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem,
-};
+}, Color};
 use resolve::QueryResult;
 use serde::{Deserialize, Serialize};
 

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use plantuml::PlantUmlItem;
+use graphing::plantuml::PlantUmlItem;
 use resolve::CachedResolver;
 use serde::{Deserialize, Serialize};
 

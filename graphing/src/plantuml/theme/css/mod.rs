@@ -1,7 +1,7 @@
-use super::Color;
-
 mod props;
 pub use props::*;
+
+use crate::Color;
 
 #[derive(Default, Clone, Debug)]
 pub struct ElementCss {

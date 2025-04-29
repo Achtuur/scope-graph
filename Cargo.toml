@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
-members = [ "mermaid", "plantuml",
+members = [
+    "graphing",
     "sclang", # lil test language
     "scope-graph", # scope graph resolver
     "sg-parse", # parse using scope graph

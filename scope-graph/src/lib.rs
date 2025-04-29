@@ -2,7 +2,7 @@ use std::{marker::PhantomData, sync::atomic::AtomicUsize};
 
 use data::ScopeGraphData;
 use label::ScopeGraphLabel;
-use plantuml::theme::{Color, ElementCss, StyleSheet};
+use graphing::{plantuml::theme::{ElementCss, StyleSheet}, Color};
 use serde::{Deserialize, Serialize};
 
 pub mod label;
@@ -19,7 +19,7 @@ pub mod generator;
 /// Enable caching when doing forward resolution
 pub const FORWARD_ENABLE_CACHING: bool = true;
 /// Draw caches in the graph
-pub const DRAW_CACHES: bool = false;
+pub const DRAW_CACHES: bool = true;
 /// Draw memory addresses for the paths
 pub const DRAW_MEM_ADDR: bool = false;
 /// Prompt to save the graph

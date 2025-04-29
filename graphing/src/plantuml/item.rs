@@ -1,6 +1,8 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use crate::theme::{Color, CssClass, ElementCss, LineStyle};
+use crate::Color;
+
+use super::theme::{CssClass, ElementCss, LineStyle};
 
 static CLASS_CTR: AtomicUsize = AtomicUsize::new(0);
 

@@ -1,6 +1,6 @@
 use std::hash::Hash;
 
-use plantuml::{EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem};
+use graphing::plantuml::{EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem};
 
 use crate::label::ScopeGraphLabel;
 

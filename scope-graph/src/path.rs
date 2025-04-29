@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use plantuml::{theme::Color, theme::LineStyle, EdgeDirection, PlantUmlItem};
+use graphing::plantuml::{theme::LineStyle, EdgeDirection, PlantUmlItem};
 
 use crate::{label::ScopeGraphLabel, scope::Scope};
 

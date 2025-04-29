@@ -1,6 +1,6 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use crate::theme::LineType;
+use super::theme::LineType;
 
 static EDGE_CTR: AtomicUsize = AtomicUsize::new(0);
 

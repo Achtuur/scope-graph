@@ -1,4 +1,6 @@
-pub trait CssProperty {
+use crate::Color;
+
+pub(crate) trait CssProperty {
     fn as_css(&self) -> String;
 }
 
@@ -8,6 +10,12 @@ where
 {
     fn as_css(&self) -> String {
         format!("{}", self)
+    }
+}
+
+impl CssProperty for Color {
+    fn as_css(&self) -> String {
+        self.hex_string()
     }
 }
 
