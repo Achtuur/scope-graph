@@ -1,5 +1,6 @@
 mod props;
 pub use props::*;
+use crate::CssProperty;
 
 use crate::Color;
 
@@ -241,33 +242,33 @@ impl CssClass {
 }
 
 #[derive(Default, Clone, Debug)]
-pub struct StyleSheet {
+pub struct PlantUmlStyleSheet {
     classes: Vec<CssClass>,
 }
 
-impl FromIterator<CssClass> for StyleSheet {
+impl FromIterator<CssClass> for PlantUmlStyleSheet {
     fn from_iter<T: IntoIterator<Item = CssClass>>(iter: T) -> Self {
-        let mut style_sheet = StyleSheet::new();
+        let mut style_sheet = PlantUmlStyleSheet::new();
         style_sheet.extend(iter);
         style_sheet
     }
 }
 
-impl From<Vec<CssClass>> for StyleSheet {
+impl From<Vec<CssClass>> for PlantUmlStyleSheet {
     fn from(value: Vec<CssClass>) -> Self {
-        StyleSheet { classes: value }
+        PlantUmlStyleSheet { classes: value }
     }
 }
 
-impl<const N: usize> From<[CssClass; N]> for StyleSheet {
+impl<const N: usize> From<[CssClass; N]> for PlantUmlStyleSheet {
     fn from(value: [CssClass; N]) -> Self {
-        StyleSheet {
+        PlantUmlStyleSheet {
             classes: value.to_vec(),
         }
     }
 }
 
-impl StyleSheet {
+impl PlantUmlStyleSheet {
     pub fn new() -> Self {
         Self {
             classes: Vec::new(),
@@ -282,7 +283,7 @@ impl StyleSheet {
         self.classes.extend(classes);
     }
 
-    pub fn merge(&mut self, other: StyleSheet) {
+    pub fn merge(&mut self, other: PlantUmlStyleSheet) {
         self.classes.extend(other.classes);
     }
 

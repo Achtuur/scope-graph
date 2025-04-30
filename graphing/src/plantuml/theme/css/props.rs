@@ -1,23 +1,4 @@
-use crate::Color;
-
-pub(crate) trait CssProperty {
-    fn as_css(&self) -> String;
-}
-
-impl<T> CssProperty for T
-where
-    T: std::fmt::Display,
-{
-    fn as_css(&self) -> String {
-        format!("{}", self)
-    }
-}
-
-impl CssProperty for Color {
-    fn as_css(&self) -> String {
-        self.hex_string()
-    }
-}
+use crate::{Color, CssProperty};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum LineStyle {

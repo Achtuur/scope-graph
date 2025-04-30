@@ -129,7 +129,7 @@ where
 pub fn criterion_benchmark(c: &mut Criterion) {
     let graph = bench_graph(BaseScopeGraph::new(), 0);
     graph
-        .as_uml_diagram(false)
+        .as_uml_diagram("title", false)
         .write_to_file("output/bench/graph.puml")
         .unwrap();
 

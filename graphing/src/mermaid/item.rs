@@ -1,6 +1,7 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use super::theme::LineType;
+use super::{theme::EdgeType, MermaidStyleSheet};
+
 
 static EDGE_CTR: AtomicUsize = AtomicUsize::new(0);
 
@@ -11,12 +12,15 @@ pub enum ItemShape {
     #[display("rounded")]
     Rounded,
     #[display("stadium")]
-    Stadium
+    Stadium,
+    #[display("braces")]
+    Braces,
+    #[display("card")]
+    Card,
 }
 
 
 pub struct MermaidNode {
-    id: String,
     label: String,
     shape: ItemShape,
 }
@@ -25,38 +29,108 @@ pub struct MermaidEdge {
     from: String,
     to: String,
     label: String,
-    line_type: LineType,
-    animated: bool,
+    line_type: EdgeType,
 }
 
-pub enum MermaidItem {
+pub enum MermaidItemKind {
     Node(MermaidNode),
     Edge(MermaidEdge),
 }
 
-impl MermaidItem {
-    pub fn to_mmd(&self) -> String {
+impl MermaidItemKind {
+    pub fn to_mmd(&self, id: &str) -> String {
         match self {
-            MermaidItem::Node(node) => {
-                format!("{}@{{ shape: {}, label: \"{}\" }}", node.id, node.shape, node.label)
+            MermaidItemKind::Node(node) => {
+                format!("{}@{{ shape: {}, label: \"<span>{}</span>\" }};", id, node.shape, node.label)
             },
-            MermaidItem::Edge(edge) => {
+            MermaidItemKind::Edge(edge) => {
+
                 let line = match edge.label.as_str() {
                     "" => match edge.line_type {
-                        LineType::Solid => "-->",
-                        LineType::Dotted => "-.->",
-                        LineType::Thick => "==>",
+                        EdgeType::Solid => "-->",
+                        EdgeType::Dotted => "-.->",
+                        EdgeType::Thick => "==>",
                     }.to_string(),
 
                     lbl => match edge.line_type {
-                        LineType::Solid => format!("--{}-->", lbl),
-                        LineType::Dotted => format!("-.{}.->", lbl),
-                        LineType::Thick => format!("== {} ==>", lbl),
+                        EdgeType::Solid => format!("-- {} -->", lbl),
+                        EdgeType::Dotted => format!("-. {} .->", lbl),
+                        EdgeType::Thick => format!("== {} ==>", lbl),
                     }
                 };
-                let id = format!("edge{}", EDGE_CTR.fetch_add(1, Ordering::Relaxed));
-                format!("{} {}@{} {}", edge.from, id, line, edge.to)
+                format!("{} {}@{} {};", edge.from, id, line, edge.to)
             },
         }
+    }
+}
+
+pub struct MermaidItem {
+    id: String,
+    kind: MermaidItemKind,
+    classes: Vec<String>,
+}
+
+impl MermaidItem {
+    pub fn edge(
+        from: impl ToString,
+        to: impl ToString,
+        label: impl ToString,
+        line_type: EdgeType,
+    ) -> Self {
+        let num = EDGE_CTR.fetch_add(1, Ordering::Relaxed);
+        Self {
+            id: format!("edge{}", num),
+            kind: MermaidItemKind::Edge(MermaidEdge {
+                from: from.to_string(),
+                to: to.to_string(),
+                label: label.to_string(),
+                line_type,
+            }),
+            classes: Vec::new(),
+        }
+    }
+
+    pub fn node(
+        id: impl ToString,
+        label: impl ToString,
+        shape: ItemShape,
+    ) -> Self {
+        Self {
+            id: id.to_string(),
+            kind: MermaidItemKind::Node(MermaidNode {
+                label: label.to_string(),
+                shape,
+            }),
+            classes: Vec::new(),
+        }
+    }
+
+    pub fn add_class(mut self, class: impl ToString) -> Self {
+        self.classes.push(class.to_string());
+        self
+    }
+
+    pub(crate) fn id(&self) -> &str {
+        &self.id
+    }
+
+    pub(crate) fn find_nonexistant_class(&self, sheet: &MermaidStyleSheet) -> Option<&str> {
+        self.classes.iter().find_map(|class| {
+            if !sheet.contains_key(class) {
+                Some(class.as_str())
+            } else {
+                None
+            }
+        })
+    }
+
+    pub(crate) fn to_mmd(&self) -> String {
+        let item = self.kind.to_mmd(&self.id);
+        let classes = self.classes.iter().map(|class| {
+            format!("class {} {}", self.id, class)
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+        format!("{}\n{}", item, classes)
     }
 }

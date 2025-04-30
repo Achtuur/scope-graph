@@ -7,7 +7,7 @@ use std::{
 };
 
 pub use item::*;
-use theme::StyleSheet;
+use theme::PlantUmlStyleSheet;
 
 pub mod theme;
 
@@ -19,7 +19,7 @@ hide stereotype"#;
 
 #[derive(Clone, Debug)]
 pub struct PlantUmlDiagram {
-    style: StyleSheet,
+    style: PlantUmlStyleSheet,
     items: Vec<PlantUmlItem>,
     title: String,
 }
@@ -27,13 +27,13 @@ pub struct PlantUmlDiagram {
 impl PlantUmlDiagram {
     pub fn new(title: impl ToString) -> Self {
         Self {
-            style: StyleSheet::new(),
+            style: PlantUmlStyleSheet::new(),
             items: Vec::new(),
             title: title.to_string(),
         }
     }
 
-    pub fn set_style_sheet(&mut self, style: StyleSheet) {
+    pub fn set_style_sheet(&mut self, style: PlantUmlStyleSheet) {
         self.style = style;
     }
 
@@ -64,7 +64,8 @@ impl PlantUmlDiagram {
     }
 
     pub fn write_to_file(self, path: &str) -> Result<(), io::Error> {
-        let path = PathBuf::from_str(path).unwrap();
+        let mut path = PathBuf::from_str(path).unwrap();
+        path.set_extension("puml");
         let dir = path.parent().unwrap();
         fs::create_dir_all(dir)?;
         let content = self.as_uml();

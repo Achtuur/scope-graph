@@ -1,14 +1,20 @@
 use std::collections::HashMap;
 
-use graphing::plantuml::PlantUmlItem;
+use graphing::{
+    mermaid::{
+        item::{ItemShape, MermaidItem},
+        theme::EdgeType,
+    },
+    plantuml::PlantUmlItem,
+};
 use resolve::CachedResolver;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    data::ScopeGraphData, graph::{BaseScopeGraph, ScopeData, ScopeMap}, label::ScopeGraphLabel, order::LabelOrder, path::Path, regex::dfs::RegexAutomata, scope::Scope, BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor
+    data::ScopeGraphData, graph::{BaseScopeGraph, ScopeData, ScopeMap}, label::ScopeGraphLabel, order::LabelOrder, path::Path, regex::dfs::RegexAutomata, scope::Scope, BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor, COLOR_POINTER
 };
 
-use super::{resolve::QueryResult, ScopeGraph};
+use super::{ScopeGraph, resolve::QueryResult};
 
 mod resolve;
 
@@ -134,11 +140,7 @@ where
         resolver.resolve(Path::start(scope))
     }
 
-    fn generate_cache_uml<'a>(&'a self) -> Vec<PlantUmlItem>
-    where
-        Lbl: 'a,
-        Data: 'a,
-    {
+    fn generate_cache_uml(&self) -> Vec<PlantUmlItem> {
         self.resolve_cache
             .iter()
             .flat_map(|(query_params, query_cache)| {
@@ -169,18 +171,69 @@ where
                                     .join("\n");
                                 format!(
                                     "<b>(p{}, {:08x}, s{})</b>\n{}",
-                                keys.0, keys.1, keys.2,
-                                cache_str
-                            )
+                                    keys.0, keys.1, keys.2, cache_str
+                                )
                             })
                             .collect::<Vec<String>>()
                             .join("\n");
 
                         let cache_str = format!("<b>{:?}</b>\n{}", key, vals);
                         let item = PlantUmlItem::note(key.uml_id(), cache_str)
-                        .add_class("cache-entry")
-                        .add_class(BackgroundColor::get_class_name(key.0));
+                            .add_class("cache-entry")
+                            .add_class(BackgroundColor::get_class_name(key.0));
                         Some(item)
+                    })
+            })
+            .collect()
+    }
+
+    fn generate_cache_mmd(&self) -> Vec<MermaidItem> {
+        self.resolve_cache
+            .iter()
+            .flat_map(|(query_params, query_cache)| {
+                query_cache
+                    .iter()
+                    .filter(|(key, _)| !self.scope_holds_data(key.2))
+                    // map with scope as key to not have duplicate notes
+                    .fold(HashMap::new(), |mut acc, (keys, envs)| {
+                        let key = keys.2; // scope
+                        let entry: &mut HashMap<QueryCacheKey, &Vec<QueryResult<Lbl, Data>>> =
+                            acc.entry(key).or_default();
+                        entry.insert(*keys, envs);
+                        acc
+                    })
+                    .into_iter()
+                    .flat_map(|(key, envs)| {
+                        if envs.is_empty() {
+                            return Vec::new();
+                        }
+
+                        let vals = envs
+                            .iter()
+                            .map(|(keys, env)| {
+                                let cache_str = env
+                                    .iter()
+                                    .map(|result| result.to_string())
+                                    .collect::<Vec<String>>()
+                                    .join("\n");
+                                cache_str
+                                // // uncomment this to show cache key
+                                // format!(
+                                //     "<b>(p{}, {:08x}, s{})</b><br>{}",
+                                //     keys.0, keys.1, keys.2, cache_str
+                                // )
+                            })
+                            .collect::<Vec<String>>()
+                            .join("<br>");
+
+                        let id = format!("cache-{}", key.uml_id());
+
+                        let cache_str = format!("<b>{:?}</b><br>{}", key, vals);
+                        let note = MermaidItem::node(&id, cache_str, ItemShape::Card)
+                            .add_class("cache-entry")
+                            .add_class(BackgroundColor::get_class_name(key.0));
+                        let edge = MermaidItem::edge(key.uml_id(), id, "", EdgeType::Dotted);
+                        vec![note, edge]
                     })
             })
             .collect()
@@ -225,23 +278,35 @@ where
     }
 
     /// draw the path to the data in the cache for a specific scope
-    pub fn cache_path(&self, scope_num: usize) -> Vec<PlantUmlItem> {
+    pub fn cache_path_uml(&self, scope_num: usize) -> Vec<PlantUmlItem> {
         self.resolve_cache
-        .iter()
-        .flat_map(|(_, query_cache)| {
-            query_cache
             .iter()
-            .filter(|(k, _)| k.2 == Scope(scope_num))
-            .flat_map(|(_, envs)| {
-                envs
-                .iter()
-                .flat_map(|qr| {
-                    qr.path
-                    .as_uml(ForeGroundColor::next_class(), false)
-                })
+            .flat_map(|(_, query_cache)| {
+                query_cache
+                    .iter()
+                    .filter(|(k, _)| k.2 == Scope(scope_num))
+                    .flat_map(|(_, envs)| {
+                        envs.iter()
+                            .flat_map(|qr| qr.path.as_uml(ForeGroundColor::next_class(), false))
+                    })
             })
-        })
-        .map(|x| x.add_class("cache-edge"))
-        .collect::<Vec<_>>()
+            .map(|x| x.add_class("cache-edge"))
+            .collect::<Vec<_>>()
+    }
+
+    pub fn cache_path_mmd(&self, scope_num: usize) -> Vec<MermaidItem> {
+        self.resolve_cache
+            .iter()
+            .flat_map(|(_, query_cache)| {
+                query_cache
+                    .iter()
+                    .filter(|(k, _)| k.2 == Scope(scope_num))
+                    .flat_map(|(_, envs)| {
+                        envs.iter()
+                            .flat_map(|qr| qr.path.as_mmd(ForeGroundColor::next_class(), true))
+                    })
+            })
+            .map(|x| x.add_class("cache-edge"))
+            .collect::<Vec<_>>()
     }
 }

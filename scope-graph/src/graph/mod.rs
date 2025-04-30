@@ -1,14 +1,23 @@
 use std::{collections::HashMap, hash::Hash};
 
-use graphing::{plantuml::{
-    theme::{ElementCss, FontStyle, HorizontalAlignment, LineStyle, StyleSheet},
-    EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem,
-}, Color};
+use graphing::{
+    Color,
+    mermaid::{
+        MermaidChartDirection, MermaidDiagram, MermaidStyleSheet,
+        item::{ItemShape, MermaidItem},
+        theme::{AnimationSpeed, AnimationStyle, EdgeType, ElementStyle, Size},
+    },
+    plantuml::{
+        EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem,
+        theme::{ElementCss, FontStyle, HorizontalAlignment, LineStyle, PlantUmlStyleSheet},
+    },
+};
 use resolve::QueryResult;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, regex::dfs::RegexAutomata, scope::Scope, BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor
+    BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor, data::ScopeGraphData,
+    label::ScopeGraphLabel, order::LabelOrder, regex::dfs::RegexAutomata, scope::Scope,
 };
 
 mod base;
@@ -166,39 +175,9 @@ where
     }
 
     fn scope_holds_data(&self, scope: Scope) -> bool;
-    fn as_mmd(&self, title: &str) -> String {
-        let mut mmd = format!(
-            "---\n\
-            title: \"{}\"\n\
-            ---\n\
-            flowchart LR\n\
-            ",
-            title
-        );
 
-        for (s, d) in self.scope_iter() {
-            if d.data.variant_has_data() {
-                mmd += &format!("\tscope_{}[\"{}\"]\n", s.0, d.data.render_string());
-            } else {
-                mmd += &format!("\tscope_{}((\"{}\"))\n", s.0, s.0);
-            }
-        }
-
-        for (s, d) in self.scope_iter() {
-            for edge in d.parents().iter() {
-                mmd += &format!(
-                    "scope_{} ==>|\"{}\"| scope_{}\n",
-                    s.0,
-                    edge.lbl().str(),
-                    edge.to.0
-                )
-            }
-        }
-        mmd
-    }
-
-    fn as_uml_diagram(&self, display_cache: bool) -> PlantUmlDiagram {
-        let mut style_sheet: StyleSheet = [
+    fn as_uml_diagram(&self, title: &str, draw_caches: bool) -> PlantUmlDiagram {
+        let mut style_sheet: PlantUmlStyleSheet = [
             ElementCss::new()
                 .background_color(Color::new_rgb(242, 232, 230))
                 .as_selector("element"),
@@ -228,42 +207,23 @@ where
                 .line_style(LineStyle::Dotted)
                 .line_color(Color::LIGHT_GRAY)
                 .as_class("cache-edge"),
-            ElementCss::new()
-                .font_size(11)
-                .as_class("cache-entry")
+            ElementCss::new().font_size(11).as_class("cache-entry"),
         ]
         .into();
-        let fg = ForeGroundColor::stylesheet();
-        let bg = BackgroundColor::stylesheet();
-        let bg_line = BackGroundEdgeColor::stylesheet();
+        let fg = ForeGroundColor::uml_stylesheet();
+        let bg = BackgroundColor::uml_stylesheet();
+        let bg_line = BackGroundEdgeColor::uml_stylesheet();
         style_sheet.merge(fg);
         style_sheet.merge(bg);
         style_sheet.merge(bg_line);
 
-        let items = self.as_uml(display_cache);
         let mut diagram = PlantUmlDiagram::new("scope graph");
-        diagram.extend(items);
         diagram.set_style_sheet(style_sheet);
-        diagram
-    }
-
-    fn as_uml(&self, display_cache: bool) -> Vec<PlantUmlItem> {
-        let mut items = self.generate_graph_uml();
-        match display_cache {
-            true => {
-                items.extend(self.generate_cache_uml());
-                items
-            }
-            false => items,
+        diagram.extend(self.generate_graph_uml());
+        if draw_caches {
+            diagram.extend(self.generate_cache_uml());
         }
-    }
-
-    fn generate_cache_uml<'a>(&'a self) -> Vec<PlantUmlItem>
-    where
-        Lbl: 'a,
-        Data: 'a,
-    {
-        Vec::new()
+        diagram
     }
 
     fn generate_graph_uml(&self) -> Vec<PlantUmlItem> {
@@ -277,8 +237,8 @@ where
                 false => (NodeType::Node, "scope", s.to_string()),
             };
             PlantUmlItem::node(s.uml_id(), contents, node_type)
-            .add_class(class)
-            .add_class(BackgroundColor::get_class_name(s.0))
+                .add_class(class)
+                .add_class(BackgroundColor::get_class_name(s.0))
         });
 
         let edges = self.scope_iter().flat_map(move |(s, d)| {
@@ -290,6 +250,94 @@ where
 
                 PlantUmlItem::edge(s.uml_id(), edge.target().uml_id(), edge.lbl().str(), dir)
                     .add_class("scope_edge")
+            })
+        });
+
+        scope_nodes.chain(edges).collect()
+    }
+
+    fn generate_cache_uml(&self) -> Vec<PlantUmlItem> {
+        Vec::new()
+    }
+
+    fn as_mmd_diagram(&self, title: &str, draw_caches: bool) -> MermaidDiagram {
+        let mut style_sheet = MermaidStyleSheet::new()
+            .with_class("scope", ElementStyle::new()
+            .line_color(Color::DARK_GRAY)
+            .font_size(Size::Pt(18))
+            .margin(Size::Px(5))
+            .padding(Size::Px(5))
+        )
+            .with_class(
+                "data-scope",
+                ElementStyle::new()
+                    .line_color(Color::BLACK)
+                    .background_color(Color::new_rgb(242, 232, 175)),
+            )
+            .with_class("scope-edge", ElementStyle::new().line_thickness(2.5))
+            .with_class(
+                "query-edge",
+                ElementStyle::new()
+                    .line_thickness(1.5)
+                    .animation_style(AnimationStyle::Linear)
+                    .animation_speed(AnimationSpeed::Slow),
+            )
+            .with_class(
+                "cache-entry",
+                ElementStyle::new().font_size(Size::Pt(8)),
+            )
+            .with_class(
+                "cache-edge",
+                ElementStyle::new(),
+            );
+
+        let fg = ForeGroundColor::mmd_stylesheet();
+        let bg = BackgroundColor::mmd_stylesheet();
+        let bg_line = BackGroundEdgeColor::mmd_stylesheet();
+        style_sheet.merge(fg);
+        style_sheet.merge(bg);
+        style_sheet.merge(bg_line);
+
+        let mut diagram = MermaidDiagram::new(title);
+        diagram.set_style_sheet(style_sheet);
+        diagram.set_direction(MermaidChartDirection::BottomTop);
+        diagram.extend(self.generate_graph_mmd());
+        if draw_caches {
+            diagram.extend(self.generate_cache_mmd());
+        }
+        diagram
+    }
+
+    fn generate_cache_mmd(&self) -> Vec<MermaidItem> {
+        Vec::new()
+    }
+
+    fn generate_graph_mmd(&self) -> Vec<MermaidItem> {
+        let scope_nodes = self
+            .scope_iter()
+            .map(|(s, d)| match d.data.variant_has_data() {
+                true => {
+                    let contents = format!("{} > {}", s, d.data.render_string());
+                    MermaidItem::node(s.uml_id(), contents, ItemShape::Rounded)
+                        .add_class("data-scope")
+                }
+                false => {
+                    let contents = s.to_string();
+                    MermaidItem::node(s.uml_id(), contents, ItemShape::Circle)
+                        .add_class("scope")
+                        .add_class(BackgroundColor::get_class_name(s.0))
+                }
+            });
+
+        let edges = self.scope_iter().flat_map(move |(s, d)| {
+            d.parents().iter().map(move |edge| {
+                MermaidItem::edge(
+                    s.uml_id(),
+                    edge.target().uml_id(),
+                    edge.lbl().str(),
+                    EdgeType::Thick,
+                )
+                .add_class("scope-edge")
             })
         });
 

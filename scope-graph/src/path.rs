@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use graphing::plantuml::{theme::LineStyle, EdgeDirection, PlantUmlItem};
+use graphing::{mermaid::{item::MermaidItem, theme::EdgeType}, plantuml::{theme::LineStyle, EdgeDirection, PlantUmlItem}};
 
 use crate::{label::ScopeGraphLabel, scope::Scope};
 
@@ -44,22 +44,30 @@ where
         }
     }
 
-    pub fn as_mmd(&self, mut mmd: String) -> String {
+    pub fn as_mmd(&self, class: String, reverse: bool) -> Vec<MermaidItem> {
         match self {
-            Self::Start(_) => mmd,
+            Self::Start(_) => Vec::new(),
             Self::Step {
                 from,
                 label,
                 target,
             } => {
-                mmd += "\n";
-                mmd += &format!(
-                    "scope_{} --{}--> scope_{}",
-                    from.target().0,
-                    label.char(),
-                    target.0
-                );
-                from.as_mmd(mmd)
+                let (from_scope, to_scope) = match reverse {
+                    false => (from.target(), *target),
+                    true => (*target, from.target()),
+                };
+                let item = MermaidItem::edge(
+                    from_scope.uml_id(),
+                    to_scope.uml_id(),
+                    // label.char(),
+                    "",
+                    EdgeType::Dotted,
+                )
+                .add_class(class.clone());
+
+                let mut from_items = from.as_mmd(class, reverse);
+                from_items.push(item);
+                from_items
             }
         }
     }
@@ -226,6 +234,10 @@ where
 
     pub fn as_uml(&self, class: String, reverse: bool) -> Vec<PlantUmlItem> {
         self.0.as_uml(class, reverse)
+    }
+
+    pub fn as_mmd(&self, class: String, reverse: bool) -> Vec<MermaidItem> {
+        self.0.as_mmd(class, reverse)
     }
 
     pub fn as_mem_addr(&self) -> String {

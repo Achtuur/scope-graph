@@ -17,6 +17,7 @@ impl Color {
     pub const YELLOW: Self = Self::new_rgb_u32(0xc0bd22);
     pub const CYAN: Self = Self::new_rgb_u32(0x00FFFF);
 
+    pub const DARK_GRAY: Self = Self::new_rgb_u32(0xB6B6B6);
     pub const LIGHT_GRAY: Self = Self::new_rgb_u32(0xE6E6E6);
     pub const LIGHT_RED: Self = Self::new_rgb_u32(0xFFF1F1);
     pub const LIGHT_GREEN: Self = Self::new_rgb_u32(0xF1FFF1);
