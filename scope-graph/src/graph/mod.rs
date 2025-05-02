@@ -58,9 +58,9 @@ where
 {
     // pub edges: Vec<Edge<Lbl>>,
     /// incoming edges
-    pub children: Vec<Edge<Lbl>>,
+    pub incoming: Vec<Edge<Lbl>>,
     /// outgoing edges
-    pub parents: Vec<Edge<Lbl>>,
+    pub outgoing: Vec<Edge<Lbl>>,
     pub data: Data,
 }
 
@@ -72,25 +72,25 @@ where
     pub fn new(data: Data) -> Self {
         Self {
             data,
-            children: Vec::new(),
-            parents: Vec::new(),
+            incoming: Vec::new(),
+            outgoing: Vec::new(),
         }
     }
 
-    pub fn children(&self) -> &[Edge<Lbl>] {
-        &self.children
+    pub fn incoming(&self) -> &[Edge<Lbl>] {
+        &self.incoming
     }
 
-    pub fn children_mut(&mut self) -> &mut Vec<Edge<Lbl>> {
-        &mut self.children
+    pub fn incoming_mut(&mut self) -> &mut Vec<Edge<Lbl>> {
+        &mut self.incoming
     }
 
-    pub fn parents(&self) -> &[Edge<Lbl>] {
-        &self.parents
+    pub fn outgoing(&self) -> &[Edge<Lbl>] {
+        &self.outgoing
     }
 
-    pub fn parents_mut(&mut self) -> &mut Vec<Edge<Lbl>> {
-        &mut self.parents
+    pub fn outgoing_mut(&mut self) -> &mut Vec<Edge<Lbl>> {
+        &mut self.outgoing
     }
 }
 
@@ -242,7 +242,7 @@ where
         });
 
         let edges = self.scope_iter().flat_map(move |(s, d)| {
-            d.parents().iter().map(move |edge| {
+            d.outgoing().iter().map(move |edge| {
                 let dir = match self.scope_holds_data(edge.target()) {
                     true => EdgeDirection::Right,
                     false => EdgeDirection::Up,
@@ -330,7 +330,7 @@ where
             });
 
         let edges = self.scope_iter().flat_map(move |(s, d)| {
-            d.parents().iter().map(move |edge| {
+            d.outgoing().iter().map(move |edge| {
                 MermaidItem::edge(
                     s.uml_id(),
                     edge.target().uml_id(),

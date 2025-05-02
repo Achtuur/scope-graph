@@ -65,14 +65,14 @@ where
         self.scopes
             .get_mut(&source)
             .expect("Attempting to add edge to non-existant scope")
-            .parents_mut()
+            .outgoing_mut()
             .push(edge_to_parent);
 
         let edge_to_child = Edge::new(source, label);
         self.scopes
             .get_mut(&target)
             .expect("Attempting to add edge to non-existant scope")
-            .children_mut()
+            .incoming_mut()
             .push(edge_to_child);
     }
 

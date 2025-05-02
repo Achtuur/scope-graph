@@ -27,5 +27,5 @@ where
     Lbl: ScopeGraphLabel,
 {
     Label((Lbl, PartialRegex<'a, Lbl>)),
-    End(PartialRegex<'a, Lbl>),
+    End,
 }

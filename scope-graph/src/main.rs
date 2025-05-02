@@ -5,7 +5,7 @@ use std::{
 
 use rand::Rng;
 use scope_graph::{
-    data::ScopeGraphData, generator::{GraphGenerator, GraphPattern}, graph::{CachedScopeGraph, ScopeGraph}, label::ScopeGraphLabel, order::LabelOrderBuilder, regex::{dfs::RegexAutomata, Regex}, scope::Scope, ColorSet, ForeGroundColor, SgData, SgLabel, DRAW_CACHES, SAVE_GRAPH
+    data::ScopeGraphData, generator::{GraphGenerator, GraphPattern}, graph::{BaseScopeGraph, CachedScopeGraph, ScopeGraph}, label::ScopeGraphLabel, order::LabelOrderBuilder, regex::{dfs::RegexAutomata, Regex}, scope::Scope, ColorSet, ForeGroundColor, SgData, SgLabel, DRAW_CACHES, SAVE_GRAPH
 };
 use serde::{Deserialize, Serialize};
 
@@ -104,7 +104,7 @@ fn graph_builder<'a>() -> UsedScopeGraph<'a, SgLabel, SgData> {
         GraphPattern::Diamond(2),
         GraphPattern::Decl(SgData::var("y", "int")),
         GraphPattern::Linear(2),
-        GraphPattern::Tree(2),
+        // GraphPattern::Diamond(5),
 
     ];
     let graph = GraphGenerator::new(graph)
@@ -127,10 +127,10 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
     let matcher = RegexAutomata::from_regex(label_reg.clone());
     matcher.uml_diagram().write_to_file("output/regex.puml").unwrap();
 
-    let y_match: Arc<str> = Arc::from("y");
+    let y_match: Arc<str> = Arc::from("x");
     let x_match: Arc<str> = Arc::from("x");
     let query_scope_set = [
-        (y_match.clone(), vec![11, 10]),
+        (y_match.clone(), vec![4, 9]),
     ];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
@@ -165,13 +165,13 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
         });
 
         // mmd
-        let cache_mmd = graph.cache_path_mmd(11);
+        // let cache_mmd = graph.cache_path_mmd(11);
         let mut mmd_diagram = graph.as_mmd_diagram(&title, DRAW_CACHES);
         // mmd_diagram.extend(cache_mmd);
         mmd_diagram.extend(res_mmd);
 
         // uml
-        let cache_uml = graph.cache_path_uml(11);
+        // let cache_uml = graph.cache_path_uml(11);
         let mut uml_diagram = graph.as_uml_diagram(&title, DRAW_CACHES);
         // uml_diagram.extend(cache_uml);
         uml_diagram.extend(res_uml);

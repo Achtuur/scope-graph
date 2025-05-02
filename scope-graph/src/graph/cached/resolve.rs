@@ -116,13 +116,15 @@ where
         let scope = self.get_scope(path.target()).expect("Scope not found");
 
         tracing::debug!("Checking cache for path {}", path);
-        if let Some(env) = self.get_cached_env(&path) {
+        if let Some(env) = self.get_cached_env(&path, &reg) {
             tracing::debug!("Cache hit for {}", path);
             return env;
         }
 
-        let mut labels = scope
-            .parents()
+        let labels = match scope.outgoing().is_empty() {
+            true => vec![LabelOrEnd::End],
+            false => scope
+            .outgoing()
             .iter()
             .map(|e| e.lbl())
             // get unique labels by using hashset
@@ -134,8 +136,8 @@ where
                 set
             })
             .into_iter()
-            .collect::<Vec<_>>();
-        labels.push(LabelOrEnd::End(reg.clone()));
+            .collect::<Vec<_>>()
+        };
 
         let envs = self.get_env_for_labels(&labels, path.clone());
         // don't cache on the scope that holds the data itself as that is useless
@@ -192,21 +194,16 @@ where
         let scope = self.get_scope(path.target()).unwrap().clone();
         match label {
             // reached end of a path
-            LabelOrEnd::End(reg) => {
-                // don't check wfd here
-                match reg.is_accepting() {
-                    true => vec![QueryResult {
-                        // path: ReversePath::from(path),
-                        path: ReversePath::start(path.target()),
-                        data: scope.data.clone(),
-                    }],
-                    false => Vec::new(),
-                }
+            LabelOrEnd::End => {
+                vec![QueryResult {
+                    path: ReversePath::start(path.target()),
+                    data: scope.data.clone(),
+                }]
             }
             // not yet at end
             LabelOrEnd::Label((label, partial_reg)) => {
                 scope
-                    .parents()
+                    .outgoing()
                     .iter()
                     .filter(|e| e.lbl() == label)
                     .map(|e| path.step(e.lbl().clone(), e.target())) // create new paths
@@ -276,15 +273,18 @@ where
         }
     }
 
-    fn get_cached_env(&self, path: &Path<Lbl>) -> Option<Vec<QueryResult<Lbl, Data>>> {
+    fn get_cached_env(&self, path: &Path<Lbl>, reg: &PartialRegex<'r, Lbl>) -> Option<Vec<QueryResult<Lbl, Data>>> {
         if !FORWARD_ENABLE_CACHING {
             return None;
         }
 
+        // todo: also check path here, not just scope
         let envs = self
             .cache
             .iter()
-            .filter(|(k, _)| k.2 == path.target()) // get all envs for the scope
+            .filter(|((reg_idx, _, scope), _)| {
+                *scope == path.target() && *reg_idx == reg.index()
+            })
             .flat_map(|(_, v)| {
                 v.clone() // remove this clone?
             })

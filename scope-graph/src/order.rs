@@ -110,9 +110,9 @@ where
     /// Less, so HIGHER priority
     pub fn is_less(&self, label1: &LabelOrEnd<Lbl>, label2: &LabelOrEnd<Lbl>) -> bool {
         match (label1, label2) {
-            (LabelOrEnd::End(_), LabelOrEnd::End(_)) => false,
-            (LabelOrEnd::End(_), LabelOrEnd::Label(_)) => true,
-            (LabelOrEnd::Label(_), LabelOrEnd::End(_)) => false,
+            (LabelOrEnd::End, LabelOrEnd::End) => false,
+            (LabelOrEnd::End, LabelOrEnd::Label(_)) => true,
+            (LabelOrEnd::Label(_), LabelOrEnd::End) => false,
             (LabelOrEnd::Label((l1, _)), LabelOrEnd::Label((l2, _))) => self.cmp(l1, l2).is_lt(),
         }
     }
@@ -151,9 +151,9 @@ where
     /// Less, so HIGHER priority
     pub fn is_less(&self, label1: &LabelOrEnd<Lbl>, label2: &LabelOrEnd<Lbl>) -> bool {
         match (label1, label2) {
-            (LabelOrEnd::End(_), LabelOrEnd::End(_)) => false,
-            (LabelOrEnd::End(_), LabelOrEnd::Label(_)) => true,
-            (LabelOrEnd::Label(_), LabelOrEnd::End(_)) => false,
+            (LabelOrEnd::End, LabelOrEnd::End) => false,
+            (LabelOrEnd::End, LabelOrEnd::Label(_)) => true,
+            (LabelOrEnd::Label(_), LabelOrEnd::End) => false,
             (LabelOrEnd::Label((l1, _)), LabelOrEnd::Label((l2, _))) => {
                 self.is_less_internal(l1, l2)
             }

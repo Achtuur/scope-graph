@@ -86,10 +86,7 @@ where
     pub fn resolve(&mut self, path: Path<Lbl>) -> Vec<QueryResult<Lbl, Data>> {
         tracing::info!("Resolving path: {}", path);
         let reg = PartialRegex::new(self.path_re);
-        let mut envs = self.resolve_all(path.clone(), reg);
-        // only keep envs that are well-formed
-        envs.retain(|qr| self.data_wfd(&qr.data));
-        envs
+        self.resolve_all(path, reg)
     }
 
     /// recursive call site for resolving
@@ -115,8 +112,11 @@ where
     ) -> Vec<QueryResult<Lbl, Data>> {
         // all edges where brzozowski derivative != 0
         let scope = self.get_scope(path.target()).expect("Scope not found");
-        let mut labels = scope
-            .parents()
+
+        let labels = match scope.outgoing().is_empty() {
+            true => vec![LabelOrEnd::End],
+            false => scope
+            .outgoing()
             .iter()
             .map(|e| e.lbl())
             // get unique labels by using hashset
@@ -128,13 +128,8 @@ where
                 set
             })
             .into_iter()
-            .collect::<Vec<_>>();
-
-        if labels.is_empty() {
-            // if no labels are found, we are at the end of the path
-            labels.push(LabelOrEnd::End(reg));
-        }
-        // labels.push(LabelOrEnd::End);
+            .collect::<Vec<_>>()
+        };
 
         self.get_env_for_labels(&labels, path)
     }
@@ -191,9 +186,8 @@ where
         let scope = self.get_scope(path.target()).unwrap().clone();
         match label {
             // reached end of a path
-            LabelOrEnd::End(reg) => {
-                // don't check wfd here
-                match reg.is_accepting() {
+            LabelOrEnd::End => {
+                match self.data_wfd(&scope.data) {
                     true => vec![QueryResult {
                         path: ReversePath::from(path),
                         data: scope.data.clone(),
@@ -204,7 +198,7 @@ where
             // not yet at end
             LabelOrEnd::Label((label, partial_reg)) => {
                 scope
-                    .parents()
+                    .outgoing()
                     .iter()
                     .filter(|e| e.lbl() == label)
                     .map(|e| path.clone().step(e.lbl().clone(), e.target())) // create new paths
