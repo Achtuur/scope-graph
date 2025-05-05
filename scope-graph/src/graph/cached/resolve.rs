@@ -4,14 +4,14 @@ use std::{
 };
 
 use crate::{
+    FORWARD_ENABLE_CACHING,
     data::ScopeGraphData,
     graph::BaseScopeGraph,
     label::{LabelOrEnd, ScopeGraphLabel},
     order::LabelOrder,
     path::{Path, ReversePath},
-    regex::{dfs::RegexAutomata, PartialRegex},
+    regex::{PartialRegex, dfs::RegexAutomata},
     scope::Scope,
-    FORWARD_ENABLE_CACHING,
 };
 
 use super::{QueryCache, QueryResult, ScopeData};
@@ -124,19 +124,19 @@ where
         let labels = match scope.outgoing().is_empty() {
             true => vec![LabelOrEnd::End],
             false => scope
-            .outgoing()
-            .iter()
-            .map(|e| e.lbl())
-            // get unique labels by using hashset
-            .fold(HashSet::new(), |mut set, lbl| {
-                let mut this_reg = reg.clone();
-                if this_reg.step(lbl).is_some() {
-                    set.insert(LabelOrEnd::Label((lbl.clone(), this_reg)));
-                }
-                set
-            })
-            .into_iter()
-            .collect::<Vec<_>>()
+                .outgoing()
+                .iter()
+                .map(|e| e.lbl())
+                // get unique labels by using hashset
+                .fold(HashSet::new(), |mut set, lbl| {
+                    let mut this_reg = reg.clone();
+                    if this_reg.step(lbl).is_some() {
+                        set.insert(LabelOrEnd::Label((lbl.clone(), this_reg)));
+                    }
+                    set
+                })
+                .into_iter()
+                .collect::<Vec<_>>(),
         };
 
         let envs = self.get_env_for_labels(&labels, path.clone());
@@ -273,18 +273,19 @@ where
         }
     }
 
-    fn get_cached_env(&self, path: &Path<Lbl>, reg: &PartialRegex<'r, Lbl>) -> Option<Vec<QueryResult<Lbl, Data>>> {
+    fn get_cached_env(
+        &self,
+        path: &Path<Lbl>,
+        reg: &PartialRegex<'r, Lbl>,
+    ) -> Option<Vec<QueryResult<Lbl, Data>>> {
         if !FORWARD_ENABLE_CACHING {
             return None;
         }
 
-        // todo: also check path here, not just scope
         let envs = self
             .cache
             .iter()
-            .filter(|((reg_idx, _, scope), _)| {
-                *scope == path.target() && *reg_idx == reg.index()
-            })
+            .filter(|((reg_idx, _, scope), _)| *scope == path.target() && *reg_idx == reg.index())
             .flat_map(|(_, v)| {
                 v.clone() // remove this clone?
             })

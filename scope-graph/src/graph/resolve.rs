@@ -1,13 +1,13 @@
 use std::{collections::HashSet, sync::Mutex};
 
 use crate::{
+    DRAW_MEM_ADDR,
     data::ScopeGraphData,
     label::{LabelOrEnd, ScopeGraphLabel},
     order::LabelOrder,
     path::{Path, ReversePath},
-    regex::{dfs::RegexAutomata, PartialRegex},
+    regex::{PartialRegex, dfs::RegexAutomata},
     scope::Scope,
-    DRAW_MEM_ADDR,
 };
 
 use super::{BaseScopeGraph, ScopeData};
@@ -116,19 +116,19 @@ where
         let labels = match scope.outgoing().is_empty() {
             true => vec![LabelOrEnd::End],
             false => scope
-            .outgoing()
-            .iter()
-            .map(|e| e.lbl())
-            // get unique labels by using hashset
-            .fold(HashSet::new(), |mut set, lbl| {
-                let mut this_reg = reg.clone();
-                if this_reg.step(lbl).is_some() {
-                    set.insert(LabelOrEnd::Label((lbl.clone(), this_reg)));
-                }
-                set
-            })
-            .into_iter()
-            .collect::<Vec<_>>()
+                .outgoing()
+                .iter()
+                .map(|e| e.lbl())
+                // get unique labels by using hashset
+                .fold(HashSet::new(), |mut set, lbl| {
+                    let mut this_reg = reg.clone();
+                    if this_reg.step(lbl).is_some() {
+                        set.insert(LabelOrEnd::Label((lbl.clone(), this_reg)));
+                    }
+                    set
+                })
+                .into_iter()
+                .collect::<Vec<_>>(),
         };
 
         self.get_env_for_labels(&labels, path)
@@ -186,15 +186,13 @@ where
         let scope = self.get_scope(path.target()).unwrap().clone();
         match label {
             // reached end of a path
-            LabelOrEnd::End => {
-                match self.data_wfd(&scope.data) {
-                    true => vec![QueryResult {
-                        path: ReversePath::from(path),
-                        data: scope.data.clone(),
-                    }],
-                    false => Vec::new(),
-                }
-            }
+            LabelOrEnd::End => match self.data_wfd(&scope.data) {
+                true => vec![QueryResult {
+                    path: ReversePath::from(path),
+                    data: scope.data.clone(),
+                }],
+                false => Vec::new(),
+            },
             // not yet at end
             LabelOrEnd::Label((label, partial_reg)) => {
                 scope
@@ -222,10 +220,5 @@ where
 
     fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>> {
         self.scope_graph.scopes().get(&scope)
-    }
-
-    fn scope_data_wfd(&self, s: Scope) -> bool {
-        let scope = self.get_scope(s).expect("Scope not found");
-        self.data_wfd(&scope.data)
     }
 }

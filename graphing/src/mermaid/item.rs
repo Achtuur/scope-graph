@@ -1,7 +1,6 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use super::{theme::EdgeType, MermaidStyleSheet};
-
+use super::{MermaidStyleSheet, theme::EdgeType};
 
 static EDGE_CTR: AtomicUsize = AtomicUsize::new(0);
 
@@ -18,7 +17,6 @@ pub enum ItemShape {
     #[display("card")]
     Card,
 }
-
 
 pub struct MermaidNode {
     label: String,
@@ -41,25 +39,28 @@ impl MermaidItemKind {
     pub fn to_mmd(&self, id: &str) -> String {
         match self {
             MermaidItemKind::Node(node) => {
-                format!("{}@{{ shape: {}, label: \"<span>{}</span>\" }};", id, node.shape, node.label)
-            },
+                format!(
+                    "{}@{{ shape: {}, label: \"<span>{}</span>\" }};",
+                    id, node.shape, node.label
+                )
+            }
             MermaidItemKind::Edge(edge) => {
-
                 let line = match edge.label.as_str() {
                     "" => match edge.line_type {
                         EdgeType::Solid => "-->",
                         EdgeType::Dotted => "-.->",
                         EdgeType::Thick => "==>",
-                    }.to_string(),
+                    }
+                    .to_string(),
 
                     lbl => match edge.line_type {
                         EdgeType::Solid => format!("-- {} -->", lbl),
                         EdgeType::Dotted => format!("-. {} .->", lbl),
                         EdgeType::Thick => format!("== {} ==>", lbl),
-                    }
+                    },
                 };
                 format!("{} {}@{} {};", edge.from, id, line, edge.to)
-            },
+            }
         }
     }
 }
@@ -90,11 +91,7 @@ impl MermaidItem {
         }
     }
 
-    pub fn node(
-        id: impl ToString,
-        label: impl ToString,
-        shape: ItemShape,
-    ) -> Self {
+    pub fn node(id: impl ToString, label: impl ToString, shape: ItemShape) -> Self {
         Self {
             id: id.to_string(),
             kind: MermaidItemKind::Node(MermaidNode {
@@ -126,11 +123,12 @@ impl MermaidItem {
 
     pub(crate) fn to_mmd(&self) -> String {
         let item = self.kind.to_mmd(&self.id);
-        let classes = self.classes.iter().map(|class| {
-            format!("class {} {}", self.id, class)
-        })
-        .collect::<Vec<_>>()
-        .join("\n");
+        let classes = self
+            .classes
+            .iter()
+            .map(|class| format!("class {} {}", self.id, class))
+            .collect::<Vec<_>>()
+            .join("\n");
         format!("{}\n{}", item, classes)
     }
 }

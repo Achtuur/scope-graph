@@ -1,22 +1,23 @@
 use std::sync::Arc;
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use rand::Rng;
 use scope_graph::{
-    data::ScopeGraphData,
+    SgData, SgLabel,
     graph::{BaseScopeGraph, CachedScopeGraph, ScopeGraph},
-    label::ScopeGraphLabel,
     order::LabelOrderBuilder,
-    regex::{dfs::RegexAutomata, Regex},
+    regex::{Regex, dfs::RegexAutomata},
     scope::Scope,
-    SgLabel, SgData,
 };
-use serde::{Deserialize, Serialize};
 
 const MAX_CHILDREN: usize = 2;
 const GEN_DEPTH: usize = 10;
 
-fn recurse_add_scopes<Sg: ScopeGraph<SgLabel, SgData>>(graph: &mut Sg, parent: Scope, depth: usize) {
+fn recurse_add_scopes<Sg: ScopeGraph<SgLabel, SgData>>(
+    graph: &mut Sg,
+    parent: Scope,
+    depth: usize,
+) {
     if depth == 0 {
         return;
     }

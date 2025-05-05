@@ -262,12 +262,14 @@ where
 
     fn as_mmd_diagram(&self, title: &str, draw_caches: bool) -> MermaidDiagram {
         let mut style_sheet = MermaidStyleSheet::new()
-            .with_class("scope", ElementStyle::new()
-            .line_color(Color::DARK_GRAY)
-            .font_size(Size::Pt(18))
-            .margin(Size::Px(5))
-            .padding(Size::Px(5))
-        )
+            .with_class(
+                "scope",
+                ElementStyle::new()
+                    .line_color(Color::DARK_GRAY)
+                    .font_size(Size::Pt(18))
+                    .margin(Size::Px(5))
+                    .padding(Size::Px(5)),
+            )
             .with_class(
                 "data-scope",
                 ElementStyle::new()
@@ -282,14 +284,8 @@ where
                     .animation_style(AnimationStyle::Linear)
                     .animation_speed(AnimationSpeed::Slow),
             )
-            .with_class(
-                "cache-entry",
-                ElementStyle::new().font_size(Size::Pt(8)),
-            )
-            .with_class(
-                "cache-edge",
-                ElementStyle::new(),
-            );
+            .with_class("cache-entry", ElementStyle::new().font_size(Size::Pt(8)))
+            .with_class("cache-edge", ElementStyle::new());
 
         let fg = ForeGroundColor::mmd_stylesheet();
         let bg = BackgroundColor::mmd_stylesheet();

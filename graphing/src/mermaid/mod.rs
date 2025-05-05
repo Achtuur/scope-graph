@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs, io::Write, ops::Deref, path::PathBuf, str::FromStr};
 
-use item::{MermaidItem, MermaidNode};
+use item::MermaidItem;
 use theme::ElementStyle;
 
 pub mod item;
@@ -94,27 +94,30 @@ impl MermaidDiagram {
     }
 
     pub fn as_mmd(&self) -> String {
-       // iterate over items and render them
-       // pass along the stylesheet so they can select their class
-        let classes = (*self.style).iter().map(|(class, style)| {
-            style.as_classdef(class)
-        })
-        .collect::<Vec<_>>()
-        .join("\n");
+        // iterate over items and render them
+        // pass along the stylesheet so they can select their class
+        let classes = (*self.style)
+            .iter()
+            .map(|(class, style)| style.as_classdef(class))
+            .collect::<Vec<_>>()
+            .join("\n");
 
         for item in &self.items {
             if let Some(dne_class) = item.find_nonexistant_class(&self.style) {
-                tracing::warn!("Class {} does not exist in the stylesheet (found in {})", dne_class, item.id());
+                tracing::warn!(
+                    "Class {} does not exist in the stylesheet (found in {})",
+                    dne_class,
+                    item.id()
+                );
             }
         }
 
-
-        let body = self.items.iter().map(|item| {
-            item.to_mmd()
-        })
-        .collect::<Vec<_>>()
-        .join("\n");
-
+        let body = self
+            .items
+            .iter()
+            .map(|item| item.to_mmd())
+            .collect::<Vec<_>>()
+            .join("\n");
 
         format!(
             "```mermaid\n\

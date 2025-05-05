@@ -46,7 +46,6 @@ impl CssProperty for AnimationSettings {
     }
 }
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, derive_more::Display)]
 pub enum AnimationStyle {
     #[display("linear")]

@@ -11,7 +11,14 @@ use resolve::CachedResolver;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    data::ScopeGraphData, graph::{BaseScopeGraph, ScopeData, ScopeMap}, label::ScopeGraphLabel, order::LabelOrder, path::Path, regex::dfs::RegexAutomata, scope::Scope, BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor, COLOR_POINTER
+    BackgroundColor, ColorSet, ForeGroundColor,
+    data::ScopeGraphData,
+    graph::{BaseScopeGraph, ScopeData, ScopeMap},
+    label::ScopeGraphLabel,
+    order::LabelOrder,
+    path::Path,
+    regex::dfs::RegexAutomata,
+    scope::Scope,
 };
 
 use super::{ScopeGraph, resolve::QueryResult};

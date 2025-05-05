@@ -1,16 +1,14 @@
-#[cfg(feature = "plantuml")]
-pub mod plantuml;
 #[cfg(feature = "mermaid")]
 pub mod mermaid;
+#[cfg(feature = "plantuml")]
+pub mod plantuml;
 
 mod color;
 pub use color::*;
 
-
 pub(crate) trait CssProperty {
     fn as_css(&self) -> String;
 }
-
 
 impl<T> CssProperty for T
 where

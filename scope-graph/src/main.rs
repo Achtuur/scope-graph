@@ -1,13 +1,16 @@
 use std::{
-    io::{stdin, Write},
+    io::{Write, stdin},
     sync::Arc,
 };
 
-use rand::Rng;
 use scope_graph::{
-    data::ScopeGraphData, generator::{GraphGenerator, GraphPattern}, graph::{BaseScopeGraph, CachedScopeGraph, ScopeGraph}, label::ScopeGraphLabel, order::LabelOrderBuilder, regex::{dfs::RegexAutomata, Regex}, scope::Scope, ColorSet, ForeGroundColor, SgData, SgLabel, DRAW_CACHES, SAVE_GRAPH
+    ColorSet, DRAW_CACHES, ForeGroundColor, SAVE_GRAPH, SgData, SgLabel,
+    generator::{GraphGenerator, GraphPattern},
+    graph::{CachedScopeGraph, ScopeGraph},
+    order::LabelOrderBuilder,
+    regex::{Regex, dfs::RegexAutomata},
+    scope::Scope,
 };
-use serde::{Deserialize, Serialize};
 
 pub type UsedScopeGraph<'s, Lbl, Data> = CachedScopeGraph<Lbl, Data>;
 
@@ -93,7 +96,6 @@ fn slides_example() {
     }
 }
 
-
 fn graph_builder<'a>() -> UsedScopeGraph<'a, SgLabel, SgData> {
     let graph = UsedScopeGraph::<SgLabel, SgData>::new();
     let patterns = [
@@ -105,13 +107,16 @@ fn graph_builder<'a>() -> UsedScopeGraph<'a, SgLabel, SgData> {
         GraphPattern::Decl(SgData::var("y", "int")),
         GraphPattern::Linear(2),
         // GraphPattern::Diamond(5),
-
     ];
-    let graph = GraphGenerator::new(graph)
-    .with_patterns(patterns)
-    .build();
-    graph.as_uml_diagram("graph", DRAW_CACHES).write_to_file("output/output0.puml").unwrap();
-    graph.as_mmd_diagram("graph", DRAW_CACHES).write_to_file("output/output0.md").unwrap();
+    let graph = GraphGenerator::new(graph).with_patterns(patterns).build();
+    graph
+        .as_uml_diagram("graph", DRAW_CACHES)
+        .write_to_file("output/output0.puml")
+        .unwrap();
+    graph
+        .as_mmd_diagram("graph", DRAW_CACHES)
+        .write_to_file("output/output0.md")
+        .unwrap();
     graph
 }
 
@@ -121,17 +126,16 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
         .build();
 
     // P*D;
-    let label_reg = Regex::concat(
-        Regex::kleene(SgLabel::Parent),SgLabel::Declaration
-    );
+    let label_reg = Regex::concat(Regex::kleene(SgLabel::Parent), SgLabel::Declaration);
     let matcher = RegexAutomata::from_regex(label_reg.clone());
-    matcher.uml_diagram().write_to_file("output/regex.puml").unwrap();
+    matcher
+        .uml_diagram()
+        .write_to_file("output/regex.puml")
+        .unwrap();
 
     let y_match: Arc<str> = Arc::from("x");
     let x_match: Arc<str> = Arc::from("x");
-    let query_scope_set = [
-        (y_match.clone(), vec![4, 9]),
-    ];
+    let query_scope_set = [(y_match.clone(), vec![4, 9])];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
         let title = format!(
@@ -143,26 +147,26 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
         let start_scopes = set.1;
 
         let (res_uml, res_mmd) = start_scopes
-        .into_iter()
-        .flat_map(|s| {
-            let scope = graph.first_scope_without_data(s).unwrap();
-            graph.query_proj(
-                scope,
-                &matcher,
-                &order,
-                |d| Arc::from(d.name()),
-                p.clone(),
-                |d1, d2| d1.name() == d2.name(),
-            )
-        })
-        .fold((Vec::new(), Vec::new()), |(mut uml_acc, mut mmd_acc), r| {
-            let fg_class = ForeGroundColor::next_class();
-            let uml = r.path.as_uml(fg_class.clone(), true);
-            let mmd = r.path.as_mmd(fg_class, true);
-            uml_acc.extend(uml);
-            mmd_acc.extend(mmd);
-            (uml_acc, mmd_acc)
-        });
+            .into_iter()
+            .flat_map(|s| {
+                let scope = graph.first_scope_without_data(s).unwrap();
+                graph.query_proj(
+                    scope,
+                    &matcher,
+                    &order,
+                    |d| Arc::from(d.name()),
+                    p.clone(),
+                    |d1, d2| d1.name() == d2.name(),
+                )
+            })
+            .fold((Vec::new(), Vec::new()), |(mut uml_acc, mut mmd_acc), r| {
+                let fg_class = ForeGroundColor::next_class();
+                let uml = r.path.as_uml(fg_class.clone(), true);
+                let mmd = r.path.as_mmd(fg_class, true);
+                uml_acc.extend(uml);
+                mmd_acc.extend(mmd);
+                (uml_acc, mmd_acc)
+            });
 
         // mmd
         // let cache_mmd = graph.cache_path_mmd(11);

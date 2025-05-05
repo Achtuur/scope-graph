@@ -1,5 +1,5 @@
 use std::{
-    collections::{btree_map::Entry, BTreeMap, HashSet},
+    collections::{BTreeMap, HashSet, btree_map::Entry},
     fmt::Write,
     hash::Hash,
 };

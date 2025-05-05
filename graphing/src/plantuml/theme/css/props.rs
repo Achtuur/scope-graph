@@ -1,4 +1,4 @@
-use crate::{Color, CssProperty};
+use crate::CssProperty;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum LineStyle {

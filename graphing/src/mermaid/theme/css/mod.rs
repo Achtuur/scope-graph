@@ -2,7 +2,7 @@ mod props;
 
 pub use props::*;
 
-use crate::{CssProperty, Color};
+use crate::{Color, CssProperty};
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct StyleOptions {

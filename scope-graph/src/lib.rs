@@ -1,8 +1,12 @@
-use std::{marker::PhantomData, sync::atomic::AtomicUsize};
+use std::sync::atomic::AtomicUsize;
 
 use data::ScopeGraphData;
+use graphing::{
+    Color,
+    mermaid::{MermaidStyleSheet, theme::ElementStyle},
+    plantuml::theme::{ElementCss, PlantUmlStyleSheet},
+};
 use label::ScopeGraphLabel;
-use graphing::{mermaid::{theme::ElementStyle, MermaidStyleSheet}, plantuml::theme::{ElementCss, PlantUmlStyleSheet}, Color};
 use serde::{Deserialize, Serialize};
 
 pub mod label;
@@ -10,11 +14,10 @@ pub mod path;
 pub mod scope;
 
 pub mod data;
+pub mod generator;
 pub mod graph;
 pub mod order;
 pub mod regex;
-pub mod generator;
-
 
 /// Enable caching when doing forward resolution
 pub const FORWARD_ENABLE_CACHING: bool = true;
@@ -28,7 +31,6 @@ pub const SAVE_GRAPH: bool = false;
 pub struct ForeGroundColor;
 pub struct BackgroundColor;
 pub struct BackGroundEdgeColor;
-
 
 const FG_COLORS: &[Color] = &[
     Color::RED,
@@ -88,20 +90,20 @@ pub trait ColorSet {
 
     fn uml_stylesheet() -> PlantUmlStyleSheet {
         (0..Self::COLORS.len())
-        .map(|i| {
-            let class_name = Self::get_class_name(i);
-            Self::get_uml_css(i).as_class(class_name)
-        })
-        .collect()
+            .map(|i| {
+                let class_name = Self::get_class_name(i);
+                Self::get_uml_css(i).as_class(class_name)
+            })
+            .collect()
     }
 
     fn mmd_stylesheet() -> MermaidStyleSheet {
         (0..Self::COLORS.len())
-        .map(|i| {
-            let class_name = Self::get_class_name(i);
-            (class_name, Self::get_mmd_css(i))
-        })
-        .collect()
+            .map(|i| {
+                let class_name = Self::get_class_name(i);
+                (class_name, Self::get_mmd_css(i))
+            })
+            .collect()
     }
 }
 
@@ -150,16 +152,14 @@ impl ColorSet for BackGroundEdgeColor {
 
     fn get_uml_css(idx: usize) -> ElementCss {
         let color = Self::get_color(idx);
-        ElementCss::new()
-        .line_color(color)
-        .line_thickness(1.25)
+        ElementCss::new().line_color(color).line_thickness(1.25)
     }
 
     fn get_mmd_css(idx: usize) -> ElementStyle {
         let color = Self::get_color(idx);
         ElementStyle::new()
-        .background_color(color)
-        .line_thickness(1.25)
+            .background_color(color)
+            .line_thickness(1.25)
     }
 }
 

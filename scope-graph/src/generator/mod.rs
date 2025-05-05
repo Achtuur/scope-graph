@@ -1,6 +1,4 @@
-use std::marker::PhantomData;
-
-use crate::{data::ScopeGraphData, graph::ScopeGraph, label::ScopeGraphLabel, scope::Scope, SgData, SgLabel};
+use crate::{SgData, SgLabel, graph::ScopeGraph, scope::Scope};
 
 pub enum GraphPattern {
     /// Diamond pattern alongside with of the path

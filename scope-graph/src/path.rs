@@ -1,6 +1,9 @@
 use std::rc::Rc;
 
-use graphing::{mermaid::{item::MermaidItem, theme::EdgeType}, plantuml::{theme::LineStyle, EdgeDirection, PlantUmlItem}};
+use graphing::{
+    mermaid::{item::MermaidItem, theme::EdgeType},
+    plantuml::{EdgeDirection, PlantUmlItem},
+};
 
 use crate::{label::ScopeGraphLabel, scope::Scope};
 

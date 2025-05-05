@@ -1,6 +1,6 @@
 mod props;
-pub use props::*;
 use crate::CssProperty;
+pub use props::*;
 
 use crate::Color;
 

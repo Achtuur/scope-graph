@@ -8,8 +8,8 @@ use crate::{
 };
 
 use super::{
-    resolve::{QueryResult, Resolver},
     Edge, ScopeData, ScopeGraph, ScopeMap,
+    resolve::{QueryResult, Resolver},
 };
 
 /// Base scope graph behaviour
