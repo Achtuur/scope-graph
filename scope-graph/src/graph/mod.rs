@@ -12,7 +12,6 @@ use graphing::{
         theme::{ElementCss, FontStyle, HorizontalAlignment, LineStyle, PlantUmlStyleSheet},
     },
 };
-use resolve::QueryResult;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -26,6 +25,7 @@ mod resolve;
 
 pub use base::*;
 pub use cached::*;
+pub use resolve::QueryResult;
 
 /// Bi-directional edge between two scopes
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
@@ -101,6 +101,8 @@ where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
 {
+    fn reset_cache(&mut self);
+
     /// Add a scope to the graph with the given data.
     ///
     /// # Returns

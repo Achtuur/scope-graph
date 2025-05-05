@@ -56,7 +56,6 @@ where
     pub lbl_order: &'r LabelOrder<Lbl>,
     pub data_eq: DEq,
     pub data_wfd: DWfd,
-    pub considered_paths: Mutex<Vec<Path<Lbl>>>,
 }
 
 impl<'r, Lbl, Data, DEq, DWfd> Resolver<'r, Lbl, Data, DEq, DWfd>
@@ -79,7 +78,6 @@ where
             lbl_order,
             data_eq,
             data_wfd,
-            considered_paths: Mutex::new(Vec::new()),
         }
     }
 
@@ -95,12 +93,9 @@ where
         path: Path<Lbl>,
         reg: PartialRegex<'a, Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
-        // println!("Resolving path: {}", path);
-        self.considered_paths.lock().unwrap().push(path.clone());
         self.get_env(path, reg)
     }
 
-    // todo: allow overload of data_wfd
     fn data_wfd(&self, data: &Data) -> bool {
         (self.data_wfd)(data)
     }
@@ -137,32 +132,24 @@ where
     fn get_env_for_labels<'a>(
         &mut self,
         labels: &'a [LabelOrEnd<'r, Lbl>],
-        // reg: PartialRegex<'r, Lbl>,
-        // edges: &[&Edge<Lbl>],
         path: Path<Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
-        let mut results = Vec::new();
-
-        // 'max' labels ie all labels with lowest priority
-        // max refers to the numerical worth, ie a < b, b would be max
-        let max = labels
+        labels
             .iter()
             .filter(|l1| !labels.iter().any(|l2| self.lbl_order.is_less(l1, l2)))
-            .collect::<Vec<_>>();
+            // 'max' labels ie all labels with lowest priority
+            // max refers to the numerical worth, ie a < b, b would be max
+            .flat_map(|max_lbl| {
+                // all labels that are lower priority than `lbl`
+                let lower_labels = labels
+                    .iter()
+                    .filter(|l| self.lbl_order.is_less(l, max_lbl))
+                    .cloned()
+                    .collect::<Vec<_>>();
 
-        for max_lbl in max {
-            // all labels that are lower priority than `lbl`
-            let lower_labels = labels
-                .iter()
-                .filter(|l| self.lbl_order.is_less(l, max_lbl))
-                .cloned()
-                .collect::<Vec<_>>();
-
-            let env = self.get_shadowed_env(max_lbl, &lower_labels, path.clone());
-            results.extend(env.into_iter());
-        }
-
-        results
+                self.get_shadowed_env(max_lbl, &lower_labels, path.clone())
+            })
+            .collect::<Vec<_>>()
     }
 
     fn get_shadowed_env<'a>(
@@ -173,8 +160,6 @@ where
     ) -> Vec<QueryResult<Lbl, Data>> {
         let lower_paths = self.get_env_for_labels(lower_lbls, path.clone());
         let max_path = self.get_env_for_label(max_lbl, path);
-        // println!("lower_paths: {0:?}", lower_paths);
-        // println!("max_path: {0:?}", max_path);
         self.shadow(lower_paths, max_path)
     }
 

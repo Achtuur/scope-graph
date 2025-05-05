@@ -47,6 +47,8 @@ where
     Lbl: ScopeGraphLabel + Clone,
     Data: ScopeGraphData + Clone,
 {
+    fn reset_cache(&mut self) {}
+
     fn add_scope(&mut self, scope: Scope, data: Data) -> Scope {
         tracing::trace!("Adding scope: {} with data: {}", scope, data);
         self.scopes.insert(scope, ScopeData::new(data));
@@ -112,8 +114,9 @@ where
         DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
     {
         let data_wfd = |data: &Data| data_proj(data) == proj_wfd;
-        let mut resolver = Resolver::new(self, path_regex, order, &data_equiv, &data_wfd);
-        resolver.resolve(Path::start(scope))
+        self.query(scope, path_regex, order, data_equiv, data_wfd)
+        // let mut resolver = Resolver::new(self, path_regex, order, &data_equiv, &data_wfd);
+        // resolver.resolve(Path::start(scope))
     }
 
     fn scope_iter<'a>(&'a self) -> impl Iterator<Item = (&'a Scope, &'a ScopeData<Lbl, Data>)>

@@ -61,6 +61,11 @@ where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
 {
+    fn reset_cache(&mut self) {
+        self.resolve_cache.clear();
+    }
+
+
     fn add_edge(&mut self, source: Scope, target: Scope, label: Lbl) {
         self.sg.add_edge(source, target, label.clone());
     }

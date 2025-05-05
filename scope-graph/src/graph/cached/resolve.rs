@@ -34,12 +34,11 @@ where
     path_re: &'r RegexAutomata<Lbl>,
     lbl_order: &'r LabelOrder<Lbl>,
     data_eq: DEq,
-    // data_wfd: DWfd,
     /// Data projection function
     data_proj: DProj,
     /// DProj output that results in well-formed data
     ///
-    /// ie DWfd := |data: &Data| data_proj(data) == proj_wfd
+    /// `DWfd := |data: &Data| data_proj(data) == proj_wfd`
     proj_wfd: P,
 }
 
@@ -48,7 +47,6 @@ where
     Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + std::fmt::Display + Eq + std::hash::Hash + Ord,
     Data: ScopeGraphData,
     DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
-    // DWfd: for<'da> Fn(&'da Data) -> bool,
     P: std::hash::Hash + Eq,
     DProj: for<'da> Fn(&'da Data) -> P,
 {
@@ -58,7 +56,6 @@ where
         path_re: &'r RegexAutomata<Lbl>,
         lbl_order: &'r LabelOrder<Lbl>,
         data_eq: DEq,
-        // data_wfd: DWfd,
         data_proj: DProj,
         proj_wfd: P,
     ) -> CachedResolver<'r, Lbl, Data, DEq, P, DProj> {
@@ -68,7 +65,6 @@ where
             path_re,
             lbl_order,
             data_eq,
-            // data_wfd,
             data_proj,
             proj_wfd,
         }
@@ -140,7 +136,6 @@ where
         };
 
         let envs = self.get_env_for_labels(&labels, path.clone());
-        // don't cache on the scope that holds the data itself as that is useless
         self.cache_env(&path, reg, envs.clone());
         envs
     }
@@ -177,7 +172,11 @@ where
         let lower_paths = self.get_env_for_labels(lower_lbls, path.clone());
         let mut max_path = self.get_env_for_label(max_lbl, path.clone());
 
-        // push the current max_lbl to the path, as that path is actually resolved here.
+        // path is a path from the starting scope to the current one.
+        // in the cache, we want to store the path from the _data_ to the current scope.
+        // hence, every step we add the traversed label to the query result.
+        // this should only be done for the max path, as that path is actually resolved in this call.
+        // the lower paths are only resolved after they become the max label.
         if let LabelOrEnd::Label((l, _)) = max_lbl {
             for qr in max_path.iter_mut() {
                 qr.path = qr.path.step(l.clone(), path.target())
