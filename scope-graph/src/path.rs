@@ -47,6 +47,13 @@ where
         }
     }
 
+    pub fn start_scope(&self) -> Scope {
+        match self {
+            Self::Start(s) => *s,
+            Self::Step { from, .. } => from.start_scope(),
+        }
+    }
+
     pub fn as_mmd(&self, class: String, reverse: bool) -> Vec<MermaidItem> {
         match self {
             Self::Start(_) => Vec::new(),
@@ -228,6 +235,20 @@ where
 {
     pub fn start(scope: Scope) -> Self {
         Self(Path::start(scope))
+    }
+
+    /// Gets the target of the current path.
+    ///
+    /// This is equal to Path::start_scope()
+    pub fn target(&self) -> Scope {
+        self.0.start_scope()
+    }
+
+    /// Gets the start scope of the current path.
+    ///
+    /// This is equal to Path::target()
+    pub fn start_scope(&self) -> Scope {
+        self.0.target()
     }
 
     /// Step forward (p -> new p)

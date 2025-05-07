@@ -1,6 +1,6 @@
 use std::hash::Hash;
 
-use graphing::plantuml::{EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem};
+use graphing::{mermaid::{item::{ItemShape, MermaidItem}, theme::EdgeType, MermaidDiagram}, plantuml::{EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem}};
 
 use crate::label::ScopeGraphLabel;
 
@@ -163,36 +163,39 @@ where
     Lbl: ScopeGraphLabel,
 {
     // uses display impl and removes spaces
-    fn node_key(node_idx: usize) -> u64 {
+    fn node_key(node_idx: usize) -> String {
         // let node_str = node.to_string();
         // node_str.replace(" ", "");
         // let mut s = std::hash::DefaultHasher::new();
         // node_idx.hash(&mut s);
         // s.finish()
-        node_idx as u64
+        format!("n{}", node_idx)
+        // node_idx as u64
     }
 
-    pub fn to_mmd(&self) -> String {
-        let mut mmd = String::new();
-        mmd += "---\ntitle: Regex Automata\n---\n";
-        mmd += "flowchart LR\n";
-        for (idx, node) in self.node_vec.iter().enumerate() {
-            let node_key = Self::node_key(idx);
-            let node_value = node.value.to_string().replace("(", "⦅").replace(")", "⦆");
-            mmd += &format!("{0:}(({1:}))\n", node_key, node_value);
-        }
+    pub fn to_mmd(&self) -> MermaidDiagram {
+        let mut diagram = MermaidDiagram::new("Regex Automata");
 
-        for (idx, node) in self.node_vec.iter().enumerate() {
-            for (lbl, target_node) in &node.edges {
-                let node_key = Self::node_key(idx);
-                let target_key = Self::node_key(*target_node);
-                mmd += &format!("{0:} ==>|\"{1:}\"| {2:}\n", node_key, lbl, target_key);
-            }
-        }
-        mmd
+        let nodes = self.node_vec.iter().enumerate().map(|(idx, node)| {
+            MermaidItem::node(Self::node_key(idx), node.value.to_string(), ItemShape::Rounded)
+        });
+
+        let edges = self.node_vec.iter().enumerate().flat_map(|(idx, node)| {
+            let from = Self::node_key(idx);
+            node.edges.iter().map(move |(lbl, target_idx)| {
+                let to = Self::node_key(*target_idx);
+
+                MermaidItem::edge(&from, to, lbl.to_string(), EdgeType::Solid)
+            })
+        });
+
+        diagram.extend(nodes);
+        diagram.extend(edges);
+
+        diagram
     }
 
-    pub fn uml_diagram(&self) -> PlantUmlDiagram {
+    pub fn to_uml(&self) -> PlantUmlDiagram {
         let mut diagram = PlantUmlDiagram::new("Regex Automata");
 
         let nodes = self.node_vec.iter().enumerate().map(|(idx, node)| {
@@ -209,7 +212,7 @@ where
                     EdgeDirection::Unspecified
                 };
 
-                PlantUmlItem::edge(from, to, lbl.to_string(), dir)
+                PlantUmlItem::edge(&from, to, lbl.to_string(), dir)
             })
         });
 
@@ -233,54 +236,52 @@ where
 mod tests {
     use super::*;
 
-    fn write_mmd_to_file(mmd: &str) {
-        use std::fs::File;
-        use std::io::Write;
-        let mut file = File::create("regex_automata.mmd").unwrap();
-        file.write_all(mmd.as_bytes()).unwrap();
-    }
-
     #[test]
     fn test_generate() {
-        let regex = Regex::or(Regex::concat('a', 'c'), Regex::concat('b', 'c'));
+        // let regex = Regex::or(Regex::concat('a', 'c'), Regex::concat('b', 'c'));
 
-        // let regex = Regex::or(
-        //     Regex::concat('a', 'c'),
-        //     Regex::concat('b', 'c'),
-        // );
-        // let regex = Regex::kleene('a');
-        // let regex = Regex::concat(Regex::kleene('P'), Regex::concat('P', 'D'));
+        // let regex: Regex<char> = Regex::neg(Regex::ZeroSet);
+        let regex: Regex<char> = Regex::kleene(
+            Regex::or('p', 'q')
+        );
 
-        // let mut regex = Regex::from('a');
-        // for c in 'b'..='z' {
-        //     regex = Regex::concat(regex, c);
-        // }
+        let regex: Regex<char> = Regex::concat(
+            Regex::question('a'),
+            Regex::concat('b', Regex::question('c'))
+        );
 
-        let automata = RegexAutomata::from_regex(regex);
+
         let timer = std::time::Instant::now();
+        let automata = RegexAutomata::from_regex(regex);
         println!("{:?}", timer.elapsed());
-        let mmd = automata.to_mmd();
-        write_mmd_to_file(&mmd);
+        automata
+        .to_uml()
+        .write_to_file("output/regex/automata.puml")
+        .unwrap();
     }
 
     #[test]
     fn test_is_match() {
         let regex = Regex::kleene('a');
         let automata = RegexAutomata::from_regex(regex);
-        let mmd = automata.to_mmd();
-        write_mmd_to_file(&mmd);
+        automata
+        .to_mmd()
+        .write_to_file("output/regex/automata.md")
+        .unwrap();
         let haystack = vec!['a'; 10];
-        assert!(automata.is_match(&haystack));
-        let haystack = vec!['b'];
         assert!(!automata.is_match(&haystack));
+        let haystack = vec!['b'];
+        assert!(automata.is_match(&haystack));
     }
 
     #[test]
     fn test_is_match_kleene() {
         let regex = Regex::concat(Regex::kleene('P'), Regex::concat('P', 'D'));
         let automata = RegexAutomata::from_regex(regex);
-        let mmd = automata.to_mmd();
-        write_mmd_to_file(&mmd);
+        automata
+        .to_mmd()
+        .write_to_file("output/regex/automata.md")
+        .unwrap();
         let haystack = vec!['P', 'P', 'D'];
         assert!(automata.is_match(&haystack));
     }

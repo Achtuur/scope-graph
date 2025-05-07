@@ -133,7 +133,7 @@ where
     }
 }
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, Default)]
 pub struct LabelOrder<Lbl>
 where
     Lbl: ScopeGraphLabel,

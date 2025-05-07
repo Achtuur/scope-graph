@@ -1,6 +1,7 @@
 pub mod dfs;
 mod partial;
 
+use dfs::RegexAutomata;
 pub use partial::PartialRegex;
 use serde::{Deserialize, Serialize};
 
@@ -21,6 +22,8 @@ where
     Concat(Box<Self>, Box<Self>),
     /// r*
     KleeneStar(Box<Self>),
+    /// r? (r|e)
+    QuestionMark(Box<Self>),
     /// r + s
     Or(Box<Self>, Box<Self>),
     /// r & s
@@ -43,6 +46,7 @@ where
             Self::Or(r, s) => write!(f, "({r}+{s})"),
             Self::And(r, s) => write!(f, "({r}&{s})"),
             Self::Neg(r) => write!(f, "!{r}"),
+            Self::QuestionMark(r) => write!(f, "{r}?"),
         }
     }
 }
@@ -76,6 +80,10 @@ where
         Self::KleeneStar(Box::new(r.into()))
     }
 
+    pub fn question(r: impl Into<Self>) -> Self {
+        Self::QuestionMark(Box::new(r.into()))
+    }
+
     pub fn neg(r: impl Into<Self>) -> Self {
         Self::Neg(Box::new(r.into()))
     }
@@ -84,8 +92,12 @@ where
         self.v() == Regex::EmptyString
     }
 
+    pub fn compile(self) -> RegexAutomata<Lbl> {
+        RegexAutomata::from_regex(self)
+    }
+
     /// Helper function to determine whether a regular expression is final
-    pub fn v(&self) -> Regex<Lbl> {
+    fn v(&self) -> Regex<Lbl> {
         match self {
             Self::EmptyString => Self::EmptyString,
             Self::ZeroSet => Self::ZeroSet,
@@ -95,6 +107,7 @@ where
                 _ => Self::ZeroSet,
             },
             Self::KleeneStar(_) => Self::EmptyString,
+            Self::QuestionMark(_) => Self::EmptyString,
             Self::Or(r, s) => match (r.v(), s.v()) {
                 (Self::EmptyString, _) | (_, Self::EmptyString) => Self::EmptyString,
                 _ => Self::ZeroSet,
@@ -109,18 +122,19 @@ where
         }
     }
 
-    pub fn derivative(&self, dim: &Lbl) -> Self {
+    fn derivative(&self, dim: &Lbl) -> Self {
         match self {
             Self::EmptyString => Self::ZeroSet,
             Self::ZeroSet => Self::ZeroSet,
             Self::Character(a) if dim == a => Self::EmptyString,
             Self::Character(_) => Self::ZeroSet, // dim != a
             Self::Concat(r, s) => {
-                let lhs = Regex::Concat(Box::new(r.derivative(dim)), s.clone());
+                let lhs = Regex::concat(r.derivative(dim), *s.clone());
                 let rhs = Regex::concat(r.v(), s.derivative(dim));
                 Regex::or(lhs, rhs)
             }
             Self::KleeneStar(r) => Regex::concat(r.derivative(dim), Regex::KleeneStar(r.clone())),
+            Self::QuestionMark(r) => r.derivative(dim),
             Self::Or(r, s) => Regex::or(r.derivative(dim), s.derivative(dim)),
             Self::And(r, s) => Regex::and(r.derivative(dim), s.derivative(dim)),
             Self::Neg(r) => Regex::neg(r.derivative(dim)),
@@ -128,7 +142,7 @@ where
     }
 
     /// Returns all unique labels in the regex
-    pub fn unique_labels(&self) -> Vec<&Lbl> {
+    fn unique_labels(&self) -> Vec<&Lbl> {
         let mut v = match self {
             Self::EmptyString | Self::ZeroSet => Vec::new(),
             Self::Character(l) => {
@@ -140,7 +154,9 @@ where
                 v.append(&mut s.unique_labels());
                 v
             }
-            Self::KleeneStar(r) | Self::Neg(r) => r.unique_labels(),
+            Self::KleeneStar(r)
+            | Self::QuestionMark(r)
+            | Self::Neg(r) => r.unique_labels(),
         };
         v.dedup();
         v
@@ -161,7 +177,7 @@ where
     /// println!("leading: {0:?}", leading); // ['a', 'b']
     ///
     /// ```
-    pub fn leading_labels(&self) -> Vec<&Lbl> {
+    fn leading_labels(&self) -> Vec<&Lbl> {
         let mut v = match self {
             Self::EmptyString | Self::ZeroSet => Vec::new(),
             Self::Character(l) => {
@@ -184,14 +200,16 @@ where
                 v.append(&mut s.leading_labels());
                 v
             }
-            Self::KleeneStar(r) | Self::Neg(r) => r.leading_labels(),
+            Self::KleeneStar(r)
+            | Self::QuestionMark(r)
+            | Self::Neg(r) => r.leading_labels(),
         };
         v.dedup();
         v
     }
 
     /// Simplify this regex, eg `a + 0` -> `a`, `eps + a -> a`
-    pub fn reduce(self) -> Self {
+    fn reduce(self) -> Self {
         match self {
             Self::EmptyString => Self::EmptyString,
             Self::ZeroSet => Self::ZeroSet,
@@ -206,6 +224,11 @@ where
                 Self::ZeroSet => Self::ZeroSet,
                 Self::EmptyString => Self::EmptyString,
                 r => Self::KleeneStar(Box::new(r)),
+            },
+            Self::QuestionMark(r) => match r.reduce() {
+                Self::ZeroSet => Self::ZeroSet,
+                Self::EmptyString => Self::EmptyString,
+                r => Self::question(r),
             },
             Self::Or(r, s) => match (r.reduce(), s.reduce()) {
                 (Self::EmptyString, Self::ZeroSet) | (Self::ZeroSet, Self::EmptyString) => {

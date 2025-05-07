@@ -44,7 +44,7 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
     let label_reg = Regex::concat(Regex::kleene(SgLabel::Parent), SgLabel::Declaration);
     let matcher = RegexAutomata::from_regex(label_reg.clone());
     matcher
-        .uml_diagram()
+        .to_uml()
         .write_to_file("output/regex.puml")
         .unwrap();
 
