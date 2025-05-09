@@ -17,7 +17,7 @@ use crate::{
     label::ScopeGraphLabel,
     order::LabelOrder,
     path::Path,
-    regex::dfs::RegexAutomata,
+    regex::dfs::RegexAutomaton,
     scope::Scope,
 };
 
@@ -27,18 +27,20 @@ mod resolve;
 
 type ProjHash = u64;
 
+type ProjEnvs<Lbl, Data> = HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
+
 /// Key for the cache.
 ///
 /// This is a tuple of index in regex automata, the result from projecting the data and the target scope.
 ///
 /// You can alternatively think of this as a (usize, DataProj) cache per scope.
-type QueryCacheKey = (usize, ProjHash, Scope);
+type QueryCacheKey = (usize, Scope);
 
 /// Cache for the results of a certain query
-type QueryCache<Lbl, Data> = HashMap<QueryCacheKey, Vec<QueryResult<Lbl, Data>>>;
+type QueryCache<Lbl, Data> = HashMap<QueryCacheKey, ProjEnvs<Lbl, Data>>;
 
 /// Key for `ScopeGraphCache`
-type ParameterKey<Lbl> = (LabelOrder<Lbl>, RegexAutomata<Lbl>);
+type ParameterKey<Lbl> = (LabelOrder<Lbl>, RegexAutomaton<Lbl>);
 /// Cache for the entire scope graph.
 ///
 /// This contains a cache per set of query parameters
@@ -97,7 +99,7 @@ where
     fn query<DEq, DWfd>(
         &mut self,
         scope: Scope,
-        path_regex: &RegexAutomata<Lbl>,
+        path_regex: &RegexAutomaton<Lbl>,
         order: &LabelOrder<Lbl>,
         data_equiv: DEq,
         data_wellformedness: DWfd,
@@ -107,49 +109,41 @@ where
         DWfd: for<'da> Fn(&'da Data) -> bool,
     {
         unreachable!("Use query_proj instead");
-        // let cache = self.resolve_cache
-        // .entry((order.clone(), path_regex.clone()))
-        // .or_default();
-
-        // let resolver = CachedResolver::new(
-        //     &self.sg,
-        //     cache,
-        //     path_regex,
-        //     order,
-        //     &data_equiv,
-        //     &data_wellformedness,
-        // );
-        // resolver.resolve(Path::start(scope))
     }
 
-    fn query_proj<P, DProj, DEq>(
+    fn query_proj<P, DProj>(
         &mut self,
         scope: Scope,
-        path_regex: &RegexAutomata<Lbl>,
+        path_regex: &RegexAutomaton<Lbl>,
         order: &LabelOrder<Lbl>,
         data_proj: DProj,
         proj_wfd: P,
-        data_equiv: DEq,
     ) -> Vec<QueryResult<Lbl, Data>>
     where
         P: std::hash::Hash + Eq,
         DProj: for<'da> Fn(&'da Data) -> P,
-        DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
     {
+        // todo: fix key to not have to clone
+        let cache_entry = self.resolve_cache.entry((order.clone(), path_regex.clone())).or_default();
         let mut resolver = CachedResolver::new(
             &self.sg,
-            // todo: fix key to not have to clone
-            self.resolve_cache
-                .entry((order.clone(), path_regex.clone()))
-                .or_default(),
+            cache_entry,
             path_regex,
             order,
-            &data_equiv,
-            // &data_wfd,
             data_proj,
             proj_wfd,
         );
-        resolver.resolve(Path::start(scope))
+        let envs = resolver.resolve(Path::start(scope));
+        tracing::info!(
+            "Resolved query: {}, {}, {}, found:",
+            scope,
+            path_regex,
+            order,
+        );
+        for qr in &envs {
+            tracing::info!("\t{}", qr);
+        }
+        envs
     }
 
     fn generate_cache_uml(&self) -> Vec<PlantUmlItem> {
@@ -158,13 +152,13 @@ where
             .flat_map(|(query_params, query_cache)| {
                 query_cache
                     .iter()
-                    .filter(|(key, _)| !self.scope_holds_data(key.2))
+                    .filter(|(key, _)| !self.scope_holds_data(key.1))
                     // map with scope as key to not have duplicate notes
                     .fold(HashMap::new(), |mut acc, (keys, envs)| {
-                        let key = keys.2; // scope
-                        let entry: &mut HashMap<QueryCacheKey, &Vec<QueryResult<Lbl, Data>>> =
+                        let key = keys.1; // scope
+                        let entry: &mut QueryCache<Lbl, Data> =
                             acc.entry(key).or_default();
-                        entry.insert(*keys, envs);
+                        entry.insert(*keys, envs.clone());
                         acc
                     })
                     .into_iter()
@@ -177,13 +171,13 @@ where
                             .iter()
                             .map(|(keys, env)| {
                                 let cache_str = env
-                                    .iter()
-                                    .map(|result| result.to_string())
+                                    .values()
+                                    .flat_map(|result| result.into_iter().map(|x| x.to_string()))
                                     .collect::<Vec<String>>()
                                     .join("\n");
                                 format!(
-                                    "<b>(p{}, {:08x}, s{})</b>\n{}",
-                                    keys.0, keys.1, keys.2, cache_str
+                                    "<b>(p{}, s{})</b>\n{}",
+                                    keys.0, keys.1, cache_str
                                 )
                             })
                             .collect::<Vec<String>>()
@@ -205,13 +199,13 @@ where
             .flat_map(|(query_params, query_cache)| {
                 query_cache
                     .iter()
-                    .filter(|(key, _)| !self.scope_holds_data(key.2))
+                    .filter(|(key, _)| !self.scope_holds_data(key.1))
                     // map with scope as key to not have duplicate notes
                     .fold(HashMap::new(), |mut acc, (keys, envs)| {
-                        let key = keys.2; // scope
-                        let entry: &mut HashMap<QueryCacheKey, &Vec<QueryResult<Lbl, Data>>> =
+                        let key = keys.1; // scope
+                        let entry: &mut QueryCache<Lbl, Data> =
                             acc.entry(key).or_default();
-                        entry.insert(*keys, envs);
+                        entry.insert(*keys, envs.clone());
                         acc
                     })
                     .into_iter()
@@ -224,8 +218,9 @@ where
                             .iter()
                             .map(|(keys, env)| {
                                 let cache_str = env
-                                    .iter()
-                                    .map(|result| result.to_string())
+                                    .values()
+                                    .flat_map(|result| result.into_iter().map(|x| x.to_string()))
+                                    // .map(|result| result.to_string())
                                     .collect::<Vec<String>>()
                                     .join("\n");
                                 cache_str
@@ -296,10 +291,12 @@ where
             .flat_map(|(_, query_cache)| {
                 query_cache
                     .iter()
-                    .filter(|(k, _)| k.2 == Scope(scope_num))
+                    .filter(|(k, _)| k.1 == Scope(scope_num))
                     .flat_map(|(_, envs)| {
-                        envs.iter()
-                            .flat_map(|qr| qr.path.as_uml(ForeGroundColor::next_class(), false))
+                        envs
+                        .values()
+                        .flat_map(|envs| envs.into_iter().map(|q| &q.path))
+                        .flat_map(|path| path.as_uml(ForeGroundColor::next_class(), true))
                     })
             })
             .map(|x| x.add_class("cache-edge"))
@@ -312,10 +309,12 @@ where
             .flat_map(|(_, query_cache)| {
                 query_cache
                     .iter()
-                    .filter(|(k, _)| k.2 == Scope(scope_num))
+                    .filter(|(k, _)| k.1 == Scope(scope_num))
                     .flat_map(|(_, envs)| {
-                        envs.iter()
-                            .flat_map(|qr| qr.path.as_mmd(ForeGroundColor::next_class(), true))
+                        envs
+                        .values()
+                        .flat_map(|envs| envs.into_iter().map(|q| &q.path))
+                        .flat_map(|path| path.as_mmd(ForeGroundColor::next_class(), true))
                     })
             })
             .map(|x| x.add_class("cache-edge"))

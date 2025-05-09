@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, path::Path,
-    regex::dfs::RegexAutomata, scope::Scope,
+    regex::dfs::RegexAutomaton, scope::Scope,
 };
 
 use super::{
@@ -85,7 +85,7 @@ where
     fn query<DEq, DWfd>(
         &mut self,
         scope: Scope,
-        path_regex: &RegexAutomata<Lbl>,
+        path_regex: &RegexAutomaton<Lbl>,
         order: &LabelOrder<Lbl>,
         data_equiv: DEq,
         data_wellformedness: DWfd,
@@ -99,24 +99,21 @@ where
         resolver.resolve(Path::start(scope))
     }
 
-    fn query_proj<P, DProj, DEq>(
+    fn query_proj<P, DProj>(
         &mut self,
         scope: Scope,
-        path_regex: &RegexAutomata<Lbl>,
+        path_regex: &RegexAutomaton<Lbl>,
         order: &LabelOrder<Lbl>,
         data_proj: DProj,
         proj_wfd: P,
-        data_equiv: DEq,
     ) -> Vec<QueryResult<Lbl, Data>>
     where
         P: std::hash::Hash + Eq,
-        DProj: for<'da> Fn(&'da Data) -> P,
-        DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
+        DProj: for<'da> Fn(&'da Data) -> P
     {
         let data_wfd = |data: &Data| data_proj(data) == proj_wfd;
+        let data_equiv = |a: &Data, b: &Data| data_proj(a) == data_proj(b);
         self.query(scope, path_regex, order, data_equiv, data_wfd)
-        // let mut resolver = Resolver::new(self, path_regex, order, &data_equiv, &data_wfd);
-        // resolver.resolve(Path::start(scope))
     }
 
     fn scope_iter<'a>(&'a self) -> impl Iterator<Item = (&'a Scope, &'a ScopeData<Lbl, Data>)>

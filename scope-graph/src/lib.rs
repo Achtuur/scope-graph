@@ -20,9 +20,9 @@ pub mod order;
 pub mod regex;
 
 /// Enable caching when doing forward resolution
-pub const FORWARD_ENABLE_CACHING: bool = true;
+pub const ENABLE_CACHING: bool = true;
 /// Draw caches in the graph
-pub const DRAW_CACHES: bool = false;
+pub const DRAW_CACHES: bool = true;
 /// Draw memory addresses for the paths
 pub const DRAW_MEM_ADDR: bool = false;
 /// Prompt to save the graph

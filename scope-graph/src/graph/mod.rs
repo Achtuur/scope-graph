@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor, data::ScopeGraphData,
-    label::ScopeGraphLabel, order::LabelOrder, regex::dfs::RegexAutomata, scope::Scope,
+    label::ScopeGraphLabel, order::LabelOrder, regex::dfs::RegexAutomaton, scope::Scope,
 };
 
 mod base;
@@ -132,7 +132,7 @@ where
     fn query<DEq, DWfd>(
         &mut self,
         scope: Scope,
-        path_regex: &RegexAutomata<Lbl>,
+        path_regex: &RegexAutomaton<Lbl>,
         order: &LabelOrder<Lbl>,
         data_equiv: DEq,
         data_wellformedness: DWfd,
@@ -141,20 +141,18 @@ where
         DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
         DWfd: for<'da> Fn(&'da Data) -> bool;
 
-    /// 'r is lifetime of resolver
-    fn query_proj<P, DProj, DEq>(
+    /// Query using a projection function and a wellformedness value for the projected data
+    fn query_proj<P, DProj>(
         &mut self,
         scope: Scope,
-        path_regex: &RegexAutomata<Lbl>,
+        path_regex: &RegexAutomaton<Lbl>,
         order: &LabelOrder<Lbl>,
         data_proj: DProj,
         proj_wfd: P,
-        data_equiv: DEq,
     ) -> Vec<QueryResult<Lbl, Data>>
     where
         P: Hash + Eq,
-        DProj: for<'da> Fn(&'da Data) -> P,
-        DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool;
+        DProj: for<'da> Fn(&'da Data) -> P;
 
     fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>>;
 

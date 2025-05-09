@@ -4,7 +4,7 @@ use std::{
 };
 
 use scope_graph::{
-    generator::{GraphGenerator, GraphPattern}, graph::{BaseScopeGraph, CachedScopeGraph, ScopeGraph}, order::LabelOrderBuilder, regex::{dfs::RegexAutomata, Regex}, scope::Scope, ColorSet, ForeGroundColor, SgData, SgLabel, DRAW_CACHES, SAVE_GRAPH
+    generator::{GraphGenerator, GraphPattern}, graph::{BaseScopeGraph, CachedScopeGraph, ScopeGraph}, order::LabelOrderBuilder, regex::{dfs::RegexAutomaton, Regex}, scope::Scope, ColorSet, ForeGroundColor, SgData, SgLabel, DRAW_CACHES, SAVE_GRAPH
 };
 
 pub type UsedScopeGraph<Lbl, Data> =  CachedScopeGraph<Lbl, Data>;
@@ -12,16 +12,19 @@ pub type UsedScopeGraph<Lbl, Data> =  CachedScopeGraph<Lbl, Data>;
 fn graph_builder() -> UsedScopeGraph<SgLabel, SgData> {
     let graph = UsedScopeGraph::<SgLabel, SgData>::new();
     let patterns = [
-        GraphPattern::Decl(SgData::var("x", "int")),
-        GraphPattern::Decl(SgData::var("x1", "int")),
-        GraphPattern::Decl(SgData::var("x2", "int")),
-        GraphPattern::Decl(SgData::var("x3", "int")),
-        GraphPattern::Decl(SgData::var("x4", "int")),
-        GraphPattern::Linear(3),
         GraphPattern::Linear(1),
-        GraphPattern::Diamond(5),
-        GraphPattern::Decl(SgData::var("y", "int")),
-        GraphPattern::Linear(20),
+        GraphPattern::Decl(SgData::var("x", "int")),
+        GraphPattern::Tree(7),
+        GraphPattern::ReverseTree(3),
+        // GraphPattern::Decl(SgData::var("x1", "int")),
+        // GraphPattern::Decl(SgData::var("x2", "int")),
+        // GraphPattern::Decl(SgData::var("x3", "int")),
+        // GraphPattern::Decl(SgData::var("x4", "int")),
+        // GraphPattern::Linear(3),
+        // GraphPattern::Linear(1),
+        // GraphPattern::Diamond(5),
+        // GraphPattern::Decl(SgData::var("y", "int")),
+        // GraphPattern::Linear(10),
     ];
     let graph = GraphGenerator::new(graph).with_patterns(patterns).build();
     graph
@@ -42,14 +45,14 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
 
     // P*D;
     let label_reg = Regex::concat(Regex::kleene(SgLabel::Parent), SgLabel::Declaration);
-    let matcher = RegexAutomata::from_regex(label_reg.clone());
+    let matcher = RegexAutomaton::from_regex(label_reg.clone());
     matcher
         .to_uml()
         .write_to_file("output/regex.puml")
         .unwrap();
 
     let x_match: Arc<str> = Arc::from("x2");
-    let query_scope_set = [(x_match.clone(), vec![25])];
+    let query_scope_set = [(x_match.clone(), vec![26])];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
         let title = format!(
@@ -70,7 +73,6 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
                     &order,
                     |d| Arc::from(d.name()),
                     p.clone(),
-                    |d1, d2| d1.name() == d2.name(),
                 )
             })
             .fold((Vec::new(), Vec::new()), |(mut uml_acc, mut mmd_acc), r| {
@@ -120,17 +122,6 @@ fn main() {
             println!("saved!");
         }
     }
-}
-
-fn write_to_file(fname: &str, content: &[u8]) {
-    let mut file = std::fs::OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open(fname)
-        .unwrap();
-    tracing::info!("Writing to file {}", fname);
-    file.write_all(content).unwrap();
 }
 
 fn save_graph(graph: &UsedScopeGraph<SgLabel, SgData>, fname: &str) {

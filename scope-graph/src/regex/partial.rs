@@ -1,13 +1,13 @@
-use crate::label::ScopeGraphLabel;
+use crate::{label::ScopeGraphLabel, path::Path};
 
-use super::dfs::RegexAutomata;
+use super::dfs::RegexAutomaton;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PartialRegex<'a, Lbl>
 where
     Lbl: ScopeGraphLabel,
 {
-    automata: &'a RegexAutomata<Lbl>,
+    automata: &'a RegexAutomaton<Lbl>,
     idx: usize,
 }
 
@@ -15,11 +15,11 @@ impl<'a, Lbl> PartialRegex<'a, Lbl>
 where
     Lbl: ScopeGraphLabel,
 {
-    pub fn new(automata: &'a RegexAutomata<Lbl>) -> Self {
+    pub fn new(automata: &'a RegexAutomaton<Lbl>) -> Self {
         Self { automata, idx: 0 }
     }
 
-    pub fn with_index(automata: &'a RegexAutomata<Lbl>, idx: usize) -> Self {
+    pub fn with_index(automata: &'a RegexAutomaton<Lbl>, idx: usize) -> Self {
         Self { automata, idx }
     }
 

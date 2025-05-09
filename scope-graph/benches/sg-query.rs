@@ -3,20 +3,21 @@ use std::{sync::Arc, time::Duration};
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use rand::Rng;
 use scope_graph::{
-    generator::{GraphGenerator, GraphPattern}, graph::{BaseScopeGraph, CachedScopeGraph, QueryResult, ScopeGraph}, order::{LabelOrder, LabelOrderBuilder}, regex::{dfs::RegexAutomata, Regex}, scope::Scope, SgData, SgLabel, DRAW_CACHES
+    generator::{GraphGenerator, GraphPattern}, graph::{BaseScopeGraph, CachedScopeGraph, QueryResult, ScopeGraph}, order::{LabelOrder, LabelOrderBuilder}, regex::{dfs::RegexAutomaton, Regex}, scope::Scope, SgData, SgLabel, DRAW_CACHES
 };
 
 
-fn query_graph<Sg>(graph: &mut Sg, num_queries: usize, order: &LabelOrder<SgLabel>, reg: &RegexAutomata<SgLabel>) -> Vec<QueryResult<SgLabel, SgData>>
+fn query_graph<Sg>(graph: &mut Sg, num_queries: usize, order: &LabelOrder<SgLabel>, reg: &RegexAutomaton<SgLabel>) -> Vec<QueryResult<SgLabel, SgData>>
 where
     Sg: ScopeGraph<SgLabel, SgData>,
 {
-    // let mut thread_rng = rand::rng();
+    let mut thread_rng = rand::rng();
 
     // let matches: &[Arc<str>] = &[Arc::from("x"), Arc::from("y")];
     let mut envs = Vec::new();
     for _ in 0..num_queries {
         let start_scope = Scope(280);
+        let start_scope = Scope(thread_rng.random_range(200..300));
 
         let m: Arc<str> = Arc::from("x");
         // let m = matches[thread_rng.random_range(0..matches.len())].clone();
@@ -27,7 +28,6 @@ where
             order,
             |d| Arc::from(d.name()),
             m,
-            |d1, d2| d1 == d2,
         );
     }
     graph.reset_cache(); // make next benchmark run from scratch
@@ -44,7 +44,7 @@ where Sg: ScopeGraph<SgLabel, SgData>
         // GraphPattern::Decl(SgData::var("x3", "int")),
         // GraphPattern::Decl(SgData::var("x4", "int")),
         GraphPattern::Linear(30),
-        GraphPattern::Linear(1),
+        // GraphPattern::Tree(2),
         GraphPattern::Tree(2),
         GraphPattern::Diamond(50),
         GraphPattern::Decl(SgData::var("y", "int")),
@@ -65,14 +65,13 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         .write_to_file("output/bench/graph.md")
         .unwrap();
 
-    
     let order = LabelOrderBuilder::new()
     .push(SgLabel::Declaration, SgLabel::Parent)
     .build();
 
     // P*D;
     let label_reg = Regex::concat(Regex::kleene(SgLabel::Parent), SgLabel::Declaration);
-    let matcher = RegexAutomata::from_regex(label_reg.clone());
+    let matcher = RegexAutomaton::from_regex(label_reg.clone());
 
     let mut group = c.benchmark_group("query");
     group.warm_up_time(Duration::from_secs(1));
@@ -80,7 +79,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
 
     for num_bench in [1, 2, 5] {
         let s1 = format!("bench {}", num_bench);
-        let s2 = format!("cache bench {}", num_bench);
+        let s2 = format!("map bench {}", num_bench);
         group.bench_function(&s1, |b| {
             b.iter(|| query_graph(&mut graph, num_bench, &order, &matcher))
         });

@@ -1,12 +1,15 @@
 pub mod dfs;
 mod partial;
 
-use dfs::RegexAutomata;
+use dfs::RegexAutomaton;
 pub use partial::PartialRegex;
 use serde::{Deserialize, Serialize};
 
 use crate::label::ScopeGraphLabel;
 
+/// Regular expressions with labels
+///
+/// todo: allow easy way to match any label, without having to do an OR of all labels by
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Regex<Lbl>
 where
@@ -92,8 +95,8 @@ where
         self.v() == Regex::EmptyString
     }
 
-    pub fn compile(self) -> RegexAutomata<Lbl> {
-        RegexAutomata::from_regex(self)
+    pub fn compile(self) -> RegexAutomaton<Lbl> {
+        RegexAutomaton::from_regex(self)
     }
 
     /// Helper function to determine whether a regular expression is final

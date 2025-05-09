@@ -6,7 +6,7 @@ use crate::{
     label::{LabelOrEnd, ScopeGraphLabel},
     order::LabelOrder,
     path::{Path, ReversePath},
-    regex::{PartialRegex, dfs::RegexAutomata},
+    regex::{PartialRegex, dfs::RegexAutomaton},
     scope::Scope,
 };
 
@@ -52,7 +52,7 @@ where
 {
     // scopegraph contains cache
     pub scope_graph: &'r BaseScopeGraph<Lbl, Data>,
-    pub path_re: &'r RegexAutomata<Lbl>,
+    pub path_re: &'r RegexAutomaton<Lbl>,
     pub lbl_order: &'r LabelOrder<Lbl>,
     pub data_eq: DEq,
     pub data_wfd: DWfd,
@@ -67,7 +67,7 @@ where
 {
     pub fn new(
         scope_graph: &'r BaseScopeGraph<Lbl, Data>,
-        path_re: &'r RegexAutomata<Lbl>,
+        path_re: &'r RegexAutomaton<Lbl>,
         lbl_order: &'r LabelOrder<Lbl>,
         data_eq: DEq,
         data_wfd: DWfd,
@@ -108,23 +108,24 @@ where
         // all edges where brzozowski derivative != 0
         let scope = self.get_scope(path.target()).expect("Scope not found");
 
-        let labels = match scope.outgoing().is_empty() {
-            true => vec![LabelOrEnd::End],
-            false => scope
-                .outgoing()
-                .iter()
-                .map(|e| e.lbl())
-                // get unique labels by using hashset
-                .fold(HashSet::new(), |mut set, lbl| {
-                    let mut this_reg = reg.clone();
-                    if this_reg.step(lbl).is_some() {
-                        set.insert(LabelOrEnd::Label((lbl.clone(), this_reg)));
-                    }
-                    set
-                })
-                .into_iter()
-                .collect::<Vec<_>>(),
-        };
+        let mut labels = scope
+        .outgoing()
+        .iter()
+        .map(|e| e.lbl())
+        // get unique labels by using hashset
+        .fold(HashSet::new(), |mut set, lbl| {
+            let mut this_reg = reg.clone();
+            if this_reg.step(lbl).is_some() {
+                set.insert(LabelOrEnd::Label((lbl.clone(), this_reg)));
+            }
+            set
+        })
+        .into_iter()
+        .collect::<Vec<_>>();
+
+        if reg.is_accepting() {
+            labels.push(LabelOrEnd::End);
+        }
 
         self.get_env_for_labels(&labels, path)
     }

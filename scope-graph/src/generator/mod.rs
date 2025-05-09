@@ -23,6 +23,8 @@ pub enum GraphPattern {
     ///
     /// Each child of this tree will follow the rest of the path
     Tree(usize),
+    /// Reverse tree pattern with number of levels,
+    ReverseTree(usize),
     /// Join all children into a single node
     Join,
     Decl(SgData),
@@ -76,6 +78,27 @@ impl GraphPattern {
                     graph.add_edge(tail, child, SgLabel::Parent);
                 }
                 vec![tail]
+            }
+            Self::ReverseTree(levels) => {
+                let mut child_scopes = child_scopes;
+                while child_scopes.len() > 1 {
+                    // let mut new_children = Vec::new();
+                    let chunk_size = child_scopes.len() / levels;
+                    child_scopes = child_scopes
+                    .chunks(chunk_size.max(2)) // if chunk is 1 then nothing is reduced
+                    .flat_map(|chunk| Self::Join.add(graph, chunk.to_vec()))
+                    .collect();
+                    // .for_each(|chunk| {
+                    //     let new_tail = graph.add_scope_default();
+                    //     for scope in chunk {
+                    //         graph.add_edge(new_tail, *scope, SgLabel::Parent);
+                    //     }
+                    //     new_children.push(new_tail);
+                    // });
+                    // child_scopes = new_children;
+                    // tree is reduced
+                }
+                child_scopes
             }
         }
     }

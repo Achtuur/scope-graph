@@ -7,7 +7,7 @@ use crate::label::ScopeGraphLabel;
 use super::Regex;
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct AutomataNode<Lbl>
+pub struct AutomatonNode<Lbl>
 where
     Lbl: ScopeGraphLabel,
 {
@@ -15,7 +15,7 @@ where
     pub edges: Vec<(Lbl, usize)>,
 }
 
-impl<Lbl> AutomataNode<Lbl>
+impl<Lbl> AutomatonNode<Lbl>
 where
     Lbl: ScopeGraphLabel,
 {
@@ -35,15 +35,15 @@ where
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct RegexAutomata<Lbl>
+pub struct RegexAutomaton<Lbl>
 where
     Lbl: ScopeGraphLabel,
 {
-    pub node_vec: Vec<AutomataNode<Lbl>>,
+    node_vec: Vec<AutomatonNode<Lbl>>,
     raw_reg: Regex<Lbl>,
 }
 
-impl<Lbl> RegexAutomata<Lbl>
+impl<Lbl> RegexAutomaton<Lbl>
 where
     Lbl: ScopeGraphLabel,
 {
@@ -58,7 +58,7 @@ where
     }
 
     fn compile(&mut self, reg: Regex<Lbl>) {
-        self.node_vec.push(AutomataNode::new(reg.clone()));
+        self.node_vec.push(AutomatonNode::new(reg.clone()));
         let mut queue = vec![reg];
 
         while let Some(key) = queue.pop() {
@@ -74,7 +74,7 @@ where
                 // add new node if it doesn't exist
                 let derivative_idx = if self.get_node_mut(&derivative).is_none() {
                     queue.push(derivative.clone());
-                    self.node_vec.push(AutomataNode::new(derivative));
+                    self.node_vec.push(AutomatonNode::new(derivative));
                     self.node_vec.len() - 1
                 } else {
                     self.get_node_idx(&derivative).unwrap()
@@ -90,11 +90,11 @@ where
         self.node_vec.is_empty()
     }
 
-    pub fn get_node(&self, idx: usize) -> Option<&AutomataNode<Lbl>> {
+    pub fn get_node(&self, idx: usize) -> Option<&AutomatonNode<Lbl>> {
         self.node_vec.get(idx)
     }
 
-    pub fn get_node_mut(&mut self, regex: &Regex<Lbl>) -> Option<&mut AutomataNode<Lbl>> {
+    pub fn get_node_mut(&mut self, regex: &Regex<Lbl>) -> Option<&mut AutomatonNode<Lbl>> {
         self.node_vec.iter_mut().find(|n| n.value == *regex)
     }
 
@@ -158,7 +158,7 @@ where
     }
 }
 
-impl<Lbl> RegexAutomata<Lbl>
+impl<Lbl> RegexAutomaton<Lbl>
 where
     Lbl: ScopeGraphLabel,
 {
@@ -223,7 +223,7 @@ where
     }
 }
 
-impl<Lbl> std::fmt::Display for RegexAutomata<Lbl>
+impl<Lbl> std::fmt::Display for RegexAutomaton<Lbl>
 where
     Lbl: ScopeGraphLabel + std::fmt::Display + Clone + Eq + Hash,
 {
@@ -252,7 +252,7 @@ mod tests {
 
 
         let timer = std::time::Instant::now();
-        let automata = RegexAutomata::from_regex(regex);
+        let automata = RegexAutomaton::from_regex(regex);
         println!("{:?}", timer.elapsed());
         automata
         .to_uml()
@@ -263,21 +263,21 @@ mod tests {
     #[test]
     fn test_is_match() {
         let regex = Regex::kleene('a');
-        let automata = RegexAutomata::from_regex(regex);
+        let automata = RegexAutomaton::from_regex(regex);
         automata
         .to_mmd()
         .write_to_file("output/regex/automata.md")
         .unwrap();
         let haystack = vec!['a'; 10];
-        assert!(!automata.is_match(&haystack));
-        let haystack = vec!['b'];
         assert!(automata.is_match(&haystack));
+        let haystack = vec!['b'];
+        assert!(!automata.is_match(&haystack));
     }
 
     #[test]
     fn test_is_match_kleene() {
         let regex = Regex::concat(Regex::kleene('P'), Regex::concat('P', 'D'));
-        let automata = RegexAutomata::from_regex(regex);
+        let automata = RegexAutomaton::from_regex(regex);
         automata
         .to_mmd()
         .write_to_file("output/regex/automata.md")
