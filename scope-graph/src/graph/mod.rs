@@ -111,6 +111,10 @@ where
     fn add_scope(&mut self, scope: Scope, data: Data) -> Scope;
     fn add_edge(&mut self, source: Scope, target: Scope, label: Lbl);
 
+    fn add_scope_default(&mut self) -> Scope {
+        self.add_scope(Scope::new(), Data::default())
+    }
+
     fn add_decl(&mut self, source: Scope, label: Lbl, data: Data) -> Scope {
         tracing::debug!(
             "Adding decl: {} with label: {} and data: {}",

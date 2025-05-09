@@ -7,6 +7,7 @@ use serde::Serialize;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, PartialOrd, Ord)]
 enum TestLabel {
+    D,
     P,
     Q,
     R,
@@ -21,6 +22,7 @@ impl std::fmt::Display for TestLabel {
 impl ScopeGraphLabel for TestLabel {
     fn char(&self) -> char {
         match self {
+            TestLabel::D => '$',
             TestLabel::P => 'P',
             TestLabel::Q => 'Q',
             TestLabel::R => 'R',
@@ -29,6 +31,7 @@ impl ScopeGraphLabel for TestLabel {
 
     fn str(&self) -> &'static str {
         match self {
+            TestLabel::D => "$",
             TestLabel::P => "P",
             TestLabel::Q => "Q",
             TestLabel::R => "R",
@@ -36,8 +39,9 @@ impl ScopeGraphLabel for TestLabel {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, PartialEq, Eq, Hash, Serialize, PartialOrd, Ord)]
 enum TestData {
+    #[default]
     NoData,
     Var(String),
 }
@@ -87,8 +91,8 @@ impl TestData {
 /// ```
 #[test]
 fn test_no_data() {
-    let mut graph = CachedScopeGraph::new();
-    let s = graph.add_scope(Scope::new(), TestData::NoData);
+    let mut graph = CachedScopeGraph::<TestLabel, TestData>::new();
+    let s = graph.add_scope_default();
     let regex = Regex::kleene(TestLabel::P).compile();
     let lo = LabelOrderBuilder::default().build();
     graph.query_proj(s,
@@ -167,6 +171,25 @@ fn test_no_data() {
 // ]] analysis succeeds
 //    run evaluate-test to SUCCEEDS()
 
+#[test]
+fn test_resolve_reference_with_same_name() {
+    let mut graph = CachedScopeGraph::<TestLabel, TestData>::new();
+    let s = graph.add_scope(Scope::new(), TestData::var("x"));
+
+    let regex = Regex::EmptyString.compile();
+    let lo = LabelOrderBuilder::default().build();
+    let envs = graph.query_proj(s,
+        &regex,
+        &lo,
+        |d| d.name().to_string(),
+        String::from("x"),
+        |d1, d2| d1 == d2,
+    );
+    assert!(envs.len() == 1);
+    let env = envs.first().unwrap();
+    assert!(env.path.target() == s);
+}
+
 // test resolve reference with different name in the same scope fails [[
 //   resolve {s}
 //     new s, s -> Var{"x"@-},
@@ -179,6 +202,23 @@ fn test_no_data() {
 //       resolve Var
 // ]] analysis succeeds
 //    run evaluate-test to FAILS()
+
+#[test]
+fn test_resolve_reference_with_different_name() {
+    let mut graph = CachedScopeGraph::<TestLabel, TestData>::new();
+    let s = graph.add_scope(Scope::new(), TestData::var("y"));
+
+    let regex = Regex::EmptyString.compile();
+    let lo = LabelOrderBuilder::default().build();
+    let envs = graph.query_proj(s,
+        &regex,
+        &lo,
+        |d| d.name().to_string(),
+        String::from("x"),
+        |d1, d2| d1 == d2,
+    );
+    assert!(envs.is_empty());
+}
 
 // test resolution policy filter forces a step [[
 //   resolve {s1 s2}
@@ -194,6 +234,26 @@ fn test_no_data() {
 //       resolve Var filter P
 // ]] analysis succeeds
 //    run evaluate-test to SUCCEEDS()
+
+#[test]
+fn test_resolution_policy_forces_step() {
+    let mut graph = CachedScopeGraph::<TestLabel, TestData>::new();
+    let s1 = graph.add_scope(Scope::new(), TestData::var("x"));
+    let s2 = graph.add_scope(Scope::new(), TestData::var("x"));
+
+    let regex = Regex::Character(TestLabel::P).compile();
+    let lo = LabelOrderBuilder::default().build();
+    let envs = graph.query_proj(s1,
+        &regex,
+        &lo,
+        |_| (),
+        (),
+        |d1, d2| d1 == d2,
+    );
+    assert!(envs.len() == 1);
+    let env = envs.first().unwrap();
+    assert!(env.path.target() == s2);
+}
 
 // test resolution policy filter cannot reach declaration [[
 //   resolve {s1 s2}
@@ -240,7 +300,7 @@ fn test_no_data() {
 //    run evaluate-test to SUCCEEDS()
 #[test]
 fn test_explicit_policy_filter() {
-    let mut graph = CachedScopeGraph::new();
+    let mut graph = CachedScopeGraph::<TestLabel, TestData>::new();
     let s1 = graph.add_scope(Scope::new(), TestData::var("x"));
     let s2 = graph.add_scope(Scope::new(), TestData::var("x"));
     graph.add_edge(s1, s2, TestLabel::P);
@@ -276,8 +336,8 @@ fn test_explicit_policy_filter() {
 
 #[test]
 fn test_explicit_policy_min() {
-    let mut graph = CachedScopeGraph::new();
-    let s1 = graph.add_scope(Scope::new(), TestData::NoData);
+    let mut graph = CachedScopeGraph::<TestLabel, TestData>::new();
+    let s1 = graph.add_scope_default();
     let s2 = graph.add_scope(Scope::new(), TestData::var("x"));
     let s3 = graph.add_scope(Scope::new(), TestData::var("x"));
     graph.add_edge(s1, s2, TestLabel::P);
@@ -431,8 +491,8 @@ fn test_explicit_policy_min() {
 
 #[test]
 fn test_partial_order() {
-    let mut graph = CachedScopeGraph::new();
-    let s1 = graph.add_scope(Scope::new(), TestData::NoData);
+    let mut graph = CachedScopeGraph::<TestLabel, TestData>::new();
+    let s1 = graph.add_scope_default();
     let regex: RegexAutomata<TestLabel> = Regex::EmptyString.compile();
 
     let lo = LabelOrderBuilder::new().build();
@@ -462,8 +522,8 @@ fn test_partial_order() {
 
 #[test]
 fn test_partial_order_2() {
-    let mut graph = CachedScopeGraph::new();
-    let s1 = graph.add_scope(Scope::new(), TestData::NoData);
+    let mut graph = CachedScopeGraph::<TestLabel, TestData>::new();
+    let s1 = graph.add_scope_default();
     let regex: RegexAutomata<TestLabel> = Regex::EmptyString.compile();
 
     let lo = LabelOrderBuilder::new()
@@ -495,8 +555,8 @@ fn test_partial_order_2() {
 
 #[test]
 fn test_partial_order_3() {
-    let mut graph = CachedScopeGraph::new();
-    let s1 = graph.add_scope(Scope::new(), TestData::NoData);
+    let mut graph = CachedScopeGraph::<TestLabel, TestData>::new();
+    let s1 = graph.add_scope_default();
     let regex: RegexAutomata<TestLabel> = Regex::EmptyString.compile();
 
     let lo = LabelOrderBuilder::new()
@@ -541,23 +601,27 @@ fn test_partial_order_3() {
 
 #[test]
 fn test_label_order_respected() {
-    let mut graph = CachedScopeGraph::new();
-    let s0 = graph.add_scope(Scope::new(), TestData::NoData);
-    let s_with = graph.add_scope(Scope::new(), TestData::NoData);
-    let s_rec = graph.add_scope(Scope::new(), TestData::var("x"));
-    let s_let = graph.add_scope(Scope::new(), TestData::var("x"));
+    let mut graph = CachedScopeGraph::<TestLabel, TestData>::new();
+    let s0 = graph.add_scope_default();
+    let s_with = graph.add_scope_default();
+    let s_rec = graph.add_scope_default();
+    let s_let = graph.add_scope_default();
+    let s_let_decl = graph.add_decl(s_let, TestLabel::D, TestData::var("x"));
+    let _s_with_decl = graph.add_decl(s_rec, TestLabel::D, TestData::var("x"));
     graph.add_edge(s_with, s0, TestLabel::P);
     graph.add_edge(s_with, s_rec, TestLabel::R);
     graph.add_edge(s_let, s_with, TestLabel::P);
     graph.as_mmd_diagram("test_label_order_resp", DRAW_CACHES)
     .write_to_file("output/tests/test_label_order_resp.md").unwrap();
-    let regex: RegexAutomata<TestLabel> = Regex::concat(
+    let regex: RegexAutomata<TestLabel> = Regex::concat(Regex::concat(
         Regex::kleene(TestLabel::P), Regex::question(TestLabel::R)
-    )
+    ), Regex::Character(TestLabel::D))
     .compile();
     regex.to_mmd().write_to_file("output/tests/test_label_order_resp_regex.md").unwrap();
 
     let lo = LabelOrderBuilder::new()
+    .push(TestLabel::D, TestLabel::P)
+    .push(TestLabel::D, TestLabel::R)
     .push(TestLabel::R, TestLabel::P)
     .build();
     let envs = graph.query_proj(s_let,
@@ -571,7 +635,7 @@ fn test_label_order_respected() {
     assert!(envs.len() == 1);
     let env = envs.first().unwrap();
     assert!(env.data.name() == "x");
-    assert!(env.path.target() == s_let);
+    assert!(env.path.target() == s_let_decl);
 }
 
 // test project all is respected [[
@@ -595,11 +659,11 @@ fn test_label_order_respected() {
 
 #[test]
 fn test_all_is_respected() {
-    let mut graph = CachedScopeGraph::new();
-    let s0 = graph.add_scope(Scope::new(), TestData::NoData);
-    let s1 = graph.add_scope(Scope::new(), TestData::NoData);
-    let s2 = graph.add_scope(Scope::new(), TestData::NoData);
-    let s3 = graph.add_scope(Scope::new(), TestData::NoData);
+    let mut graph = CachedScopeGraph::<TestLabel, TestData>::new();
+    let s0 = graph.add_scope_default();
+    let s1 = graph.add_scope_default();
+    let s2 = graph.add_scope_default();
+    let s3 = graph.add_scope_default();
     graph.add_edge(s0, s1, TestLabel::P);
     graph.add_edge(s0, s2, TestLabel::P);
     graph.add_edge(s1, s3, TestLabel::P);
@@ -659,6 +723,44 @@ fn test_all_is_respected() {
 //       r : int
 // ]] analysis succeeds
 //    run evaluate-test to SUCCEEDS()
+
+#[test]
+fn test_project_target_data_behaves_as_set() {
+    let mut graph = CachedScopeGraph::<TestLabel, TestData>::new();
+    let s0 = graph.add_scope_default();
+    let s1 = graph.add_scope_default();
+    let s2 = graph.add_scope_default();
+    let s3 = graph.add_scope_default();
+    let s3_decl = graph.add_decl(s3, TestLabel::D, TestData::var("x"));
+    graph.add_edge(s0, s1, TestLabel::P);
+    graph.add_edge(s0, s2, TestLabel::P);
+    graph.add_edge(s1, s3, TestLabel::P);
+    graph.add_edge(s2, s3, TestLabel::P);
+    graph.as_mmd_diagram("test_project_target_data_behaves_as_set", DRAW_CACHES)
+    .write_to_file("output/tests/test_project_target_data_behaves_as_set.md").unwrap();
+    let regex: RegexAutomata<TestLabel> = Regex::concat(
+        Regex::kleene(TestLabel::P), Regex::Character(TestLabel::D)
+    )
+    .compile();
+    regex.to_mmd().write_to_file("output/tests/test_label_order_resp_regex.md").unwrap();
+
+    let lo = LabelOrderBuilder::new()
+    .push(TestLabel::D, TestLabel::P)
+    .build();
+    let envs = graph.query_proj(s0,
+        &regex,
+        &lo,
+        |d| d.name().to_string(),
+        String::from("x"),
+        |d1, d2| d1 == d2,
+    );
+    println!("envs: {0:?}", envs);
+    assert!(!envs.is_empty());
+    for env in envs {
+        assert!(env.data.name() == "x");
+        assert!(env.path.target() == s3_decl);
+    }
+}
 
 // test project data is respected [[
 //   resolve {s0 s1 s2 s3}

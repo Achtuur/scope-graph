@@ -204,8 +204,9 @@ impl ScopeGraphLabel for SgLabel {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
 pub enum SgData {
+    #[default]
     NoData,
     Variable(String, String),
 }

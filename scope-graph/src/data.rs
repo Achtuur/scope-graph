@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 pub trait ScopeGraphData:
-    PartialEq + Clone + std::fmt::Debug + std::fmt::Display + Eq + Ord + std::hash::Hash + Serialize
+    PartialEq + Clone + Default + std::fmt::Debug + std::fmt::Display + Eq + Ord + std::hash::Hash + Serialize
 {
     /// Returns true if the variant has data.
     ///
