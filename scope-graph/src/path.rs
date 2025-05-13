@@ -17,6 +17,7 @@ where
 {
     Start(Scope),
     Step {
+        automaton_idx: usize,
         label: Lbl,
         target: Scope,
         from: Rc<Self>,
@@ -32,11 +33,12 @@ where
     }
 
     /// Step forward (p -> new p)
-    pub fn step(&self, label: Lbl, scope: Scope) -> Self {
+    pub fn step(&self, label: Lbl, scope: Scope, automaton_idx: usize) -> Self {
         Self::Step {
             label,
             target: scope,
             from: Rc::new(self.clone()),
+            automaton_idx,
         }
     }
 
@@ -54,17 +56,24 @@ where
         }
     }
 
-    pub fn is_circular(&self) -> bool {
+    pub fn is_circular(&self, prev_index: usize) -> bool {
         let mut current = self;
         let mut visited = HashSet::new();
+        let mut prev_index = prev_index;
         loop {
             match current {
-                Self::Start(s) => return !visited.insert(s),
-                Self::Step { target, from, .. } => {
-                    if !visited.insert(target) {
+                Self::Start(s) => return !visited.insert((s, prev_index)),
+                Self::Step {
+                    target,
+                    from,
+                    automaton_idx,
+                    ..
+                } => {
+                    if !visited.insert((target, *automaton_idx)) {
                         return true;
                     }
                     current = from;
+                    prev_index = *automaton_idx;
                 }
             }
         }
@@ -73,11 +82,7 @@ where
     pub fn as_mmd(&self, class: String, reverse: bool) -> Vec<MermaidItem> {
         match self {
             Self::Start(_) => Vec::new(),
-            Self::Step {
-                from,
-                label,
-                target,
-            } => {
+            Self::Step { from, target, .. } => {
                 let (from_scope, to_scope) = match reverse {
                     false => (from.target(), *target),
                     true => (*target, from.target()),
@@ -111,6 +116,7 @@ where
                 from,
                 label,
                 target,
+                ..
             } => {
                 let (from_scope, to_scope) = match reverse {
                     false => (from.target(), *target),
@@ -141,6 +147,7 @@ where
                 from,
                 label,
                 target,
+                ..
             } => {
                 format!("{} -{}-> {}", from.display(), label.char(), target)
             }
@@ -154,6 +161,7 @@ where
                 from,
                 label,
                 target,
+                ..
             } => {
                 let addr = Rc::as_ptr(from);
                 format!(
@@ -200,15 +208,16 @@ where
                 label,
                 target,
                 from,
+                automaton_idx,
             } => {
                 // what we have: from -L> target
                 // what we want: target <L- from
 
                 let mut rp = Path::Start(target);
-                rp = rp.step(label, from.target());
+                rp = rp.step(label, from.target(), automaton_idx);
                 let mut current = from.as_ref();
                 while let Path::Step { label, from, .. } = current {
-                    rp = rp.step(label.clone(), from.target());
+                    rp = rp.step(label.clone(), from.target(), automaton_idx);
                     current = from;
                 }
                 rp
@@ -268,8 +277,8 @@ where
     }
 
     /// Step forward (p -> new p)
-    pub fn step(&self, label: Lbl, scope: Scope) -> Self {
-        Self(self.0.step(label, scope))
+    pub fn step(&self, label: Lbl, scope: Scope, automaton_idx: usize) -> Self {
+        Self(self.0.step(label, scope, automaton_idx))
     }
 
     pub fn as_uml(&self, class: String, reverse: bool) -> Vec<PlantUmlItem> {
@@ -292,8 +301,8 @@ mod tests {
     #[test]
     fn test_rev() {
         let path = Path::Start(Scope(1))
-            .step('c', Scope(2))
-            .step('d', Scope(3));
+            .step('c', Scope(2), 0)
+            .step('d', Scope(3), 0);
         println!("{}", path);
         let rev = ReversePath::from(path);
         println!("{}", rev);
@@ -302,14 +311,20 @@ mod tests {
     #[test]
     fn test_is_circular() {
         let path = Path::Start(Scope(1))
-            .step('c', Scope(2))
-            .step('d', Scope(3));
-        assert!(!path.is_circular());
+            .step('c', Scope(2), 0)
+            .step('d', Scope(3), 0);
+        assert!(!path.is_circular(0));
 
         let path = Path::Start(Scope(1))
-            .step('c', Scope(2))
-            .step('d', Scope(3))
-            .step('c', Scope(2));
-        assert!(path.is_circular());
+            .step('c', Scope(2), 0)
+            .step('d', Scope(3), 0)
+            .step('c', Scope(2), 0);
+        assert!(path.is_circular(0));
+
+        let path = Path::Start(Scope(1))
+            .step('c', Scope(2), 0)
+            .step('d', Scope(3), 0)
+            .step('c', Scope(2), 1);
+        assert!(!path.is_circular(0));
     }
 }

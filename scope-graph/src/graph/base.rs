@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     data::ScopeGraphData, label::ScopeGraphLabel, order::LabelOrder, path::Path,
-    regex::dfs::RegexAutomaton, scope::Scope,
+    projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope,
 };
 
 use super::{
@@ -99,20 +99,19 @@ where
         resolver.resolve(Path::start(scope))
     }
 
-    fn query_proj<P, DProj>(
+    fn query_proj<Proj>(
         &mut self,
         scope: Scope,
         path_regex: &RegexAutomaton<Lbl>,
         order: &LabelOrder<Lbl>,
-        data_proj: DProj,
-        proj_wfd: P,
+        proj: Proj,
+        proj_wfd: Proj::Output,
     ) -> Vec<QueryResult<Lbl, Data>>
     where
-        P: std::hash::Hash + Eq,
-        DProj: for<'da> Fn(&'da Data) -> P
+        Proj: ScopeGraphDataProjection<Data>,
     {
-        let data_wfd = |data: &Data| data_proj(data) == proj_wfd;
-        let data_equiv = |a: &Data, b: &Data| data_proj(a) == data_proj(b);
+        let data_wfd = |data: &Data| proj.project(data) == proj_wfd;
+        let data_equiv = |a: &Data, b: &Data| proj.project(a) == proj.project(b);
         self.query(scope, path_regex, order, data_equiv, data_wfd)
     }
 

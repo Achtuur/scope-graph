@@ -1,4 +1,4 @@
-use std::sync::atomic::AtomicUsize;
+use std::sync::{Arc, atomic::AtomicUsize};
 
 use data::ScopeGraphData;
 use graphing::{
@@ -7,7 +7,11 @@ use graphing::{
     plantuml::theme::{ElementCss, PlantUmlStyleSheet},
 };
 use label::ScopeGraphLabel;
-use scopegraphs::{completeness::{ImplicitClose, UncheckedCompleteness}, render::{RenderScopeData, RenderScopeLabel}};
+use projection::ScopeGraphDataProjection;
+use scopegraphs::{
+    completeness::UncheckedCompleteness,
+    render::{RenderScopeData, RenderScopeLabel},
+};
 use serde::{Deserialize, Serialize};
 
 pub mod label;
@@ -18,6 +22,7 @@ pub mod data;
 pub mod generator;
 pub mod graph;
 pub mod order;
+pub mod projection;
 pub mod regex;
 
 /// Enable caching when doing forward resolution
@@ -164,8 +169,19 @@ impl ColorSet for BackGroundEdgeColor {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-#[derive(scopegraphs::Label)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Hash,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    scopegraphs::Label,
+)]
 pub enum SgLabel {
     Parent,
     Declaration,
@@ -278,64 +294,25 @@ impl RenderScopeLabel for SgLabel {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum SgProjection {
+    None,
+    VarName,
+    VarNameType,
+}
 
-// impl<'storage> graph::ScopeGraph<SgLabel, SgData> for scopegraphs::ScopeGraph<'storage, SgLabel, SgData, ImplicitClose<SgLabel>> {
-//     fn reset_cache(&mut self) {}
+impl ScopeGraphDataProjection<SgData> for SgProjection {
+    type Output = Arc<str>;
 
-//     fn add_scope(&mut self, scope: scope::Scope, data: SgData) -> scope::Scope {
-//         self.add
-//     }
-
-//     fn add_edge(&mut self, source: scope::Scope, target: scope::Scope, label: SgLabel) {
-//         scopegraphs::ScopeGraph::add_edge(&mut self, source, label, target);
-//     }
-
-//     fn add_scope_default(&mut self) -> Scope {
-//         self.add_scope_default()
-//     }
-
-//     fn query<DEq, DWfd>(
-//         &mut self,
-//         scope: scope::Scope,
-//         path_regex: &regex::dfs::RegexAutomata<SgLabel>,
-//         order: &order::LabelOrder<SgLabel>,
-//         data_equiv: DEq,
-//         data_wellformedness: DWfd,
-//     ) -> Vec<graph::QueryResult<SgLabel, SgData>>
-//     where
-//         DEq: for<'da, 'db> Fn(&'da SgData, &'db SgData) -> bool,
-//         DWfd: for<'da> Fn(&'da SgData) -> bool {
-//         todo!()
-//     }
-
-//     fn query_proj<P, DProj, DEq>(
-//         &mut self,
-//         scope: scope::Scope,
-//         path_regex: &regex::dfs::RegexAutomata<SgLabel>,
-//         order: &order::LabelOrder<SgLabel>,
-//         data_proj: DProj,
-//         proj_wfd: P,
-//         data_equiv: DEq,
-//     ) -> Vec<graph::QueryResult<SgLabel, SgData>>
-//     where
-//         P: std::hash::Hash + Eq,
-//         DProj: for<'da> Fn(&'da SgData) -> P,
-//         DEq: for<'da, 'db> Fn(&'da SgData, &'db SgData) -> bool {
-//         todo!()
-//     }
-
-//     fn get_scope(&self, scope: scope::Scope) -> Option<&graph::ScopeData<SgLabel, SgData>> {
-//         todo!()
-//     }
-
-//     fn scope_iter<'a>(&'a self) -> impl Iterator<Item = (&'a scope::Scope, &'a graph::ScopeData<SgLabel, SgData>)>
-//     where
-//         SgLabel: 'a,
-//         SgData: 'a {
-//         std::iter::empty()
-//     }
-
-//     fn scope_holds_data(&self, scope: scope::Scope) -> bool {
-//         todo!()
-//     }
-// }
+    #[inline(always)]
+    fn project(&self, data: &SgData) -> Self::Output
+    where
+        SgData: ScopeGraphData,
+    {
+        match self {
+            Self::None => Arc::from(""),
+            Self::VarName => Arc::from(data.name()),
+            Self::VarNameType => Arc::from(data.render_string()),
+        }
+    }
+}

@@ -1,4 +1,4 @@
-use std::{collections::HashSet, sync::Mutex};
+use std::collections::HashSet;
 
 use crate::{
     DRAW_MEM_ADDR,
@@ -108,19 +108,19 @@ where
         let scope = self.get_scope(path.target()).expect("Scope not found");
 
         let mut labels = scope
-        .outgoing()
-        .iter()
-        .map(|e| e.lbl())
-        // get unique labels by using hashset
-        .fold(HashSet::new(), |mut set, lbl| {
-            let mut this_reg = reg.clone();
-            if this_reg.step(lbl).is_some() {
-                set.insert(LabelOrEnd::Label((lbl.clone(), this_reg)));
-            }
-            set
-        })
-        .into_iter()
-        .collect::<Vec<_>>();
+            .outgoing()
+            .iter()
+            .map(|e| e.lbl())
+            // get unique labels by using hashset
+            .fold(HashSet::new(), |mut set, lbl| {
+                let mut this_reg = reg.clone();
+                if this_reg.step(lbl).is_some() {
+                    set.insert(LabelOrEnd::Label((lbl.clone(), this_reg)));
+                }
+                set
+            })
+            .into_iter()
+            .collect::<Vec<_>>();
 
         if reg.is_accepting() {
             labels.push(LabelOrEnd::End);
@@ -185,8 +185,11 @@ where
                     .outgoing()
                     .iter()
                     .filter(|e| e.lbl() == label)
-                    .map(|e| path.clone().step(e.lbl().clone(), e.target()))
-                    .filter(|p| !p.is_circular())
+                    .map(|e| {
+                        path.clone()
+                            .step(e.lbl().clone(), e.target(), partial_reg.index())
+                    })
+                    .filter(|p| !p.is_circular(partial_reg.index()))
                     .flat_map(|p| self.resolve_all(p, partial_reg.clone())) // resolve new paths
                     .collect::<Vec<_>>()
             }

@@ -1,4 +1,4 @@
-use crate::{label::ScopeGraphLabel, path::Path};
+use crate::label::ScopeGraphLabel;
 
 use super::dfs::RegexAutomaton;
 
@@ -15,14 +15,17 @@ impl<'a, Lbl> RegexState<'a, Lbl>
 where
     Lbl: ScopeGraphLabel,
 {
+    #[inline]
     pub fn new(automata: &'a RegexAutomaton<Lbl>) -> Self {
         Self { automata, idx: 0 }
     }
 
+    #[inline]
     pub fn with_index(automata: &'a RegexAutomaton<Lbl>, idx: usize) -> Self {
         Self { automata, idx }
     }
 
+    #[inline]
     pub fn index(&self) -> usize {
         self.idx
     }
@@ -37,6 +40,7 @@ where
         Some(self.idx)
     }
 
+    #[inline]
     pub fn is_accepting(&self) -> bool {
         self.automata
             .get_node(self.idx)

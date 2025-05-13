@@ -17,6 +17,7 @@ use crate::{
     label::ScopeGraphLabel,
     order::LabelOrder,
     path::Path,
+    projection::ScopeGraphDataProjection,
     regex::dfs::RegexAutomaton,
     scope::Scope,
 };
@@ -27,6 +28,7 @@ mod resolve;
 
 type ProjHash = u64;
 
+// type ProjEnvs<Lbl, Data> = HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
 type ProjEnvs<Lbl, Data> = HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
 
 /// Key for the cache.
@@ -68,7 +70,6 @@ where
         self.resolve_cache.clear();
     }
 
-
     fn add_edge(&mut self, source: Scope, target: Scope, label: Lbl) {
         self.sg.add_edge(source, target, label.clone());
     }
@@ -99,11 +100,11 @@ where
 
     fn query<DEq, DWfd>(
         &mut self,
-        scope: Scope,
-        path_regex: &RegexAutomaton<Lbl>,
-        order: &LabelOrder<Lbl>,
-        data_equiv: DEq,
-        data_wellformedness: DWfd,
+        _scope: Scope,
+        _path_regex: &RegexAutomaton<Lbl>,
+        _order: &LabelOrder<Lbl>,
+        _data_equiv: DEq,
+        _data_wellformedness: DWfd,
     ) -> Vec<QueryResult<Lbl, Data>>
     where
         DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
@@ -112,20 +113,22 @@ where
         unreachable!("Use query_proj instead");
     }
 
-    fn query_proj<P, DProj>(
+    fn query_proj<Proj>(
         &mut self,
         scope: Scope,
         path_regex: &RegexAutomaton<Lbl>,
         order: &LabelOrder<Lbl>,
-        data_proj: DProj,
-        proj_wfd: P,
+        data_proj: Proj,
+        proj_wfd: Proj::Output,
     ) -> Vec<QueryResult<Lbl, Data>>
     where
-        P: std::hash::Hash + Eq,
-        DProj: for<'da> Fn(&'da Data) -> P,
+        Proj: ScopeGraphDataProjection<Data>,
     {
         // todo: fix key to not have to clone
-        let cache_entry = self.resolve_cache.entry((order.clone(), path_regex.clone())).or_default();
+        let cache_entry = self
+            .resolve_cache
+            .entry((order.clone(), path_regex.clone()))
+            .or_default();
         let mut resolver = CachedResolver::new(
             &self.sg,
             cache_entry,
@@ -157,8 +160,7 @@ where
                     // map with scope as key to not have duplicate notes
                     .fold(HashMap::new(), |mut acc, (keys, envs)| {
                         let key = keys.1; // scope
-                        let entry: &mut QueryCache<Lbl, Data> =
-                            acc.entry(key).or_default();
+                        let entry: &mut QueryCache<Lbl, Data> = acc.entry(key).or_default();
                         entry.insert(*keys, envs.clone());
                         acc
                     })
@@ -173,13 +175,10 @@ where
                             .map(|(keys, env)| {
                                 let cache_str = env
                                     .values()
-                                    .flat_map(|result| result.into_iter().map(|x| x.to_string()))
+                                    .flat_map(|result| result.iter().map(|x| x.to_string()))
                                     .collect::<Vec<String>>()
                                     .join("\n");
-                                format!(
-                                    "<b>(p{}, s{})</b>\n{}",
-                                    keys.0, keys.1, cache_str
-                                )
+                                format!("<b>(p{}, s{})</b>\n{}", keys.0, keys.1, cache_str)
                             })
                             .collect::<Vec<String>>()
                             .join("\n");
@@ -204,8 +203,7 @@ where
                     // map with scope as key to not have duplicate notes
                     .fold(HashMap::new(), |mut acc, (keys, envs)| {
                         let key = keys.1; // scope
-                        let entry: &mut QueryCache<Lbl, Data> =
-                            acc.entry(key).or_default();
+                        let entry: &mut QueryCache<Lbl, Data> = acc.entry(key).or_default();
                         entry.insert(*keys, envs.clone());
                         acc
                     })
@@ -220,16 +218,13 @@ where
                             .map(|(keys, env)| {
                                 let cache_str = env
                                     .values()
-                                    .flat_map(|result| result.into_iter().map(|x| x.to_string()))
+                                    .flat_map(|result| result.iter().map(|x| x.to_string()))
                                     // .map(|result| result.to_string())
                                     .collect::<Vec<String>>()
                                     .join("\n");
-                                cache_str
+                                // cache_str
                                 // // uncomment this to show cache key
-                                // format!(
-                                //     "<b>(p{}, {:08x}, s{})</b><br>{}",
-                                //     keys.0, keys.1, keys.2, cache_str
-                                // )
+                                format!("<b>(reg{})</b><br>{}", keys.0, cache_str)
                             })
                             .collect::<Vec<String>>()
                             .join("<br>");
@@ -294,10 +289,9 @@ where
                     .iter()
                     .filter(|(k, _)| k.1 == Scope(scope_num))
                     .flat_map(|(_, envs)| {
-                        envs
-                        .values()
-                        .flat_map(|envs| envs.into_iter().map(|q| &q.path))
-                        .flat_map(|path| path.as_uml(ForeGroundColor::next_class(), true))
+                        envs.values()
+                            .flat_map(|envs| envs.iter().map(|q| &q.path))
+                            .flat_map(|path| path.as_uml(ForeGroundColor::next_class(), true))
                     })
             })
             .map(|x| x.add_class("cache-edge"))
@@ -312,10 +306,9 @@ where
                     .iter()
                     .filter(|(k, _)| k.1 == Scope(scope_num))
                     .flat_map(|(_, envs)| {
-                        envs
-                        .values()
-                        .flat_map(|envs| envs.into_iter().map(|q| &q.path))
-                        .flat_map(|path| path.as_mmd(ForeGroundColor::next_class(), true))
+                        envs.values()
+                            .flat_map(|envs| envs.iter().map(|q| &q.path))
+                            .flat_map(|path| path.as_mmd(ForeGroundColor::next_class(), true))
                     })
             })
             .map(|x| x.add_class("cache-edge"))

@@ -1,9 +1,17 @@
 // tests from:
 // https://github.com/metaborg/nabl/blob/master/statix.test/scopegraphs/nameresolution.spt
 
-use scope_graph::{data::ScopeGraphData, graph::{CachedScopeGraph, QueryResult, ScopeGraph}, label::ScopeGraphLabel, order::{LabelOrder, LabelOrderBuilder}, regex::{dfs::RegexAutomaton, Regex}, scope::Scope, DRAW_CACHES};
+use scope_graph::{
+    DRAW_CACHES,
+    data::ScopeGraphData,
+    graph::{CachedScopeGraph, ScopeGraph},
+    label::ScopeGraphLabel,
+    order::LabelOrderBuilder,
+    projection::ScopeGraphDataProjection,
+    regex::{Regex, dfs::RegexAutomaton},
+    scope::Scope,
+};
 use serde::Serialize;
-
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, PartialOrd, Ord)]
 enum TestLabel {
@@ -85,6 +93,22 @@ impl TestData {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+enum TestProjection {
+    None,
+    Name,
+}
+
+impl ScopeGraphDataProjection<TestData> for TestProjection {
+    type Output = String;
+
+    fn project(&self, data: &TestData) -> Self::Output {
+        match self {
+            TestProjection::None => String::new(),
+            TestProjection::Name => data.name().to_string(),
+        }
+    }
+}
 
 /// ```ignore
 /// test query no-data succeeds [[
@@ -102,13 +126,7 @@ fn test_no_data() {
     let s = graph.add_scope_default();
     let regex = Regex::kleene(TestLabel::P).compile();
     let lo = LabelOrderBuilder::default().build();
-    graph.query_proj(s,
-        &regex,
-        &lo,
-        |_| (),
-        (),
-        
-    );
+    graph.query_proj(s, &regex, &lo, (), ());
 }
 
 // test namespace resolve with labels wf succeeds [[
@@ -185,13 +203,7 @@ fn test_resolve_reference_with_same_name() {
 
     let regex = Regex::EmptyString.compile();
     let lo = LabelOrderBuilder::default().build();
-    let envs = graph.query_proj(s,
-        &regex,
-        &lo,
-        |d| d.name().to_string(),
-        String::from("x"),
-        
-    );
+    let envs = graph.query_proj(s, &regex, &lo, TestProjection::Name, String::from("x"));
     assert_eq!(envs.len(), 1);
     let env = envs.first().unwrap();
     assert!(env.path.target() == s);
@@ -217,13 +229,7 @@ fn test_resolve_reference_with_different_name() {
 
     let regex = Regex::EmptyString.compile();
     let lo = LabelOrderBuilder::default().build();
-    let envs = graph.query_proj(s,
-        &regex,
-        &lo,
-        |d| d.name().to_string(),
-        String::from("x"),
-        
-    );
+    let envs = graph.query_proj(s, &regex, &lo, TestProjection::Name, String::from("x"));
     assert!(envs.is_empty());
 }
 
@@ -251,13 +257,7 @@ fn test_resolution_policy_forces_step() {
 
     let regex = Regex::from(TestLabel::P).compile();
     let lo = LabelOrderBuilder::default().build();
-    let envs = graph.query_proj(s1,
-        &regex,
-        &lo,
-        |d| d.name().to_string(),
-        String::from("x"),
-        
-    );
+    let envs = graph.query_proj(s1, &regex, &lo, TestProjection::Name, String::from("x"));
     println!("envs;: {0:?}", envs);
     assert_eq!(envs.len(), 1);
     let env = envs.first().unwrap();
@@ -273,13 +273,7 @@ fn test_no_edge_has_env() {
 
     let regex = Regex::from(TestLabel::P).compile();
     let lo = LabelOrderBuilder::default().build();
-    let envs = graph.query_proj(s1,
-        &regex,
-        &lo,
-        |d| d.name().to_string(),
-        String::from("x"),
-        
-    );
+    let envs = graph.query_proj(s1, &regex, &lo, TestProjection::Name, String::from("x"));
     assert!(envs.is_empty());
 }
 
@@ -306,13 +300,7 @@ fn test_resolution_policy_filter_cannot_reach() {
 
     let regex = Regex::from(TestLabel::P).compile();
     let lo = LabelOrderBuilder::default().build();
-    let envs = graph.query_proj(s1,
-        &regex,
-        &lo,
-        |d| d.name().to_string(),
-        String::from("x"),
-        
-    );
+    let envs = graph.query_proj(s1, &regex, &lo, TestProjection::Name, String::from("x"));
     assert!(envs.is_empty());
 }
 
@@ -341,21 +329,17 @@ fn test_resolution_policy_min_is_applied() {
     graph.add_edge(s1, s2, TestLabel::P);
     graph.add_edge(s1, s3, TestLabel::Q);
 
-    graph.as_mmd_diagram("test_resolution_policy_min_is_applied", DRAW_CACHES)
-    .write_to_file("output/tests/test_resolution_policy_min_is_applied.md").unwrap();
+    graph
+        .as_mmd_diagram("test_resolution_policy_min_is_applied", DRAW_CACHES)
+        .write_to_file("output/tests/test_resolution_policy_min_is_applied.md")
+        .unwrap();
 
     // let regex = Regex::EmptyString.compile();
     let regex = Regex::or(TestLabel::P, TestLabel::Q).compile();
     let lo = LabelOrderBuilder::default()
-    .push(TestLabel::Q, TestLabel::P)
-    .build();
-    let envs = graph.query_proj(s1,
-        &regex,
-        &lo,
-        |d| d.name().to_string(),
-        String::from("x"),
-        
-    );
+        .push(TestLabel::Q, TestLabel::P)
+        .build();
+    let envs = graph.query_proj(s1, &regex, &lo, TestProjection::Name, String::from("x"));
     assert_eq!(envs.len(), 1);
     let env = envs.first().unwrap();
     assert!(env.data.name() == "x");
@@ -384,13 +368,7 @@ fn test_explicit_policy_filter() {
     graph.add_edge(s1, s2, TestLabel::P);
     let regex = Regex::from(TestLabel::P).compile();
     let lo = LabelOrderBuilder::default().build();
-    let envs = graph.query_proj(s1,
-        &regex,
-        &lo,
-        |d| d.name().to_string(),
-        String::from("x"),
-        
-    );
+    let envs = graph.query_proj(s1, &regex, &lo, TestProjection::Name, String::from("x"));
     assert_eq!(envs.len(), 1);
     let env = envs.first().unwrap();
     assert!(env.data.name() == "x");
@@ -422,21 +400,12 @@ fn test_explicit_policy_min() {
     graph.add_edge(s1, s3, TestLabel::Q);
     // this isnt supported
     // let regex = Regex::neg(Regex::ZeroSet).compile();
-    let regex = Regex::kleene(
-        Regex::or(TestLabel::P, TestLabel::Q)
-    )
-    .compile();
+    let regex = Regex::kleene(Regex::or(TestLabel::P, TestLabel::Q)).compile();
 
     let lo = LabelOrderBuilder::new()
-    .push(TestLabel::Q, TestLabel::P)
-    .build();
-    let envs = graph.query_proj(s1,
-        &regex,
-        &lo,
-        |d| d.name().to_string(),
-        String::from("x"),
-        
-    );
+        .push(TestLabel::Q, TestLabel::P)
+        .build();
+    let envs = graph.query_proj(s1, &regex, &lo, TestProjection::Name, String::from("x"));
 
     assert_eq!(envs.len(), 1);
     let env = envs.first().unwrap();
@@ -459,7 +428,6 @@ fn test_explicit_policy_min() {
 // ]] analysis succeeds
 //    run evaluate-test to SUCCEEDS()
 
-
 #[test]
 fn test_resolve_occurence_relations_in_same_scope() {
     let mut graph = CachedScopeGraph::<TestLabel, TestData>::new();
@@ -468,13 +436,7 @@ fn test_resolve_occurence_relations_in_same_scope() {
 
     let regex = Regex::from(TestLabel::D).compile();
     let lo = LabelOrderBuilder::new().build();
-    let envs = graph.query_proj(s,
-        &regex,
-        &lo,
-        |d| d.name().to_string(),
-        String::from("x"),
-        
-    );
+    let envs = graph.query_proj(s, &regex, &lo, TestProjection::Name, String::from("x"));
 
     assert_eq!(envs.len(), 1);
     let env = envs.first().unwrap();
@@ -499,7 +461,6 @@ fn test_resolve_occurence_relations_in_same_scope() {
 // ]] analysis succeeds
 //    run evaluate-test to SUCCEEDS()
 
-
 #[test]
 fn test_resolve_occurence_relations_with_resolution() {
     let mut graph = CachedScopeGraph::<TestLabel, TestData>::new();
@@ -514,25 +475,22 @@ fn test_resolve_occurence_relations_with_resolution() {
     let _ = graph.add_decl(s4, TestLabel::D, TestData::varnum("x", 4));
 
     let regex = Regex::concat(
-        Regex::concat(TestLabel::P, Regex::kleene(Regex::or(TestLabel::P, TestLabel::Q))),
-        TestLabel::D
-    ).compile();
+        Regex::concat(
+            TestLabel::P,
+            Regex::kleene(Regex::or(TestLabel::P, TestLabel::Q)),
+        ),
+        TestLabel::D,
+    )
+    .compile();
     let lo = LabelOrderBuilder::new()
-    .push(TestLabel::Q, TestLabel::P)
-    .build();
-    let envs = graph.query_proj(s1,
-        &regex,
-        &lo,
-        |d| d.name().to_string(),
-        String::from("x"),
-        
-    );
+        .push(TestLabel::Q, TestLabel::P)
+        .build();
+    let envs = graph.query_proj(s1, &regex, &lo, TestProjection::Name, String::from("x"));
 
     assert_eq!(envs.len(), 1);
     let env = envs.first().unwrap();
     assert!(matches!(env.data, TestData::VarNum(_, 4)));
 }
-
 
 // test relations have multiset behavior [[
 //   resolve {s x y}
@@ -559,16 +517,10 @@ fn test_relations_have_multiset_behavior() {
 
     let regex = Regex::from(TestLabel::D).compile();
     let lo = LabelOrderBuilder::new().build();
-    let envs = graph.query_proj(s,
-        &regex,
-        &lo,
-        |d| d.name().to_string(),
-        String::from("x"),
-    );
+    let envs = graph.query_proj(s, &regex, &lo, TestProjection::Name, String::from("x"));
 
     assert_eq!(envs.len(), 2);
 }
-
 
 // test resolve declaration added using occurrence short-hand notation succeeds [[
 //   resolve {s}
@@ -583,7 +535,6 @@ fn test_relations_have_multiset_behavior() {
 // ]] analysis succeeds
 //    run evaluate-test to SUCCEEDS()
 
-
 #[test]
 fn test_resolve_declaration_using_shorthand() {
     let mut graph = CachedScopeGraph::<TestLabel, TestData>::new();
@@ -592,14 +543,9 @@ fn test_resolve_declaration_using_shorthand() {
 
     let regex = Regex::concat(Regex::kleene(TestLabel::P), TestLabel::D).compile();
     let lo = LabelOrderBuilder::new()
-    .push(TestLabel::D, TestLabel::P)
-    .build();
-    let envs = graph.query_proj(s,
-        &regex,
-        &lo,
-        |d| d.name().to_string(),
-        String::from("x"),
-    );
+        .push(TestLabel::D, TestLabel::P)
+        .build();
+    let envs = graph.query_proj(s, &regex, &lo, TestProjection::Name, String::from("x"));
 
     assert_eq!(envs.len(), 1);
 }
@@ -634,7 +580,6 @@ fn test_resolve_declaration_using_shorthand() {
 // ]] analysis succeeds
 //    run evaluate-test to SUCCEEDS()
 
-
 #[test]
 fn test_resolve_declaration_using_shorthand_with_relation_query() {
     let mut graph = CachedScopeGraph::<TestLabel, TestData>::new();
@@ -643,14 +588,9 @@ fn test_resolve_declaration_using_shorthand_with_relation_query() {
 
     let regex = Regex::concat(Regex::kleene(TestLabel::P), TestLabel::D).compile();
     let lo = LabelOrderBuilder::new()
-    .push(TestLabel::D, TestLabel::P)
-    .build();
-    let envs = graph.query_proj(s,
-        &regex,
-        &lo,
-        |d| d.name().to_string(),
-        String::from("x"),
-    );
+        .push(TestLabel::D, TestLabel::P)
+        .build();
+    let envs = graph.query_proj(s, &regex, &lo, TestProjection::Name, String::from("x"));
 
     assert_eq!(envs.len(), 1);
     let env = envs.first().unwrap();
@@ -694,13 +634,7 @@ fn test_partial_order() {
     let regex: RegexAutomaton<TestLabel> = Regex::EmptyString.compile();
 
     let lo = LabelOrderBuilder::new().build();
-    let envs = graph.query_proj(s1,
-        &regex,
-        &lo,
-        |d| d.name().to_string(),
-        String::from("x"),
-        
-    );
+    let envs = graph.query_proj(s1, &regex, &lo, TestProjection::Name, String::from("x"));
 
     assert!(envs.is_empty());
 }
@@ -725,17 +659,11 @@ fn test_partial_order_2() {
     let regex: RegexAutomaton<TestLabel> = Regex::EmptyString.compile();
 
     let lo = LabelOrderBuilder::new()
-    .push(TestLabel::D, TestLabel::P)
-    .push(TestLabel::D, TestLabel::Q)
-    .push(TestLabel::P, TestLabel::Q)
-    .build();
-    let envs = graph.query_proj(s,
-        &regex,
-        &lo,
-        |_| (),
-        (),
-        
-    );
+        .push(TestLabel::D, TestLabel::P)
+        .push(TestLabel::D, TestLabel::Q)
+        .push(TestLabel::P, TestLabel::Q)
+        .build();
+    let envs = graph.query_proj(s, &regex, &lo, (), ());
     assert_eq!(envs.len(), 1);
     let first = envs.first().unwrap();
     assert!(first.data == TestData::NoData);
@@ -762,18 +690,12 @@ fn test_partial_order_3() {
     let regex: RegexAutomaton<TestLabel> = Regex::EmptyString.compile();
 
     let lo = LabelOrderBuilder::new()
-    .push(TestLabel::D, TestLabel::P)
-    .push(TestLabel::D, TestLabel::Q)
-    .push(TestLabel::P, TestLabel::R)
-    .push(TestLabel::Q, TestLabel::R)
-    .build();
-    let envs = graph.query_proj(s,
-        &regex,
-        &lo,
-        |_| (),
-        (),
-        
-    );
+        .push(TestLabel::D, TestLabel::P)
+        .push(TestLabel::D, TestLabel::Q)
+        .push(TestLabel::P, TestLabel::R)
+        .push(TestLabel::Q, TestLabel::R)
+        .build();
+    let envs = graph.query_proj(s, &regex, &lo, (), ());
 
     assert_eq!(envs.len(), 1);
     let first = envs.first().unwrap();
@@ -818,26 +740,26 @@ fn test_label_order_respected() {
     graph.add_edge(s_with, s0, TestLabel::P);
     graph.add_edge(s_with, s_rec, TestLabel::R);
     graph.add_edge(s_let, s_with, TestLabel::P);
-    graph.as_mmd_diagram("test_label_order_resp", DRAW_CACHES)
-    .write_to_file("output/tests/test_label_order_resp.md").unwrap();
-    let regex: RegexAutomaton<TestLabel> = Regex::concat(Regex::concat(
-        Regex::kleene(TestLabel::P), Regex::question(TestLabel::R)
-    ), TestLabel::D)
+    graph
+        .as_mmd_diagram("test_label_order_resp", DRAW_CACHES)
+        .write_to_file("output/tests/test_label_order_resp.md")
+        .unwrap();
+    let regex: RegexAutomaton<TestLabel> = Regex::concat(
+        Regex::concat(Regex::kleene(TestLabel::P), Regex::question(TestLabel::R)),
+        TestLabel::D,
+    )
     .compile();
-    regex.to_mmd().write_to_file("output/tests/test_label_order_resp_regex.md").unwrap();
+    regex
+        .to_mmd()
+        .write_to_file("output/tests/test_label_order_resp_regex.md")
+        .unwrap();
 
     let lo = LabelOrderBuilder::new()
-    .push(TestLabel::D, TestLabel::P)
-    .push(TestLabel::D, TestLabel::R)
-    .push(TestLabel::R, TestLabel::P)
-    .build();
-    let envs = graph.query_proj(s_let,
-        &regex,
-        &lo,
-        |d| d.name().to_string(),
-        String::from("x"),
-        
-    );
+        .push(TestLabel::D, TestLabel::P)
+        .push(TestLabel::D, TestLabel::R)
+        .push(TestLabel::R, TestLabel::P)
+        .build();
+    let envs = graph.query_proj(s_let, &regex, &lo, TestProjection::Name, String::from("x"));
     println!("envs: {0:?}", envs);
     assert_eq!(envs.len(), 1);
     let env = envs.first().unwrap();
@@ -885,9 +807,9 @@ fn test_label_order_respected() {
 //     let envs = graph.query_proj(s0,
 //         &regex,
 //         &lo,
-//         |d| d.name().to_string(),
+//         TestProjection::Name,
 //         String::from("x"),
-//         
+//
 //     );
 //     assert!(!envs.is_empty());
 // }
@@ -943,24 +865,21 @@ fn test_project_target_data_behaves_as_set() {
     graph.add_edge(s0, s2, TestLabel::P);
     graph.add_edge(s1, s3, TestLabel::P);
     graph.add_edge(s2, s3, TestLabel::P);
-    graph.as_mmd_diagram("test_project_target_data_behaves_as_set", DRAW_CACHES)
-    .write_to_file("output/tests/test_project_target_data_behaves_as_set.md").unwrap();
-    let regex: RegexAutomaton<TestLabel> = Regex::concat(
-        Regex::kleene(TestLabel::P), TestLabel::D
-    )
-    .compile();
-    regex.to_mmd().write_to_file("output/tests/test_label_order_resp_regex.md").unwrap();
+    graph
+        .as_mmd_diagram("test_project_target_data_behaves_as_set", DRAW_CACHES)
+        .write_to_file("output/tests/test_project_target_data_behaves_as_set.md")
+        .unwrap();
+    let regex: RegexAutomaton<TestLabel> =
+        Regex::concat(Regex::kleene(TestLabel::P), TestLabel::D).compile();
+    regex
+        .to_mmd()
+        .write_to_file("output/tests/test_label_order_resp_regex.md")
+        .unwrap();
 
     let lo = LabelOrderBuilder::new()
-    .push(TestLabel::D, TestLabel::P)
-    .build();
-    let envs = graph.query_proj(s0,
-        &regex,
-        &lo,
-        |d| d.name().to_string(),
-        String::from("x"),
-        
-    );
+        .push(TestLabel::D, TestLabel::P)
+        .build();
+    let envs = graph.query_proj(s0, &regex, &lo, TestProjection::Name, String::from("x"));
     println!("envs: {0:?}", envs);
     assert!(!envs.is_empty());
     for env in envs {

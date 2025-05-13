@@ -1,9 +1,8 @@
 use std::{sync::Arc, time::Duration};
 
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
-use rand::Rng;
+use criterion::{Criterion, criterion_group, criterion_main};
 use scope_graph::{
-    DRAW_CACHES, LibGraph, LibScope, SgData, SgLabel,
+    LibGraph, SgData, SgLabel, SgProjection,
     generator::{GraphGenerator, GraphPattern},
     graph::{BaseScopeGraph, CachedScopeGraph, QueryResult, ScopeGraph},
     order::{LabelOrder, LabelOrderBuilder},
@@ -11,7 +10,8 @@ use scope_graph::{
     scope::Scope,
 };
 use scopegraphs::{
-    completeness::{ImplicitClose, UncheckedCompleteness}, label_order, query_regex, render::RenderSettings, resolve::Resolve, Storage
+    Storage, completeness::UncheckedCompleteness, label_order, query_regex, render::RenderSettings,
+    resolve::Resolve,
 };
 
 fn query_libgraph(graph: &mut LibGraph, num_queries: usize) {
@@ -39,7 +39,7 @@ fn query_graph<Sg>(
 where
     Sg: ScopeGraph<SgLabel, SgData>,
 {
-    let mut thread_rng = rand::rng();
+    let thread_rng = rand::rng();
     let order = LabelOrderBuilder::new()
         .push(SgLabel::Declaration, SgLabel::Parent)
         .build();
@@ -49,19 +49,13 @@ where
     let reg = RegexAutomaton::from_regex(label_reg.clone());
     let mut envs = Vec::new();
     for _ in 0..num_queries {
-        // let start_scope = Scope(START_SCOPE);
-        let start_scope = Scope(thread_rng.random_range(200..300));
+        let start_scope = Scope(START_SCOPE);
+        // let start_scope = Scope(thread_rng.random_range(200..300));
 
         let m: Arc<str> = Arc::from("x");
         // let m = matches[thread_rng.random_range(0..matches.len())].clone();
 
-        envs = graph.query_proj(
-            start_scope,
-           & reg,
-            &order,
-            |d| Arc::from(d.name()),
-            m,
-        );
+        envs = graph.query_proj(start_scope, &reg, &order, SgProjection::VarName, m);
     }
     graph.reset_cache(); // make next benchmark run from scratch
     envs
@@ -90,25 +84,26 @@ fn get_pattern() -> Vec<GraphPattern> {
     ]
 }
 
-
-fn lib_graph_builder(graph: LibGraph) -> LibGraph
-{
-    GraphGenerator::new(graph).with_patterns(get_pattern()).build_sg()
+fn lib_graph_builder(graph: LibGraph) -> LibGraph {
+    GraphGenerator::new(graph)
+        .with_patterns(get_pattern())
+        .build_sg()
 }
-
 
 fn graph_builder<Sg>(graph: Sg) -> Sg
 where
     Sg: ScopeGraph<SgLabel, SgData>,
 {
-    GraphGenerator::new(graph).with_patterns(get_pattern()).build()
+    GraphGenerator::new(graph)
+        .with_patterns(get_pattern())
+        .build()
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let storage = Storage::new();
     unsafe {
         let mut lib_graph: LibGraph = LibGraph::new(&storage, UncheckedCompleteness::new());
-    
+
         lib_graph = lib_graph_builder(lib_graph);
         lib_graph
             .render_to("output/bench/libgraph.mmd", RenderSettings::default())
@@ -147,9 +142,9 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             group.bench_function(&s2, |b| {
                 b.iter(|| query_graph(&mut bu_graph, num_bench, &order, &matcher))
             });
-            group.bench_function(&s3, |b| {
-                b.iter(|| query_libgraph(&mut lib_graph, num_bench))
-            });
+            // group.bench_function(&s3, |b| {
+            //     b.iter(|| query_libgraph(&mut lib_graph, num_bench))
+            // });
         }
     }
 }
@@ -159,7 +154,6 @@ criterion_main!(benches);
 
 #[cfg(test)]
 mod tests {
-    use crate::{graph_builder, query_libgraph};
 
     #[test]
     fn test_query() {
@@ -182,7 +176,9 @@ mod tests {
         let storage = Storage::new();
         let mut lib_graph: LibGraph = LibGraph::new(&storage, ImplicitClose::default());
         lib_graph = lib_graph_builder(lib_graph);
-        lib_graph.render_to("output/bench/libgraph.mmd", RenderSettings::default()).unwrap();
+        lib_graph
+            .render_to("output/bench/libgraph.mmd", RenderSettings::default())
+            .unwrap();
         query_libgraph(lib_graph, 2);
     }
 

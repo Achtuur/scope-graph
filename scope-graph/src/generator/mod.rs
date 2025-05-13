@@ -1,6 +1,4 @@
-use scopegraphs::completeness::ImplicitClose;
-
-use crate::{graph::ScopeGraph, scope::{self, Scope}, LibGraph, LibScope, SgData, SgLabel};
+use crate::{LibGraph, LibScope, SgData, SgLabel, graph::ScopeGraph, scope::Scope};
 
 pub enum GraphPattern {
     /// Diamond pattern alongside with of the path
@@ -54,15 +52,13 @@ impl GraphPattern {
                 }
                 new_child_scopes
             }
-            Self::Diamond(diamond_size) => {
-                child_scopes
+            Self::Diamond(diamond_size) => child_scopes
                 .into_iter()
                 .flat_map(|child| {
                     let new_child_scopes = Self::Tree(*diamond_size).add(graph, vec![child]);
                     Self::Join.add(graph, new_child_scopes)
                 })
-                .collect::<Vec<_>>()
-            }
+                .collect::<Vec<_>>(),
             Self::Decl(data) => {
                 for child in &child_scopes {
                     let _ = graph.add_decl(*child, SgLabel::Declaration, data.clone());
@@ -95,9 +91,9 @@ impl GraphPattern {
                     // let mut new_children = Vec::new();
                     let chunk_size = child_scopes.len() / levels;
                     child_scopes = child_scopes
-                    .chunks(chunk_size.max(2)) // if chunk is 1 then nothing is reduced
-                    .flat_map(|chunk| Self::Join.add(graph, chunk.to_vec()))
-                    .collect();
+                        .chunks(chunk_size.max(2)) // if chunk is 1 then nothing is reduced
+                        .flat_map(|chunk| Self::Join.add(graph, chunk.to_vec()))
+                        .collect();
                 }
                 child_scopes
             }
@@ -124,8 +120,7 @@ impl GraphPattern {
     }
 
     /// Add a pattern to a scopegraphs::ScopeGraph
-    pub fn add_sg(&self, graph: &mut LibGraph, child_scopes: Vec<LibScope>) -> Vec<LibScope>
-    {
+    pub fn add_sg(&self, graph: &mut LibGraph, child_scopes: Vec<LibScope>) -> Vec<LibScope> {
         match self {
             Self::Linear(length) => {
                 Self::LinearLabel(*length, SgLabel::Parent).add_sg(graph, child_scopes)
@@ -143,18 +138,16 @@ impl GraphPattern {
                 }
                 new_child_scopes
             }
-            Self::Diamond(diamond_size) => {
-                child_scopes
+            Self::Diamond(diamond_size) => child_scopes
                 .into_iter()
                 .flat_map(|child| {
                     let new_child_scopes = Self::Tree(*diamond_size).add_sg(graph, vec![child]);
                     Self::Join.add_sg(graph, new_child_scopes)
                 })
-                .collect::<Vec<_>>()
-            }
+                .collect::<Vec<_>>(),
             Self::Decl(data) => {
                 for child in &child_scopes {
-                    let _ = graph.add_decl(*child, SgLabel::Declaration, data.clone());
+                    graph.add_decl(*child, SgLabel::Declaration, data.clone());
                 }
                 child_scopes
             }
@@ -184,9 +177,9 @@ impl GraphPattern {
                     // let mut new_children = Vec::new();
                     let chunk_size = child_scopes.len() / levels;
                     child_scopes = child_scopes
-                    .chunks(chunk_size.max(2)) // if chunk is 1 then nothing is reduced
-                    .flat_map(|chunk| Self::Join.add_sg(graph, chunk.to_vec()))
-                    .collect();
+                        .chunks(chunk_size.max(2)) // if chunk is 1 then nothing is reduced
+                        .flat_map(|chunk| Self::Join.add_sg(graph, chunk.to_vec()))
+                        .collect();
                 }
                 child_scopes
             }
@@ -208,14 +201,12 @@ impl GraphPattern {
     }
 }
 
-pub struct GraphGenerator<G>
-{
+pub struct GraphGenerator<G> {
     patterns: Vec<GraphPattern>,
     graph: G,
 }
 
-impl<G> GraphGenerator<G>
-{
+impl<G> GraphGenerator<G> {
     pub fn new(graph: G) -> Self {
         Self {
             patterns: Vec::new(),
@@ -238,7 +229,6 @@ impl<G> GraphGenerator<G>
     }
 }
 
-
 impl<G> GraphGenerator<G>
 where
     G: ScopeGraph<SgLabel, SgData>,
@@ -253,8 +243,7 @@ where
     }
 }
 
-impl<'storage> GraphGenerator<LibGraph<'storage>>
-{
+impl<'storage> GraphGenerator<LibGraph<'storage>> {
     pub fn build_sg(mut self) -> LibGraph<'storage> {
         let root = self.graph.add_scope_default();
         let mut child_scopes = vec![root];

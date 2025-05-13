@@ -1,7 +1,9 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashSet,
     hash::{DefaultHasher, Hash, Hasher},
 };
+
+use smallvec::SmallVec;
 
 use crate::{
     ENABLE_CACHING,
@@ -10,11 +12,12 @@ use crate::{
     label::{LabelOrEnd, ScopeGraphLabel},
     order::LabelOrder,
     path::{Path, ReversePath},
+    projection::ScopeGraphDataProjection,
     regex::{RegexState, dfs::RegexAutomaton},
     scope::Scope,
 };
 
-use super::{ProjHash, QueryCache, QueryResult, ScopeData};
+use super::{ProjEnvs, QueryCache, QueryResult, ScopeData};
 
 fn hash<T: Hash>(t: &T) -> u64 {
     let mut hasher = DefaultHasher::new();
@@ -22,15 +25,14 @@ fn hash<T: Hash>(t: &T) -> u64 {
     hasher.finish()
 }
 
-type ProjEnvs<Lbl, Data> = HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
+// type ProjEnvs<Lbl, Data> = HashMap<ProjHash, SmallVec<[QueryResult<Lbl, Data>; 16]>>;
 
 // todo: reuse code from Resolver
-pub struct CachedResolver<'r, Lbl, Data, P, DProj>
+pub struct CachedResolver<'r, Lbl, Data, Proj>
 where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
-    P: std::hash::Hash + Eq,
-    DProj: for<'da> Fn(&'da Data) -> P,
+    Proj: ScopeGraphDataProjection<Data>,
 {
     // scopegraph contains cache
     scope_graph: &'r BaseScopeGraph<Lbl, Data>,
@@ -40,28 +42,27 @@ where
     path_re: &'r RegexAutomaton<Lbl>,
     lbl_order: &'r LabelOrder<Lbl>,
     /// Data projection function
-    data_proj: DProj,
+    data_proj: Proj,
     /// DProj output that results in well-formed data
     ///
     /// `DWfd := |data: &Data| data_proj(data) == proj_wfd`
-    proj_wfd: P,
+    proj_wfd: Proj::Output,
 }
 
-impl<'r, Lbl, Data, P, DProj> CachedResolver<'r, Lbl, Data, P, DProj>
+impl<'r, Lbl, Data, Proj> CachedResolver<'r, Lbl, Data, Proj>
 where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
-    P: std::hash::Hash + Eq,
-    DProj: for<'da> Fn(&'da Data) -> P,
+    Proj: ScopeGraphDataProjection<Data>,
 {
     pub fn new(
         scope_graph: &'r BaseScopeGraph<Lbl, Data>,
         cache: &'r mut QueryCache<Lbl, Data>,
         path_re: &'r RegexAutomaton<Lbl>,
         lbl_order: &'r LabelOrder<Lbl>,
-        data_proj: DProj,
-        proj_wfd: P,
-    ) -> CachedResolver<'r, Lbl, Data, P, DProj> {
+        data_proj: Proj,
+        proj_wfd: Proj::Output,
+    ) -> CachedResolver<'r, Lbl, Data, Proj> {
         Self {
             scope_graph,
             cache,
@@ -73,13 +74,8 @@ where
     }
 
     /// Helper function to avoid the ugly field accessor syntax
-    fn data_wfd(&self, data: &Data) -> bool {
-        (self.data_proj)(data) == self.proj_wfd
-    }
-
-    /// Helper function to avoid the ugly field accessor syntax
-    fn data_proj(&self, data: &Data) -> P {
-        (self.data_proj)(data)
+    fn data_proj(&self, data: &Data) -> Proj::Output {
+        self.data_proj.project(data)
     }
 
     pub fn resolve(&mut self, path: Path<Lbl>) -> Vec<QueryResult<Lbl, Data>> {
@@ -92,7 +88,7 @@ where
         let reg = RegexState::new(self.path_re);
         let mut all_envs = self.resolve_all(path.clone(), reg);
         let h = hash(&self.proj_wfd);
-        all_envs.remove(&h).unwrap_or_default()
+        all_envs.remove(&h).unwrap_or_default().to_vec()
     }
 
     /// recursive call site for resolving
@@ -105,11 +101,7 @@ where
         self.get_env(path, reg)
     }
 
-    fn get_env(
-        &mut self,
-        path: Path<Lbl>,
-        reg: RegexState<'r, Lbl>,
-    ) -> ProjEnvs<Lbl, Data> {
+    fn get_env(&mut self, path: Path<Lbl>, reg: RegexState<'r, Lbl>) -> ProjEnvs<Lbl, Data> {
         // all edges where brzozowski derivative != 0
         let scope = self.get_scope(path.target()).expect("Scope not found");
 
@@ -121,19 +113,19 @@ where
         }
 
         let mut labels = scope
-        .outgoing()
-        .iter()
-        .map(|e| e.lbl())
-        // get unique labels by using hashset
-        .fold(HashSet::new(), |mut set, lbl| {
-            let mut this_reg = reg.clone();
-            if this_reg.step(lbl).is_some() {
-                set.insert(LabelOrEnd::Label((lbl.clone(), this_reg)));
-            }
-            set
-        })
-        .into_iter()
-        .collect::<Vec<_>>();
+            .outgoing()
+            .iter()
+            .map(|e| e.lbl())
+            // get unique labels by using hashset
+            .fold(HashSet::new(), |mut set, lbl| {
+                let mut this_reg = reg.clone();
+                if this_reg.step(lbl).is_some() {
+                    set.insert(LabelOrEnd::Label((lbl.clone(), this_reg)));
+                }
+                set
+            })
+            .into_iter()
+            .collect::<Vec<_>>();
 
         if reg.is_accepting() {
             labels.push(LabelOrEnd::End);
@@ -161,7 +153,7 @@ where
                     .iter()
                     .filter(|l| self.lbl_order.is_less(l, max_lbl))
                     .cloned()
-                    .collect::<Vec<_>>();
+                    .collect::<SmallVec<[_; 8]>>();
 
                 self.get_shadowed_env(max_lbl, &lower_labels, path.clone())
             })
@@ -187,30 +179,30 @@ where
         let scope = self.get_scope(path.target()).unwrap().clone();
         match label {
             // reached end of a path
-            LabelOrEnd::End => {
-                ProjEnvs::from([(
-                    hash(&self.data_proj(&scope.data)),
-                    vec![QueryResult {
-                        path: ReversePath::start(path.target()),
-                        data: scope.data.clone(),
-                    }]
-                )])
-            }
+            LabelOrEnd::End => ProjEnvs::from([(
+                hash(&self.data_proj(&scope.data)),
+                vec![QueryResult {
+                    path: ReversePath::start(path.target()),
+                    data: scope.data.clone(),
+                }],
+            )]),
             // not yet at end
             LabelOrEnd::Label((label, partial_reg)) => {
                 scope
                     .outgoing()
                     .iter()
                     .filter(|e| e.lbl() == label)
-                    .map(|e| path.step(e.lbl().clone(), e.target())) // create new paths
-                    .filter(|p| !p.is_circular()) // create new paths
+                    .map(|e| path.step(e.lbl().clone(), e.target(), partial_reg.index())) // create new paths
+                    .filter(|p| !p.is_circular(partial_reg.index())) // create new paths
                     .flat_map(|p| self.resolve_all(p, partial_reg.clone())) // resolve new paths
                     .map(|(p, mut envs)| {
                         // path is a path from the starting scope to the current one.
                         // in the cache, we want to store the path from the _data_ to the current scope.
                         // hence, every step we add the traversed label to the query result.
                         envs.iter_mut().for_each(|qr| {
-                            qr.path = qr.path.step(label.clone(), path.target());
+                            qr.path =
+                                qr.path
+                                    .step(label.clone(), path.target(), partial_reg.index());
                         });
                         (p, envs)
                     })
@@ -260,11 +252,7 @@ where
         }
     }
 
-    fn get_cached_env(
-        &self,
-        path: &Path<Lbl>,
-        reg: &RegexState<'r, Lbl>,
-    ) -> ProjEnvs<Lbl, Data> {
+    fn get_cached_env(&self, path: &Path<Lbl>, reg: &RegexState<'r, Lbl>) -> ProjEnvs<Lbl, Data> {
         if !ENABLE_CACHING {
             return ProjEnvs::default();
         }

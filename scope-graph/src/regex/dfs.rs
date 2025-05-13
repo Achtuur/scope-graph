@@ -1,6 +1,13 @@
 use std::hash::Hash;
 
-use graphing::{mermaid::{item::{ItemShape, MermaidItem}, theme::EdgeType, MermaidDiagram}, plantuml::{EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem}};
+use graphing::{
+    mermaid::{
+        MermaidDiagram,
+        item::{ItemShape, MermaidItem},
+        theme::EdgeType,
+    },
+    plantuml::{EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem},
+};
 
 use crate::label::ScopeGraphLabel;
 
@@ -171,7 +178,11 @@ where
         let mut diagram = MermaidDiagram::new("Regex Automata");
 
         let nodes = self.node_vec.iter().enumerate().map(|(idx, node)| {
-            MermaidItem::node(Self::node_key(idx), node.value.to_string(), ItemShape::Rounded)
+            MermaidItem::node(
+                Self::node_key(idx),
+                node.value.to_string(),
+                ItemShape::Rounded,
+            )
         });
 
         let edges = self.node_vec.iter().enumerate().flat_map(|(idx, node)| {
@@ -235,23 +246,20 @@ mod tests {
         // let regex = Regex::or(Regex::concat('a', 'c'), Regex::concat('b', 'c'));
 
         // let regex: Regex<char> = Regex::neg(Regex::ZeroSet);
-        let regex: Regex<char> = Regex::kleene(
-            Regex::or('p', 'q')
-        );
+        let regex: Regex<char> = Regex::kleene(Regex::or('p', 'q'));
 
         let regex: Regex<char> = Regex::concat(
             Regex::question('a'),
-            Regex::concat('b', Regex::question('c'))
+            Regex::concat('b', Regex::question('c')),
         );
-
 
         let timer = std::time::Instant::now();
         let automata = RegexAutomaton::from_regex(regex);
         println!("{:?}", timer.elapsed());
         automata
-        .to_uml()
-        .write_to_file("output/regex/automata.puml")
-        .unwrap();
+            .to_uml()
+            .write_to_file("output/regex/automata.puml")
+            .unwrap();
     }
 
     #[test]
@@ -259,9 +267,9 @@ mod tests {
         let regex = Regex::kleene('a');
         let automata = RegexAutomaton::from_regex(regex);
         automata
-        .to_mmd()
-        .write_to_file("output/regex/automata.md")
-        .unwrap();
+            .to_mmd()
+            .write_to_file("output/regex/automata.md")
+            .unwrap();
         let haystack = vec!['a'; 10];
         assert!(automata.is_match(&haystack));
         let haystack = vec!['b'];
@@ -273,9 +281,9 @@ mod tests {
         let regex = Regex::concat(Regex::kleene('P'), Regex::concat('P', 'D'));
         let automata = RegexAutomaton::from_regex(regex);
         automata
-        .to_mmd()
-        .write_to_file("output/regex/automata.md")
-        .unwrap();
+            .to_mmd()
+            .write_to_file("output/regex/automata.md")
+            .unwrap();
         let haystack = vec!['P', 'P', 'D'];
         assert!(automata.is_match(&haystack));
     }

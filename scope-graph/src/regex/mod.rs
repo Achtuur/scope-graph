@@ -166,9 +166,7 @@ where
                 v.append(&mut s.unique_labels());
                 v
             }
-            Self::KleeneStar(r)
-            | Self::QuestionMark(r)
-            | Self::Neg(r) => r.unique_labels(),
+            Self::KleeneStar(r) | Self::QuestionMark(r) | Self::Neg(r) => r.unique_labels(),
         };
         v.dedup();
         v
@@ -212,9 +210,7 @@ where
                 v.append(&mut s.leading_labels());
                 v
             }
-            Self::KleeneStar(r)
-            | Self::QuestionMark(r)
-            | Self::Neg(r) => r.leading_labels(),
+            Self::KleeneStar(r) | Self::QuestionMark(r) | Self::Neg(r) => r.leading_labels(),
         };
         v.dedup();
         v

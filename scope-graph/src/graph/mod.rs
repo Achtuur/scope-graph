@@ -1,4 +1,4 @@
-use std::{collections::HashMap, hash::Hash};
+use std::collections::HashMap;
 
 use graphing::{
     Color,
@@ -16,7 +16,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor, data::ScopeGraphData,
-    label::ScopeGraphLabel, order::LabelOrder, regex::dfs::RegexAutomaton, scope::Scope,
+    label::ScopeGraphLabel, order::LabelOrder, projection::ScopeGraphDataProjection,
+    regex::dfs::RegexAutomaton, scope::Scope,
 };
 
 mod base;
@@ -101,7 +102,6 @@ where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
 {
-
     fn reset_cache(&mut self);
 
     /// Add a scope to the graph with the given data.
@@ -143,17 +143,16 @@ where
         DWfd: for<'da> Fn(&'da Data) -> bool;
 
     /// Query using a projection function and a wellformedness value for the projected data
-    fn query_proj<P, DProj>(
+    fn query_proj<Proj>(
         &mut self,
         scope: Scope,
         path_regex: &RegexAutomaton<Lbl>,
         order: &LabelOrder<Lbl>,
-        data_proj: DProj,
-        proj_wfd: P,
+        data_proj: Proj,
+        proj_wfd: Proj::Output,
     ) -> Vec<QueryResult<Lbl, Data>>
     where
-        P: Hash + Eq,
-        DProj: for<'da> Fn(&'da Data) -> P;
+        Proj: ScopeGraphDataProjection<Data>;
 
     fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>>;
 
