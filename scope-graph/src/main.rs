@@ -60,8 +60,8 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
         let title = format!(
-            "Query1: {}, label_reg={}, label_order={}, data_eq=x",
-            0, label_reg, order
+            "Query1: {}, label_reg={}, label_order={}, proj={}",
+            0, label_reg, order, SgProjection::VarName
         );
 
         let p = set.0;

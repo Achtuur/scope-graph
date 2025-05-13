@@ -43,7 +43,7 @@ type QueryCache<Lbl, Data> = HashMap<QueryCacheKey, ProjEnvs<Lbl, Data>>;
 
 /// Key for `ScopeGraphCache`
 /// todo: add DP to key
-type ParameterKey<Lbl> = (LabelOrder<Lbl>, RegexAutomaton<Lbl>);
+type ParameterKey<Lbl> = (LabelOrder<Lbl>, RegexAutomaton<Lbl>, ProjHash);
 /// Cache for the entire scope graph.
 ///
 /// This contains a cache per set of query parameters
@@ -124,10 +124,11 @@ where
     where
         Proj: ScopeGraphDataProjection<Data>,
     {
-        // todo: fix key to not have to clone
+
+        let proj_hash = resolve::hash(&data_proj);
         let cache_entry = self
             .resolve_cache
-            .entry((order.clone(), path_regex.clone()))
+            .entry((order.clone(), path_regex.clone(), proj_hash))
             .or_default();
         let mut resolver = CachedResolver::new(
             &self.sg,

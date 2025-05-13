@@ -316,3 +316,13 @@ impl ScopeGraphDataProjection<SgData> for SgProjection {
         }
     }
 }
+
+impl std::fmt::Display for SgProjection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::None => write!(f, "none"),
+            Self::VarName => write!(f, "var name"),
+            Self::VarNameType => write!(f, "var name and type"),
+        }
+    }
+}
