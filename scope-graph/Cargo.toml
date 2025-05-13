@@ -10,10 +10,10 @@ tracing = {workspace = true, features = ["release_max_level_error"]}
 tracing-subscriber = {workspace = true}
 serde_json = {workspace = true}
 serde = {workspace = true}
+scopegraphs = "0.3.3"
 
 [dev-dependencies]
 criterion = "0.5.1"
-scopegraphs = "0.3.3"
 
 [[bench]]
 name = "sg-query"

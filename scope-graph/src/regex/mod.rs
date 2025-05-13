@@ -2,7 +2,7 @@ pub mod dfs;
 mod partial;
 
 use dfs::RegexAutomaton;
-pub use partial::PartialRegex;
+pub use partial::RegexState;
 use serde::{Deserialize, Serialize};
 
 use crate::label::ScopeGraphLabel;
@@ -67,14 +67,17 @@ impl<Lbl> Regex<Lbl>
 where
     Lbl: ScopeGraphLabel,
 {
+    /// `r | s`
     pub fn or(r: impl Into<Self>, s: impl Into<Self>) -> Self {
         Self::Or(Box::new(r.into()), Box::new(s.into()))
     }
 
+    /// `r & s`
     pub fn and(r: impl Into<Self>, s: impl Into<Self>) -> Self {
         Self::And(Box::new(r.into()), Box::new(s.into()))
     }
 
+    /// `r . s`
     pub fn concat(r: impl Into<Self>, s: impl Into<Self>) -> Self {
         Self::Concat(Box::new(r.into()), Box::new(s.into()))
     }
@@ -89,6 +92,12 @@ where
 
     pub fn neg(r: impl Into<Self>) -> Self {
         Self::Neg(Box::new(r.into()))
+    }
+
+    /// `r+` is equivalent to `rr*`
+    pub fn plus(r: impl Into<Self>) -> Self {
+        let r = r.into();
+        Self::concat(r.clone(), Self::kleene(r))
     }
 
     pub fn is_nullable(&self) -> bool {

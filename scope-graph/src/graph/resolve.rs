@@ -6,7 +6,7 @@ use crate::{
     label::{LabelOrEnd, ScopeGraphLabel},
     order::LabelOrder,
     path::{Path, ReversePath},
-    regex::{PartialRegex, dfs::RegexAutomaton},
+    regex::{RegexState, dfs::RegexAutomaton},
     scope::Scope,
 };
 
@@ -83,7 +83,7 @@ where
 
     pub fn resolve(&mut self, path: Path<Lbl>) -> Vec<QueryResult<Lbl, Data>> {
         tracing::info!("Resolving path: {}", path);
-        let reg = PartialRegex::new(self.path_re);
+        let reg = RegexState::new(self.path_re);
         self.resolve_all(path, reg)
     }
 
@@ -91,7 +91,7 @@ where
     fn resolve_all<'a: 'r>(
         &mut self,
         path: Path<Lbl>,
-        reg: PartialRegex<'a, Lbl>,
+        reg: RegexState<'a, Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
         self.get_env(path, reg)
     }
@@ -103,9 +103,8 @@ where
     fn get_env(
         &mut self,
         path: Path<Lbl>,
-        reg: PartialRegex<'r, Lbl>,
+        reg: RegexState<'r, Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
-        // all edges where brzozowski derivative != 0
         let scope = self.get_scope(path.target()).expect("Scope not found");
 
         let mut labels = scope
@@ -135,11 +134,12 @@ where
         labels: &'a [LabelOrEnd<'r, Lbl>],
         path: Path<Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
+        tracing::debug!("Resolving labels: {:?} for {:?}", labels, path.target());
         labels
             .iter()
-            .filter(|l1| !labels.iter().any(|l2| self.lbl_order.is_less(l1, l2)))
             // 'max' labels ie all labels with lowest priority
             // max refers to the numerical worth, ie a < b, b would be max
+            .filter(|l1| !labels.iter().any(|l2| self.lbl_order.is_less(l1, l2)))
             .flat_map(|max_lbl| {
                 // all labels that are lower priority than `lbl`
                 let lower_labels = labels
@@ -185,7 +185,8 @@ where
                     .outgoing()
                     .iter()
                     .filter(|e| e.lbl() == label)
-                    .map(|e| path.clone().step(e.lbl().clone(), e.target())) // create new paths
+                    .map(|e| path.clone().step(e.lbl().clone(), e.target()))
+                    .filter(|p| !p.is_circular())
                     .flat_map(|p| self.resolve_all(p, partial_reg.clone())) // resolve new paths
                     .collect::<Vec<_>>()
             }

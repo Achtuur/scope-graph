@@ -31,7 +31,7 @@ type ProjEnvs<Lbl, Data> = HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
 
 /// Key for the cache.
 ///
-/// This is a tuple of index in regex automata, the result from projecting the data and the target scope.
+/// This is a tuple of index in regex automaton, the result from projecting the data and the target scope.
 ///
 /// You can alternatively think of this as a (usize, DataProj) cache per scope.
 type QueryCacheKey = (usize, Scope);
@@ -40,6 +40,7 @@ type QueryCacheKey = (usize, Scope);
 type QueryCache<Lbl, Data> = HashMap<QueryCacheKey, ProjEnvs<Lbl, Data>>;
 
 /// Key for `ScopeGraphCache`
+/// todo: add DP to key
 type ParameterKey<Lbl> = (LabelOrder<Lbl>, RegexAutomaton<Lbl>);
 /// Cache for the entire scope graph.
 ///

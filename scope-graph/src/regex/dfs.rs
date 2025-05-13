@@ -164,13 +164,7 @@ where
 {
     // uses display impl and removes spaces
     fn node_key(node_idx: usize) -> String {
-        // let node_str = node.to_string();
-        // node_str.replace(" ", "");
-        // let mut s = std::hash::DefaultHasher::new();
-        // node_idx.hash(&mut s);
-        // s.finish()
         format!("n{}", node_idx)
-        // node_idx as u64
     }
 
     pub fn to_mmd(&self) -> MermaidDiagram {

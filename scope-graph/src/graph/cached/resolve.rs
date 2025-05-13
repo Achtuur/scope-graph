@@ -10,7 +10,7 @@ use crate::{
     label::{LabelOrEnd, ScopeGraphLabel},
     order::LabelOrder,
     path::{Path, ReversePath},
-    regex::{PartialRegex, dfs::RegexAutomaton},
+    regex::{RegexState, dfs::RegexAutomaton},
     scope::Scope,
 };
 
@@ -49,7 +49,7 @@ where
 
 impl<'r, Lbl, Data, P, DProj> CachedResolver<'r, Lbl, Data, P, DProj>
 where
-    Lbl: ScopeGraphLabel + Clone + std::fmt::Debug + std::fmt::Display + Eq + std::hash::Hash + Ord,
+    Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
     P: std::hash::Hash + Eq,
     DProj: for<'da> Fn(&'da Data) -> P,
@@ -89,7 +89,7 @@ where
             self.path_re,
             self.lbl_order
         );
-        let reg = PartialRegex::new(self.path_re);
+        let reg = RegexState::new(self.path_re);
         let mut all_envs = self.resolve_all(path.clone(), reg);
         let h = hash(&self.proj_wfd);
         all_envs.remove(&h).unwrap_or_default()
@@ -99,7 +99,7 @@ where
     fn resolve_all<'a: 'r>(
         &mut self,
         path: Path<Lbl>,
-        reg: PartialRegex<'a, Lbl>,
+        reg: RegexState<'a, Lbl>,
     ) -> ProjEnvs<Lbl, Data> {
         tracing::trace!("Resolving path: {}", path);
         self.get_env(path, reg)
@@ -108,7 +108,7 @@ where
     fn get_env(
         &mut self,
         path: Path<Lbl>,
-        reg: PartialRegex<'r, Lbl>,
+        reg: RegexState<'r, Lbl>,
     ) -> ProjEnvs<Lbl, Data> {
         // all edges where brzozowski derivative != 0
         let scope = self.get_scope(path.target()).expect("Scope not found");
@@ -149,6 +149,7 @@ where
         labels: &'a [LabelOrEnd<'r, Lbl>],
         path: Path<Lbl>,
     ) -> ProjEnvs<Lbl, Data> {
+        tracing::trace!("Resolving labels: {:?} for {:?}", labels, path.target());
         labels
             .iter()
             .filter(|l1| !labels.iter().any(|l2| self.lbl_order.is_less(l1, l2)))
@@ -202,6 +203,7 @@ where
                     .iter()
                     .filter(|e| e.lbl() == label)
                     .map(|e| path.step(e.lbl().clone(), e.target())) // create new paths
+                    .filter(|p| !p.is_circular()) // create new paths
                     .flat_map(|p| self.resolve_all(p, partial_reg.clone())) // resolve new paths
                     .map(|(p, mut envs)| {
                         // path is a path from the starting scope to the current one.
@@ -240,7 +242,7 @@ where
     fn cache_env(
         &mut self,
         path: &Path<Lbl>,
-        reg: PartialRegex<'_, Lbl>,
+        reg: RegexState<'_, Lbl>,
         env_map: &ProjEnvs<Lbl, Data>,
     ) {
         if !ENABLE_CACHING {
@@ -261,7 +263,7 @@ where
     fn get_cached_env(
         &self,
         path: &Path<Lbl>,
-        reg: &PartialRegex<'r, Lbl>,
+        reg: &RegexState<'r, Lbl>,
     ) -> ProjEnvs<Lbl, Data> {
         if !ENABLE_CACHING {
             return ProjEnvs::default();

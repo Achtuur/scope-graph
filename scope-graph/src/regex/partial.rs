@@ -3,7 +3,7 @@ use crate::{label::ScopeGraphLabel, path::Path};
 use super::dfs::RegexAutomaton;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct PartialRegex<'a, Lbl>
+pub struct RegexState<'a, Lbl>
 where
     Lbl: ScopeGraphLabel,
 {
@@ -11,7 +11,7 @@ where
     idx: usize,
 }
 
-impl<'a, Lbl> PartialRegex<'a, Lbl>
+impl<'a, Lbl> RegexState<'a, Lbl>
 where
     Lbl: ScopeGraphLabel,
 {

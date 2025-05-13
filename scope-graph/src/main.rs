@@ -44,15 +44,15 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
         .build();
 
     // P*D;
-    let label_reg = Regex::concat(Regex::kleene(SgLabel::Parent), SgLabel::Declaration);
+    let label_reg = Regex::concat(Regex::plus(SgLabel::Parent), SgLabel::Declaration);
     let matcher = RegexAutomaton::from_regex(label_reg.clone());
     matcher
         .to_uml()
         .write_to_file("output/regex.puml")
         .unwrap();
 
-    let x_match: Arc<str> = Arc::from("x2");
-    let query_scope_set = [(x_match.clone(), vec![26])];
+    let x_match: Arc<str> = Arc::from("x");
+    let query_scope_set = [(x_match.clone(), vec![0])];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
         let title = format!(
@@ -104,13 +104,22 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
 
 fn main() {
     tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::WARN)
+        .with_max_level(tracing::Level::DEBUG)
         .init();
 
     // slides_example();
 
     // let mut graph = create_long_graph();
-    let mut graph = graph_builder();
+    // let mut graph = graph_builder();
+    let mut graph = CachedScopeGraph::new();
+    let scope1 = graph.add_scope_default();
+    let scope2 = graph.add_scope_default();
+    let scope3 = graph.add_scope_default();
+    graph.add_decl(scope1, SgLabel::Declaration, SgData::var("x", "int"));
+    graph.add_decl(scope2, SgLabel::Declaration, SgData::var("y", "int"));
+    graph.add_edge(scope1, scope2, SgLabel::Parent);
+    graph.add_edge(scope2, scope1, SgLabel::Parent);
+    graph.add_edge(scope3, scope1, SgLabel::Parent);
     query_test(&mut graph);
 
     if SAVE_GRAPH {

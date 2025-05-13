@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use serde::Serialize;
 
-use crate::regex::PartialRegex;
+use crate::regex::RegexState;
 
 pub trait ScopeGraphLabel:
     PartialEq + Clone + std::fmt::Debug + std::fmt::Display + Eq + Ord + Hash + Serialize
@@ -26,6 +26,7 @@ pub enum LabelOrEnd<'a, Lbl>
 where
     Lbl: ScopeGraphLabel,
 {
-    Label((Lbl, PartialRegex<'a, Lbl>)),
+    Label((Lbl, RegexState<'a, Lbl>)),
+    /// $
     End,
 }

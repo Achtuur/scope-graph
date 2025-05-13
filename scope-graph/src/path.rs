@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{collections::HashSet, rc::Rc};
 
 use graphing::{
     mermaid::{item::MermaidItem, theme::EdgeType},
@@ -51,6 +51,22 @@ where
         match self {
             Self::Start(s) => *s,
             Self::Step { from, .. } => from.start_scope(),
+        }
+    }
+
+    pub fn is_circular(&self) -> bool {
+        let mut current = self;
+        let mut visited = HashSet::new();
+        loop {
+            match current {
+                Self::Start(s) => return !visited.insert(s),
+                Self::Step { target, from, .. } => {
+                    if !visited.insert(target) {
+                        return true;
+                    }
+                    current = from;
+                }
+            }
         }
     }
 
@@ -281,5 +297,19 @@ mod tests {
         println!("{}", path);
         let rev = ReversePath::from(path);
         println!("{}", rev);
+    }
+
+    #[test]
+    fn test_is_circular() {
+        let path = Path::Start(Scope(1))
+            .step('c', Scope(2))
+            .step('d', Scope(3));
+        assert!(!path.is_circular());
+
+        let path = Path::Start(Scope(1))
+            .step('c', Scope(2))
+            .step('d', Scope(3))
+            .step('c', Scope(2));
+        assert!(path.is_circular());
     }
 }

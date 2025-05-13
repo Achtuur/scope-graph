@@ -96,11 +96,12 @@ where
 
 pub type ScopeMap<Lbl, Data> = HashMap<Scope, ScopeData<Lbl, Data>>;
 
-pub trait ScopeGraph<Lbl, Data>: std::fmt::Debug
+pub trait ScopeGraph<Lbl, Data>
 where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
 {
+
     fn reset_cache(&mut self);
 
     /// Add a scope to the graph with the given data.
