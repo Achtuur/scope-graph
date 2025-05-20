@@ -4,6 +4,8 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use sclang::SclangExpression;
+use scope_graph::graph::{CachedScopeGraph, ScopeGraph};
+use scope_graph::graphing::Renderer;
 use scopegraphs::render::{EdgeStyle, EdgeTo};
 use scopegraphs::{completeness::ImplicitClose, render::RenderSettings, Scope, Storage};
 use stlc::*;
@@ -57,22 +59,50 @@ macro_rules! path {
 }
 
 fn main() {
-    println!("Initialising scope graph");
-    let storage = Storage::new();
-    let sg = StlcGraph::new(&storage, ImplicitClose::default());
-    let s0 = sg.add_scope_default();
+    scopegraph_mine();
+}
 
+fn get_src() -> SclangExpression {
     let timer = std::time::Instant::now();
-
-    let path = path!(SRC_DIR, first_example.sclang);
+    let path = path!(SRC_DIR, overwrite.sclang);
     let expr = match SclangExpression::from_file(&path) {
         Ok(expr) => expr,
         Err(e) => panic!("Error parsing {:?}: {}", path.as_path(), e),
     };
     println!("Parsing {:?} took {:?}", path.as_path(), timer.elapsed());
+    expr
+}
+
+fn scopegraph_mine() {
+    let mut sg = CachedScopeGraph::<StlcLabel, StlcData>::new();
+    let s0 = sg.add_scope_default();
+    let expr = get_src();
 
     let timer = std::time::Instant::now();
-    SgExpression::new(&expr).expr_type(&sg, s0);
+    SgExpression::new(&expr).expr_type(&mut sg, s0);
+    println!("Creating scope graph took {:?}", timer.elapsed());
+
+    const DRAW_CACHE: bool = true;
+    sg
+    .as_mmd_diagram("first_example", DRAW_CACHE)
+    .render_to_file("output/first_example.md")
+    .unwrap();
+    sg
+    .as_uml_diagram("first_example", DRAW_CACHE)
+    .render_to_file("output/first_example.puml")
+    .unwrap();
+}
+
+#[allow(unused)]
+fn scopegraphs_lib() {
+    println!("Initialising scope graph");
+    let storage = Storage::new();
+    let sg = LibGraph::new(&storage, ImplicitClose::default());
+    let s0 = sg.add_scope_default();
+    let expr = get_src();
+
+    let timer = std::time::Instant::now();
+    SgExpression::new(&expr).expr_type_lib(&sg, s0);
     println!("Creating scope graph took {:?}", timer.elapsed());
 
     println!("Rendering scope graph...");

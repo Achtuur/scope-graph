@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 scopegraphs = {workspace = true}
+scope-graph = { path= "../scope-graph" }
 sclang = { path = "../sclang" }
