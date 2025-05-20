@@ -43,7 +43,7 @@ where
         match self {
             Self::EmptyString => write!(f, "ε"),
             Self::ZeroSet => write!(f, "∅"),
-            Self::Character(c) => write!(f, "{c}"),
+            Self::Character(c) => write!(f, "{}", c.char()),
             Self::Concat(r, s) => write!(f, "{r}{s}"), // r dot s
             Self::KleeneStar(r) => write!(f, "{r}*"),
             Self::Or(r, s) => write!(f, "({r}+{s})"),

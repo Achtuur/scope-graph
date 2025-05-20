@@ -9,7 +9,6 @@ pub trait ScopeGraphData:
     + Eq
     + Ord
     + std::hash::Hash
-    + Serialize
 {
     /// Returns true if the variant has data.
     ///

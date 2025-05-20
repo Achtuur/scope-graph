@@ -155,6 +155,7 @@ where
         self.resolve_cache
             .iter()
             .flat_map(|(query_params, query_cache)| {
+                let params_str = format!("({}, {}, {})", query_params.0, query_params.1, query_params.2 % 256);
                 query_cache
                     .iter()
                     .filter(|(key, _)| !self.scope_holds_data(key.1))
@@ -166,7 +167,7 @@ where
                         acc
                     })
                     .into_iter()
-                    .filter_map(|(key, envs)| {
+                    .filter_map(move |(key, envs)| {
                         if envs.is_empty() {
                             return None;
                         }
@@ -184,7 +185,7 @@ where
                             .collect::<Vec<String>>()
                             .join("\n");
 
-                        let cache_str = format!("<b>{:?}</b>\n{}", key, vals);
+                        let cache_str = format!("<i>{}</i>\n<b>{:?}</b>\n{}", params_str.clone(), key, vals);
                         let item = PlantUmlItem::note(key.uml_id(), cache_str)
                             .add_class("cache-entry")
                             .add_class(BackgroundColor::get_class_name(key.0));
@@ -198,6 +199,7 @@ where
         self.resolve_cache
             .iter()
             .flat_map(|(query_params, query_cache)| {
+                let params_str = format!("({}, {})", query_params.0, query_params.1);
                 query_cache
                     .iter()
                     .filter(|(key, _)| !self.scope_holds_data(key.1))
@@ -209,7 +211,7 @@ where
                         acc
                     })
                     .into_iter()
-                    .flat_map(|(key, envs)| {
+                    .flat_map(move |(key, envs)| {
                         if envs.is_empty() {
                             return Vec::new();
                         }
@@ -231,8 +233,7 @@ where
                             .join("<br>");
 
                         let id = format!("cache-{}", key.uml_id());
-
-                        let cache_str = format!("<b>{:?}</b><br>{}", key, vals);
+                        let cache_str = format!("{}<b>{:?}</b><br>{}", params_str, key, vals);
                         let note = MermaidItem::node(&id, cache_str, ItemShape::Card)
                             .add_class("cache-entry")
                             .add_class(BackgroundColor::get_class_name(key.0));

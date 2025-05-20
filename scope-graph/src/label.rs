@@ -5,7 +5,7 @@ use serde::Serialize;
 use crate::regex::RegexState;
 
 pub trait ScopeGraphLabel:
-    PartialEq + Clone + std::fmt::Debug + std::fmt::Display + Eq + Ord + Hash + Serialize
+    PartialEq + Clone + std::fmt::Debug + std::fmt::Display + Eq + Ord + Hash
 {
     fn char(&self) -> char;
     fn str(&self) -> &'static str;

@@ -14,6 +14,8 @@ use scopegraphs::{
 };
 use serde::{Deserialize, Serialize};
 
+pub use graphing;
+
 pub mod label;
 pub mod path;
 pub mod scope;

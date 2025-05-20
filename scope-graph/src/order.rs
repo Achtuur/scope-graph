@@ -69,8 +69,12 @@ where
                     less_thans.push(lbl2.clone());
                 }
             }
+            // order should be stable if the same order is built multiple times
+            // if not, then multiple cache entries are created
+            less_thans.sort();
             orders.push((lbl.clone(), less_thans));
         }
+        orders.sort();
         LabelOrder { orders }
     }
 
@@ -177,15 +181,23 @@ where
         let s = self
             .orders
             .iter()
-            .map(|(lbl, less_thans)| {
-                let less_than_str = less_thans.iter().fold(String::new(), |mut s, lt| {
-                    write!(&mut s, "{} {} {}, ", lbl, FULLWIDTH_LT, lt)
-                        .expect("Failed to write string");
-                    s
-                });
-                less_than_str.trim_end_matches(", ").to_string()
+            .flat_map(|(lbl, less_thans)| {
+                less_thans
+                .iter()
+                .map(|lt| {
+                    format!("{} {} {}", lbl.char(), FULLWIDTH_LT, lt.char())
+                })
+                // let less_than_str = less_thans
+                // .iter()
+                // .fold(String::new(), |mut s, lt| {
+                //     write!(&mut s, "{} {} {}, ", lbl.char(), FULLWIDTH_LT, lt.char())
+                //         .expect("Failed to write string");
+                //     s
+                // });
+                // less_than_str.trim_end_matches(", ").to_string()
             })
-            .collect::<String>();
+            .collect::<Vec<_>>()
+            .join(", ");
 
         write!(f, "{}", s.trim_end_matches(" "))
     }
