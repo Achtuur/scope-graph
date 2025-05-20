@@ -2,7 +2,7 @@ use std::{io::Write, sync::atomic::{AtomicUsize, Ordering}};
 
 use crate::RenderResult;
 
-use super::{MermaidStyleSheet, theme::EdgeType};
+use super::{sanitise_label, theme::EdgeType, MermaidStyleSheet};
 
 static EDGE_CTR: AtomicUsize = AtomicUsize::new(0);
 
@@ -91,7 +91,7 @@ impl MermaidItem {
             kind: MermaidItemKind::Edge(MermaidEdge {
                 from: from.to_string(),
                 to: to.to_string(),
-                label: label.to_string(),
+                label: sanitise_label(label),
                 line_type,
             }),
             classes: Vec::new(),
@@ -102,7 +102,7 @@ impl MermaidItem {
         Self {
             id: id.to_string(),
             kind: MermaidItemKind::Node(MermaidNode {
-                label: label.to_string(),
+                label: sanitise_label(label),
                 shape,
             }),
             classes: Vec::new(),

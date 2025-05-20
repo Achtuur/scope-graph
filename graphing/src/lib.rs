@@ -16,12 +16,6 @@ pub use renderer::*;
 
 pub(crate) trait CssProperty {
     fn write(&self, writer: &mut impl Write) -> RenderResult<()>;
-
-    fn to_string(&self) -> RenderResult<String> {
-        let mut buf = Vec::new();
-        self.write(&mut buf)?;
-        String::from_utf8(buf).map_err(Into::into)
-    }
 }
 
 impl<T> CssProperty for T
@@ -33,9 +27,3 @@ where
         Ok(())
     }
 }
-
-// impl CssProperty for Color {
-//     fn to_string(&self) -> String {
-//         self.hex_string()
-//     }
-// }

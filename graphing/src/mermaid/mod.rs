@@ -8,6 +8,10 @@ use crate::Renderer;
 pub mod item;
 pub mod theme;
 
+fn sanitise_label(label: impl ToString) -> String {
+    label.to_string().replace(r#"""#, r#"\""#)
+}
+
 #[derive(Default, Debug)]
 pub struct MermaidStyleSheet {
     map: HashMap<String, ElementStyle>,
@@ -104,7 +108,8 @@ impl Renderer for MermaidDiagram {
             title: \"{}\"\n\
             ---\n\
             flowchart {}",
-            self.title, self.direction
+            sanitise_label(&self.title),
+            self.direction
         )?;
 
         // write classes

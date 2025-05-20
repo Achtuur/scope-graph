@@ -2,6 +2,7 @@ use std::{sync::Arc, time::Duration};
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use graphing::Renderer;
+use rand::Rng;
 use scope_graph::{
     LibGraph, SgData, SgLabel, SgProjection,
     generator::{GraphGenerator, GraphPattern},
@@ -40,7 +41,7 @@ fn query_graph<Sg>(
 where
     Sg: ScopeGraph<SgLabel, SgData>,
 {
-    let thread_rng = rand::rng();
+    let mut thread_rng = rand::rng();
     let order = LabelOrderBuilder::new()
         .push(SgLabel::Declaration, SgLabel::Parent)
         .build();
@@ -50,8 +51,8 @@ where
     let reg = RegexAutomaton::from_regex(label_reg.clone());
     let mut envs = Vec::new();
     for _ in 0..num_queries {
-        let start_scope = Scope(START_SCOPE);
-        // let start_scope = Scope(thread_rng.random_range(200..300));
+        // let start_scope = Scope(START_SCOPE);
+        let start_scope = Scope(thread_rng.random_range(200..300));
 
         let m: Arc<str> = Arc::from("x");
         // let m = matches[thread_rng.random_range(0..matches.len())].clone();
@@ -76,12 +77,15 @@ fn get_pattern() -> Vec<GraphPattern> {
         GraphPattern::Decl(SgData::var("x7", "int")),
         GraphPattern::Decl(SgData::var("x8", "int")),
         GraphPattern::Decl(SgData::var("x9", "int")),
+        GraphPattern::Tree(2),
+        GraphPattern::Circle(15),
         GraphPattern::Linear(30),
-        GraphPattern::Linear(1),
         // GraphPattern::Tree(2),
         // GraphPattern::Diamond(50),
         GraphPattern::Decl(SgData::var("y", "int")),
-        GraphPattern::Linear(300),
+        GraphPattern::Linear(25),
+        GraphPattern::ReverseTree(2),
+        GraphPattern::Linear(250),
     ]
 }
 
@@ -103,13 +107,6 @@ where
 pub fn criterion_benchmark(c: &mut Criterion) {
     let storage = Storage::new();
     unsafe {
-        let mut lib_graph: LibGraph = LibGraph::new(&storage, UncheckedCompleteness::new());
-
-        lib_graph = lib_graph_builder(lib_graph);
-        lib_graph
-            .render_to("output/bench/libgraph.mmd", RenderSettings::default())
-            .unwrap();
-
         let mut graph = graph_builder(BaseScopeGraph::new());
         let mut bu_graph = CachedScopeGraph::from_base(graph.clone());
         graph
@@ -119,6 +116,11 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         graph
             .as_mmd_diagram("title", false)
             .render_to_file("output/bench/graph.md")
+            .unwrap();
+        let mut lib_graph: LibGraph = LibGraph::new(&storage, UncheckedCompleteness::new());
+        lib_graph = lib_graph_builder(lib_graph);
+        lib_graph
+            .render_to("output/bench/libgraph.mmd", RenderSettings::default())
             .unwrap();
 
         let order = LabelOrderBuilder::new()
@@ -130,8 +132,8 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         let matcher = RegexAutomaton::from_regex(label_reg.clone());
 
         let mut group = c.benchmark_group("query");
-        group.warm_up_time(Duration::from_secs(1));
-        group.measurement_time(Duration::from_secs(1));
+        // group.warm_up_time(Duration::from_secs(1));
+        // group.measurement_time(Duration::from_secs(1));
 
         for num_bench in [1, 2, 5] {
             let s1 = format!("bench {}", num_bench);
@@ -143,9 +145,9 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             group.bench_function(&s2, |b| {
                 b.iter(|| query_graph(&mut bu_graph, num_bench, &order, &matcher))
             });
-            // group.bench_function(&s3, |b| {
-            //     b.iter(|| query_libgraph(&mut lib_graph, num_bench))
-            // });
+            group.bench_function(&s3, |b| {
+                b.iter(|| query_libgraph(&mut lib_graph, num_bench))
+            });
         }
     }
 }

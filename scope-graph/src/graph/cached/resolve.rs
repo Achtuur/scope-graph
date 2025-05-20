@@ -195,11 +195,11 @@ where
                     .map(|e| path.step(e.lbl().clone(), e.target(), partial_reg.index())) // create new paths
                     .filter(|p| !p.is_circular(partial_reg.index())) // create new paths
                     .flat_map(|p| self.resolve_all(p, partial_reg.clone())) // resolve new paths
-                    .map(|(p, mut envs)| {
+                    .fold(ProjEnvs::default(), |mut acc, (p, mut envs)| {
                         // path is a path from the starting scope to the current one.
                         // in the cache, we want to store the path from the _data_ to the current scope.
                         // hence, every step we add the traversed label to the query result.
-                        envs.iter_mut().for_each(|qr| {
+                        for qr in &mut envs {
                             qr.path = qr
                             .path
                             .step(
@@ -207,10 +207,9 @@ where
                                 path.target(),
                                 partial_reg.index()
                             );
-                        });
-                        (p, envs)
-                    })
-                    .fold(ProjEnvs::default(), |mut acc, (p, mut envs)| {
+                        }
+
+                        // add to acc
                         let e = acc.entry(p).or_default();
                         e.append(&mut envs);
                         acc

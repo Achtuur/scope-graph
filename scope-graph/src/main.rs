@@ -57,12 +57,12 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
     matcher.to_uml().render_to_file("output/regex.puml").unwrap();
 
     let x_match: Arc<str> = Arc::from("y");
-    let query_scope_set = [(x_match.clone(), vec![0, 1]), (x_match.clone(), vec![2])];
+    let query_scope_set = [(x_match.clone(), vec![0]), (x_match.clone(), vec![2])];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
         let title = format!(
-            "Query1: {}, label_reg={}, label_order={}, proj={}",
-            0, label_reg, order, SgProjection::VarName
+            "Query sets {:?}, label_reg={}, label_order={}, proj={}",
+            set, label_reg, order, SgProjection::VarName
         );
 
         let p = set.0;
