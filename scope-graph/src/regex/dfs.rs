@@ -239,6 +239,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use graphing::Renderer;
+
     use super::*;
 
     #[test]
@@ -253,13 +255,13 @@ mod tests {
             Regex::concat('b', Regex::question('c')),
         );
 
-        let timer = std::time::Instant::now();
         let automata = RegexAutomaton::from_regex(regex);
-        println!("{:?}", timer.elapsed());
+        let timer = std::time::Instant::now();
         automata
-            .to_uml()
-            .write_to_file("output/regex/automata.puml")
-            .unwrap();
+        .to_uml()
+        .render_to_file("output/regex/automata.puml")
+        .unwrap();
+        println!("{:?}", timer.elapsed());
     }
 
     #[test]
@@ -268,7 +270,7 @@ mod tests {
         let automata = RegexAutomaton::from_regex(regex);
         automata
             .to_mmd()
-            .write_to_file("output/regex/automata.md")
+            .render_to_file("output/regex/automata.md")
             .unwrap();
         let haystack = vec!['a'; 10];
         assert!(automata.is_match(&haystack));
@@ -281,8 +283,8 @@ mod tests {
         let regex = Regex::concat(Regex::kleene('P'), Regex::concat('P', 'D'));
         let automata = RegexAutomaton::from_regex(regex);
         automata
-            .to_mmd()
-            .write_to_file("output/regex/automata.md")
+            .to_uml()
+            .render_to_file("output/regex/automata.md")
             .unwrap();
         let haystack = vec!['P', 'P', 'D'];
         assert!(automata.is_match(&haystack));

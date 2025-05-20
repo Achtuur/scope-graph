@@ -1,4 +1,6 @@
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::{io::Write, sync::atomic::{AtomicUsize, Ordering}};
+
+use crate::RenderResult;
 
 use super::{MermaidStyleSheet, theme::EdgeType};
 
@@ -36,32 +38,37 @@ pub enum MermaidItemKind {
 }
 
 impl MermaidItemKind {
-    pub fn to_mmd(&self, id: &str) -> String {
+    pub fn write(&self, writer: &mut impl Write, id: &str) -> RenderResult<()> {
         match self {
+            // {id}@{{ shape: {shape}, label: \"<span>{label}</span>\" }};
             MermaidItemKind::Node(node) => {
-                format!(
+                write!(
+                    writer,
                     "{}@{{ shape: {}, label: \"<span>{}</span>\" }};",
                     id, node.shape, node.label
-                )
+                )?;
             }
+            // {from} {id}@{line_type} {to};
             MermaidItemKind::Edge(edge) => {
-                let line = match edge.label.as_str() {
+                write!(writer, "{} {}@", edge.from, id)?;
+                match edge.label.as_str() {
+                    // no label (line length depends on number of dashes)
                     "" => match edge.line_type {
-                        EdgeType::Solid => "-->",
-                        EdgeType::Dotted => "-.->",
-                        EdgeType::Thick => "==>",
-                    }
-                    .to_string(),
-
-                    lbl => match edge.line_type {
-                        EdgeType::Solid => format!("-- {} -->", lbl),
-                        EdgeType::Dotted => format!("-. {} .->", lbl),
-                        EdgeType::Thick => format!("== {} ==>", lbl),
+                        EdgeType::Solid => write!(writer, "-->"),
+                        EdgeType::Dotted => write!(writer, "-.->"),
+                        EdgeType::Thick => write!(writer, "==>"),
                     },
-                };
-                format!("{} {}@{} {};", edge.from, id, line, edge.to)
+                    // with label
+                    lbl => match edge.line_type {
+                        EdgeType::Solid => write!(writer, "-- {} -->", lbl),
+                        EdgeType::Dotted => write!(writer, "-. {} .->", lbl),
+                        EdgeType::Thick => write!(writer, "== {} ==>", lbl),
+                    },
+                }?;
+                write!(writer, " {};", edge.to)?;
             }
         }
+        Ok(())
     }
 }
 
@@ -121,14 +128,12 @@ impl MermaidItem {
         })
     }
 
-    pub(crate) fn to_mmd(&self) -> String {
-        let item = self.kind.to_mmd(&self.id);
-        let classes = self
-            .classes
-            .iter()
-            .map(|class| format!("class {} {}", self.id, class))
-            .collect::<Vec<_>>()
-            .join("\n");
-        format!("{}\n{}", item, classes)
+    pub(crate) fn write(&self, writer: &mut impl Write) -> RenderResult<()> {
+        self.kind.write(writer, &self.id)?;
+        let _ = writer.write(b"\n")?;
+        for class in &self.classes {
+            writeln!(writer, "class {} {}", self.id, class)?;
+        }
+        Ok(())
     }
 }

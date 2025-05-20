@@ -1,13 +1,12 @@
 mod item;
 use std::{
-    fs,
-    io::{self, Write},
-    path::PathBuf,
-    str::FromStr,
+    cmp::Reverse, collections::BinaryHeap, io::{self, Write}, path::PathBuf, str::FromStr
 };
 
 pub use item::*;
 use theme::PlantUmlStyleSheet;
+
+use crate::{RenderResult, Renderer};
 
 pub mod theme;
 
@@ -20,7 +19,8 @@ hide stereotype"#;
 #[derive(Clone, Debug)]
 pub struct PlantUmlDiagram {
     style: PlantUmlStyleSheet,
-    items: Vec<PlantUmlItem>,
+    // notes have to come after nodes, so must be sorted
+    items: BinaryHeap<Reverse<PlantUmlItem>>,
     title: String,
 }
 
@@ -28,7 +28,7 @@ impl PlantUmlDiagram {
     pub fn new(title: impl ToString) -> Self {
         Self {
             style: PlantUmlStyleSheet::new(),
-            items: Vec::new(),
+            items: BinaryHeap::new(),
             title: title.to_string(),
         }
     }
@@ -37,45 +37,32 @@ impl PlantUmlDiagram {
         self.style = style;
     }
 
-    pub fn push(&mut self, item: PlantUmlItem) {
-        self.items.push(item);
+    pub fn push(&mut self, mut item: PlantUmlItem) {
+        if let Some(class) = item.class_def() {
+            self.style.push(class);
+        }
+        self.items.push(Reverse(item));
     }
 
     pub fn extend(&mut self, items: impl IntoIterator<Item = PlantUmlItem>) {
-        self.items.extend(items);
+        for item in items {
+            self.push(item);
+        }
     }
+}
 
-    pub fn as_uml(mut self) -> String {
-        self.items
-            .iter_mut()
-            .filter_map(|i| i.class_def())
-            .for_each(|c| self.style.push(c));
-
-        let css = &self.style.as_css();
-        let header = format!("@startuml \"{}\"{}\n{}", self.title, HEADER_SECTION, css);
-        let mut items = self.items.clone();
-        items.sort();
-        let body = items
-            .iter()
-            .map(|item| item.as_uml())
-            .collect::<Vec<_>>()
-            .join("\n");
-        format!("{}\n{}\n@enduml", header, body)
-    }
-
-    pub fn write_to_file(self, path: &str) -> Result<(), io::Error> {
-        let mut path = PathBuf::from_str(path).unwrap();
-        path.set_extension("puml");
-        let dir = path.parent().unwrap();
-        fs::create_dir_all(dir)?;
-        let content = self.as_uml();
-        let mut file = std::fs::OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(&path)
-            .unwrap();
-        file.write_all(content.as_bytes())?;
+impl Renderer for PlantUmlDiagram {
+    fn render_to_writer(&self, writer: &mut impl Write) -> RenderResult<()> {
+        writeln!(writer, "@startuml \"{}\"{}", self.title, HEADER_SECTION)?;
+        // writes <style>...</style> section
+        self.style.write(writer)?;
+        let _ = writer.write(b"\n")?;
+        let items = self.items.clone();
+        for item in items {
+            item.0.write(writer)?;
+            let _ = writer.write(b"\n")?;
+        }
+        write!(writer, "\n@enduml")?;
         Ok(())
     }
 }

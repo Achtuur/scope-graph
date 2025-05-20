@@ -1,8 +1,10 @@
 mod props;
 
+use std::io::Write;
+
 pub use props::*;
 
-use crate::{Color, CssProperty};
+use crate::{Color, CssProperty, RenderResult};
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct StyleOptions {
@@ -34,35 +36,33 @@ impl StyleOptions {
         *self == Self::new()
     }
 
-    pub(crate) fn as_css(&self) -> String {
-        macro_rules! format_css {
+    pub(crate) fn write(&self, writer: &mut impl Write) -> RenderResult<()> {
+        macro_rules! write_prop {
             ($key:literal, $prop:expr) => {
-                $prop.map(|x| format!("{}:{}", $key, x.as_css()))
+                if let Some(x) = $prop {
+                    write!(writer, "{}: ", $key)?;
+                    x.write(writer)?;
+                    // writeln!(writer, ";")?;
+                }
             };
         }
 
-        [
-            format_css!("stroke", self.line_color),
-            format_css!("stroke-dasharray", self.line_style),
-            format_css!("stroke-dashoffset", self.line_offset),
-            format_css!("stroke-width", self.line_thickness),
-            format_css!("fill", self.background_color),
-            format_css!("font-size", self.font_size),
-            format_css!("padding", self.padding),
-            format_css!("margin", self.margin),
-            format_css!("animation", self.animation),
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>()
-        .join(",")
+        write_prop!("stroke", self.line_color);
+        write_prop!("stroke-dasharray", self.line_style);
+        write_prop!("stroke-dashoffset", self.line_offset);
+        write_prop!("stroke-width", self.line_thickness);
+        write_prop!("fill", self.background_color);
+        write_prop!("font-size", self.font_size);
+        write_prop!("padding", self.padding);
+        write_prop!("margin", self.margin);
+        write_prop!("animation", self.animation);
+        Ok(())
     }
 }
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct ElementStyle {
     style: StyleOptions,
-    // kind: ElementKind,
 }
 
 impl ElementStyle {
@@ -120,10 +120,13 @@ impl ElementStyle {
         self.line_style(LineStyle::Dashed)
     }
 
-    pub(crate) fn as_classdef(&self, class_name: &str) -> String {
+    pub(crate) fn write(&self, writer: &mut impl Write, class_name: &str) -> RenderResult<()> {
         if self.style.is_empty() {
-            return String::new();
+            return Ok(())
         }
-        format!("classDef {} {};", class_name, self.style.as_css())
+        write!(writer, "classDef {} ", class_name)?;
+        self.style.write(writer)?;
+        let _ = writer.write(b"\n")?;
+        Ok(())
     }
 }

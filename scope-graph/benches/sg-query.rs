@@ -1,6 +1,7 @@
 use std::{sync::Arc, time::Duration};
 
 use criterion::{Criterion, criterion_group, criterion_main};
+use graphing::Renderer;
 use scope_graph::{
     LibGraph, SgData, SgLabel, SgProjection,
     generator::{GraphGenerator, GraphPattern},
@@ -113,11 +114,11 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         let mut bu_graph = CachedScopeGraph::from_base(graph.clone());
         graph
             .as_uml_diagram("title", false)
-            .write_to_file("output/bench/graph.puml")
+            .render_to_file("output/bench/graph.puml")
             .unwrap();
         graph
             .as_mmd_diagram("title", false)
-            .write_to_file("output/bench/graph.md")
+            .render_to_file("output/bench/graph.md")
             .unwrap();
 
         let order = LabelOrderBuilder::new()

@@ -1,3 +1,5 @@
+use crate::CssProperty;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Color {
     r: u8,
@@ -49,5 +51,11 @@ impl Color {
 
     pub fn hex_string(&self) -> String {
         format!("#{:02x}{:02x}{:02x}", self.r, self.g, self.b)
+    }
+}
+
+impl CssProperty for Color {
+    fn write(&self, writer: &mut impl std::io::Write) -> crate::RenderResult<()> {
+        write!(writer, "{}", self.hex_string()).map_err(Into::into)
     }
 }

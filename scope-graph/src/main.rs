@@ -3,6 +3,7 @@ use std::{
     sync::Arc,
 };
 
+use graphing::Renderer;
 use scope_graph::{
     ColorSet, DRAW_CACHES, ForeGroundColor, SAVE_GRAPH, SgData, SgLabel, SgProjection,
     generator::{GraphGenerator, GraphPattern},
@@ -33,11 +34,11 @@ fn graph_builder() -> UsedScopeGraph<SgLabel, SgData> {
     let graph = GraphGenerator::new(graph).with_patterns(patterns).build();
     graph
         .as_uml_diagram("graph", DRAW_CACHES)
-        .write_to_file("output/output0.puml")
+        .render_to_file("output/output0.puml")
         .unwrap();
     graph
         .as_mmd_diagram("graph", DRAW_CACHES)
-        .write_to_file("output/output0.md")
+        .render_to_file("output/output0.md")
         .unwrap();
     graph
 }
@@ -53,7 +54,7 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
         SgLabel::Declaration,
     );
     let matcher = RegexAutomaton::from_regex(label_reg.clone());
-    matcher.to_uml().write_to_file("output/regex.puml").unwrap();
+    matcher.to_uml().render_to_file("output/regex.puml").unwrap();
 
     let x_match: Arc<str> = Arc::from("y");
     let query_scope_set = [(x_match.clone(), vec![0, 1]), (x_match.clone(), vec![2])];
@@ -95,8 +96,9 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
         uml_diagram.extend(res_uml);
 
         let fname = format!("output/output{}.md", idx);
-        mmd_diagram.write_to_file(&fname).unwrap();
-        uml_diagram.write_to_file(&fname).unwrap();
+        mmd_diagram.render_to_file(&fname).unwrap();
+        let fname = format!("output/output{}.puml", idx);
+        uml_diagram.render_to_file(&fname).unwrap();
     }
 }
 
@@ -112,7 +114,7 @@ fn circular_graph() -> UsedScopeGraph<SgLabel, SgData> {
     let s5 = graph.add_decl(s2, SgLabel::Declaration, SgData::var("y", "int"));
     graph
         .as_mmd_diagram("circular", DRAW_CACHES)
-        .write_to_file("output/circular.md")
+        .render_to_file("output/circular.md")
         .unwrap();
     graph
 }

@@ -20,8 +20,8 @@ impl LineStyle {
 }
 
 impl CssProperty for LineStyle {
-    fn as_css(&self) -> String {
-        self.as_num().to_string()
+    fn write(&self, writer: &mut impl std::io::Write) -> crate::RenderResult<()> {
+        write!(writer, "{}", self.as_num()).map_err(Into::into)
     }
 }
 
@@ -41,8 +41,9 @@ impl Default for AnimationSettings {
 }
 
 impl CssProperty for AnimationSettings {
-    fn as_css(&self) -> String {
-        format!("dash {}s {} infinite", self.speed.as_num(), self.style)
+    fn write(&self, writer: &mut impl std::io::Write) -> crate::RenderResult<()> {
+        write!(writer, "dash {}s {} infinite", self.speed.as_num(), self.style)
+        .map_err(Into::into)
     }
 }
 

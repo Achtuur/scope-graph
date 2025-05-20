@@ -1,6 +1,7 @@
 // tests from:
 // https://github.com/metaborg/nabl/blob/master/statix.test/scopegraphs/nameresolution.spt
 
+use graphing::Renderer;
 use scope_graph::{
     DRAW_CACHES,
     data::ScopeGraphData,
@@ -331,7 +332,7 @@ fn test_resolution_policy_min_is_applied() {
 
     graph
         .as_mmd_diagram("test_resolution_policy_min_is_applied", DRAW_CACHES)
-        .write_to_file("output/tests/test_resolution_policy_min_is_applied.md")
+        .render_to_file("output/tests/test_resolution_policy_min_is_applied.md")
         .unwrap();
 
     // let regex = Regex::EmptyString.compile();
@@ -515,9 +516,22 @@ fn test_relations_have_multiset_behavior() {
     let _ = graph.add_decl(s, TestLabel::D, TestData::var("x"));
     let _ = graph.add_decl(s, TestLabel::D, TestData::var("x"));
 
+    graph
+    .as_mmd_diagram("test_relations_have_multiset_behaviour", false)
+    .render_to_file("output/tests/test_relations_have_multiset_behaviour.md")
+    .unwrap();
+
     let regex = Regex::from(TestLabel::D).compile();
     let lo = LabelOrderBuilder::new().build();
-    let envs = graph.query_proj(s, &regex, &lo, TestProjection::Name, String::from("x"));
+    let envs = graph.query_proj(
+        s,
+        &regex,
+        &lo,
+        TestProjection::Name,
+        String::from("x")
+    );
+
+    println!("envs: {0:?}", envs);
 
     assert_eq!(envs.len(), 2);
 }
@@ -742,7 +756,7 @@ fn test_label_order_respected() {
     graph.add_edge(s_let, s_with, TestLabel::P);
     graph
         .as_mmd_diagram("test_label_order_resp", DRAW_CACHES)
-        .write_to_file("output/tests/test_label_order_resp.md")
+        .render_to_file("output/tests/test_label_order_resp.md")
         .unwrap();
     let regex: RegexAutomaton<TestLabel> = Regex::concat(
         Regex::concat(Regex::kleene(TestLabel::P), Regex::question(TestLabel::R)),
@@ -751,7 +765,7 @@ fn test_label_order_respected() {
     .compile();
     regex
         .to_mmd()
-        .write_to_file("output/tests/test_label_order_resp_regex.md")
+        .render_to_file("output/tests/test_label_order_resp_regex.md")
         .unwrap();
 
     let lo = LabelOrderBuilder::new()
@@ -798,10 +812,10 @@ fn test_label_order_respected() {
 //     graph.add_edge(s1, s3, TestLabel::P);
 //     graph.add_edge(s2, s3, TestLabel::P);
 //     graph.as_mmd_diagram("test_all_is_respected", DRAW_CACHES)
-//     .write_to_file("output/tests/test_all_is_respected.md").unwrap();
+//     .render_to_file("output/tests/test_all_is_respected.md").unwrap();
 //     let regex: RegexAutomaton<TestLabel> = Regex::kleene(TestLabel::P)
 //     .compile();
-//     regex.to_mmd().write_to_file("output/tests/test_all_is_respected_regex.md").unwrap();
+//     regex.to_mmd().render_to_file("output/tests/test_all_is_respected_regex.md").unwrap();
 
 //     let lo = LabelOrderBuilder::new().build();
 //     let envs = graph.query_proj(s0,
@@ -867,13 +881,13 @@ fn test_project_target_data_behaves_as_set() {
     graph.add_edge(s2, s3, TestLabel::P);
     graph
         .as_mmd_diagram("test_project_target_data_behaves_as_set", DRAW_CACHES)
-        .write_to_file("output/tests/test_project_target_data_behaves_as_set.md")
+        .render_to_file("output/tests/test_project_target_data_behaves_as_set.md")
         .unwrap();
     let regex: RegexAutomaton<TestLabel> =
         Regex::concat(Regex::kleene(TestLabel::P), TestLabel::D).compile();
     regex
         .to_mmd()
-        .write_to_file("output/tests/test_label_order_resp_regex.md")
+        .render_to_file("output/tests/test_label_order_resp_regex.md")
         .unwrap();
 
     let lo = LabelOrderBuilder::new()

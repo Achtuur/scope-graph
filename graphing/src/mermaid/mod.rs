@@ -3,6 +3,8 @@ use std::{collections::HashMap, fs, io::Write, ops::Deref, path::PathBuf, str::F
 use item::MermaidItem;
 use theme::ElementStyle;
 
+use crate::Renderer;
+
 pub mod item;
 pub mod theme;
 
@@ -92,16 +94,25 @@ impl MermaidDiagram {
     pub fn extend(&mut self, items: impl IntoIterator<Item = MermaidItem>) {
         self.items.extend(items);
     }
+}
 
-    pub fn as_mmd(&self) -> String {
-        // iterate over items and render them
-        // pass along the stylesheet so they can select their class
-        let classes = (*self.style)
-            .iter()
-            .map(|(class, style)| style.as_classdef(class))
-            .collect::<Vec<_>>()
-            .join("\n");
+impl Renderer for MermaidDiagram {
+    fn render_to_writer(&self, writer: &mut impl Write) -> crate::RenderResult<()> {
+        writeln!(writer,
+            "```mermaid\n\
+            ---\n\
+            title: \"{}\"\n\
+            ---\n\
+            flowchart {}",
+            self.title, self.direction
+        )?;
 
+        // write classes
+        for (class_name, style_def) in self.style.iter() {
+            style_def.write(writer, class_name)?;
+        }
+
+        // write body
         for item in &self.items {
             if let Some(dne_class) = item.find_nonexistant_class(&self.style) {
                 tracing::warn!(
@@ -110,41 +121,11 @@ impl MermaidDiagram {
                     item.id()
                 );
             }
+            item.write(writer)?;
+            let _ = writer.write(b"\n")?;
         }
 
-        let body = self
-            .items
-            .iter()
-            .map(|item| item.to_mmd())
-            .collect::<Vec<_>>()
-            .join("\n");
-
-        format!(
-            "```mermaid\n\
-            ---\n\
-            title: \"{}\"\n\
-            ---\n\
-            flowchart {}\n\
-            {}\n\
-            {}\n\
-            ```",
-            self.title, self.direction, classes, body
-        )
-    }
-
-    pub fn write_to_file(&self, path: &str) -> Result<(), std::io::Error> {
-        let mut path = PathBuf::from_str(path).unwrap();
-        path.set_extension("md");
-        let dir = path.parent().unwrap();
-        fs::create_dir_all(dir)?;
-        let content = self.as_mmd();
-        let mut file = std::fs::OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(&path)
-            .unwrap();
-        file.write_all(content.as_bytes())?;
+        write!(writer, "\n```")?;
         Ok(())
     }
 }

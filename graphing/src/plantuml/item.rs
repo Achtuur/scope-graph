@@ -1,6 +1,6 @@
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::{io::Write, sync::atomic::{AtomicUsize, Ordering}};
 
-use crate::Color;
+use crate::{Color, RenderResult};
 
 use super::theme::{CssClass, ElementCss, LineStyle};
 
@@ -119,49 +119,18 @@ impl PlantUmlItemKind {
             Self::Note { .. } => 2,
         }
     }
-
-    fn as_uml(&self, class: &str) -> String {
-        match self {
-            PlantUmlItemKind::Node {
-                id,
-                contents,
-                node_type,
-            } => {
-                format!(
-                    "{} \"{}\" as {} {}",
-                    node_type.uml_str(),
-                    contents,
-                    id,
-                    class,
-                )
-            }
-            PlantUmlItemKind::Edge {
-                from,
-                to,
-                label,
-                dir,
-            } => {
-                format!("{} -{}-> {} {} : {}", from, dir.uml_str(), to, class, label)
-            }
-            PlantUmlItemKind::Note { to, contents } => {
-                let formatted = contents.replace("\n", "\n\t");
-                let note = format!("note left of {} {}\n\t{}\nend note", to, class, formatted);
-                note
-            }
-        }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PlantUmlItem {
-    item: PlantUmlItemKind,
-    class: Vec<String>,
+    kind: PlantUmlItemKind,
+    classes: Vec<String>,
     annotation: ItemAnnotation,
 }
 
 impl PartialOrd for PlantUmlItem {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.item.cmp(&other.item))
+        Some(self.kind.cmp(&other.kind))
     }
 }
 
@@ -174,8 +143,8 @@ impl Ord for PlantUmlItem {
 impl PlantUmlItem {
     pub fn new(item: PlantUmlItemKind) -> Self {
         Self {
-            item,
-            class: Vec::new(),
+            kind: item,
+            classes: Vec::new(),
             annotation: ItemAnnotation::default(),
         }
     }
@@ -210,7 +179,7 @@ impl PlantUmlItem {
     }
 
     pub fn add_class(mut self, class: impl ToString) -> Self {
-        self.class.push(class.to_string());
+        self.classes.push(class.to_string());
         self
     }
 
@@ -236,20 +205,67 @@ impl PlantUmlItem {
         }
 
         let class_name = format!("gen-class-{}", CLASS_CTR.fetch_add(1, Ordering::Relaxed));
-        self.class.push(class_name.clone());
+        self.classes.push(class_name.clone());
         let el = self.annotation.into();
         let class = CssClass::new_class(class_name, el);
         Some(class)
     }
 
-    pub fn as_uml(&self) -> String {
-        let class = self
-            .class
-            .iter()
-            .map(|c| format!("<<{}>>", c))
-            .collect::<Vec<_>>()
-            .join("");
-        let s = self.item.as_uml(&class);
-        s.trim_end().to_string()
+    // pub fn as_uml(&self) -> String {
+    //     let class = self
+    //         .classes
+    //         .iter()
+    //         .map(|c| format!("<<{}>>", c))
+    //         .collect::<Vec<_>>()
+    //         .join("");
+    //     let s = self.kind.as_uml(&class);
+    //     s.trim_end().to_string()
+    // }
+
+    pub fn write(&self, writer: &mut impl Write) -> RenderResult<()> {
+        match &self.kind {
+            // {node_type} "{contents}" as {id} <<{classes}>>
+            PlantUmlItemKind::Node {
+                id,
+                contents,
+                node_type,
+            } => {
+                write!(
+                    writer,
+                    "{} \"{}\" as {}",
+                    node_type.uml_str(),
+                    contents,
+                    id,
+                )?;
+                self.write_class(writer)?;
+            }
+            // {from} -{dir}-> {to} {classes} : {label}
+            PlantUmlItemKind::Edge {
+                from,
+                to,
+                label,
+                dir,
+            } => {
+                write!(writer, "{} -{}-> {}", from, dir.uml_str(), to)?;
+                self.write_class(writer)?;
+                write!(writer, " : {}", label)?;
+            }
+            // note left of {to} {classes}\n\t{contents}\nend note
+            PlantUmlItemKind::Note { to, contents } => {
+                write!(writer, "note left of {} ", to)?;
+                self.write_class(writer)?;
+                let formatted = contents.replace("\n", "\n\t");
+                write!(writer, "\n\t{}", formatted)?;
+                write!(writer, "\nend note")?;
+            }
+        }
+        Ok(())
+    }
+
+    fn write_class(&self, writer: &mut impl Write) -> RenderResult<()> {
+        for class in &self.classes {
+            write!(writer, "<<{}>>", class)?;
+        }
+        Ok(())
     }
 }

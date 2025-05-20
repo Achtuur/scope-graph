@@ -9,15 +9,20 @@ pub enum LineStyle {
     LongDashed,
 }
 
-impl CssProperty for LineStyle {
-    fn as_css(&self) -> String {
+impl LineStyle {
+    pub fn as_num(&self) -> usize {
         match self {
-            LineStyle::Solid => "0",
-            LineStyle::Dotted => "1",
-            LineStyle::Dashed => "4",
-            LineStyle::LongDashed => "8",
+            LineStyle::Solid => 0,
+            LineStyle::Dotted => 1,
+            LineStyle::Dashed => 4,
+            LineStyle::LongDashed => 8,
         }
-        .to_string()
+    }
+}
+
+impl CssProperty for LineStyle {
+    fn write(&self, writer: &mut impl std::io::Write) -> crate::RenderResult<()> {
+        write!(writer, "{}", self.as_num()).map_err(Into::into)
     }
 }
 

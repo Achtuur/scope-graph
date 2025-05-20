@@ -1,5 +1,7 @@
 mod props;
-use crate::CssProperty;
+use std::io::Write;
+
+use crate::{CssProperty, RenderResult};
 pub use props::*;
 
 use crate::Color;
@@ -164,42 +166,40 @@ impl ElementCss {
         self
     }
 
-    pub fn as_css(&self) -> String {
+    pub fn write(&self, writer: &mut impl Write) -> RenderResult<()> {
         // https://plantuml.com/style
-
-        macro_rules! format_css {
+        macro_rules! write_prop {
             ($key:literal, $prop:expr) => {
-                $prop.map(|x| format!("{}: {};", $key, x.as_css()))
+                if let Some(x) = $prop {
+                    write!(writer, "{}: ", $key)?;
+                    x.write(writer)?;
+                    writeln!(writer, ";")?;
+                }
             };
         }
 
-        [
-            format_css!("FontFamily", self.font_family),
-            format_css!("FontColor", self.font_color),
-            format_css!("FontSize", self.font_size),
-            format_css!("FontStyle", self.font_style),
-            format_css!("BackGroundColor", self.background_color),
-            format_css!("RoundCorner", self.round_corner),
-            format_css!("DiagonalCorner", self.diagonal_corner),
-            format_css!("LineStyle", self.line_style),
-            format_css!("LineColor", self.line_color),
-            format_css!("LineThickness", self.line_thickness),
-            format_css!("Padding", self.padding),
-            format_css!("Margin", self.margin),
-            format_css!("MaximumWidth", self.maximum_width),
-            format_css!("Shadowing", self.shadowing),
-            format_css!("HyperLinkColor", self.hyper_link_color),
-            format_css!("HyperLinkUnderlineStyle", self.hyperlink_underline_style),
-            format_css!(
-                "HyperLinkUnderlineThickness",
-                self.hyperlink_underline_thickness
-            ),
-            format_css!("HorizontalAlignment", self.horizontal_alignment),
-        ]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>()
-        .join("\n")
+        write_prop!("FontFamily", self.font_family);
+        write_prop!("FontColor", self.font_color);
+        write_prop!("FontSize", self.font_size);
+        write_prop!("FontStyle", self.font_style);
+        write_prop!("BackGroundColor", self.background_color);
+        write_prop!("RoundCorner", self.round_corner);
+        write_prop!("DiagonalCorner", self.diagonal_corner);
+        write_prop!("LineStyle", self.line_style);
+        write_prop!("LineColor", self.line_color);
+        write_prop!("LineThickness", self.line_thickness);
+        write_prop!("Padding", self.padding);
+        write_prop!("Margin", self.margin);
+        write_prop!("MaximumWidth", self.maximum_width);
+        write_prop!("Shadowing", self.shadowing);
+        write_prop!("HyperLinkColor", self.hyper_link_color);
+        write_prop!("HyperLinkUnderlineStyle", self.hyperlink_underline_style);
+        write_prop!(
+            "HyperLinkUnderlineThickness",
+            self.hyperlink_underline_thickness
+        );
+        write_prop!("HorizontalAlignment", self.horizontal_alignment);
+        Ok(())
     }
 }
 
@@ -234,10 +234,13 @@ impl CssClass {
         self.element = element;
     }
 
-    pub fn as_css(&self) -> String {
+    pub fn write(&self, writer: &mut impl Write) -> RenderResult<()> {
         let selector = if self.is_selector { "" } else { "." };
         let class_name = format!("{}{}", selector, self.name);
-        format!("{} {{\n{}\n}}", class_name, self.element.as_css())
+        writeln!(writer, "{} {{", class_name)?;
+        self.element.write(writer)?;
+        writeln!(writer, "\n}}")?;
+        Ok(())
     }
 }
 
@@ -287,13 +290,12 @@ impl PlantUmlStyleSheet {
         self.classes.extend(other.classes);
     }
 
-    pub fn as_css(&self) -> String {
-        let classes = self
-            .classes
-            .iter()
-            .map(|c| c.as_css())
-            .collect::<Vec<_>>()
-            .join("\n");
-        format!("<style>\n{}\n</style>", classes)
+    pub(crate) fn write(&self, writer: &mut impl Write) -> RenderResult<()> {
+        writeln!(writer, "<style>")?;
+        for class in &self.classes {
+            class.write(writer)?;
+        }
+        write!(writer, "\n</style>")?;
+        Ok(())
     }
 }
