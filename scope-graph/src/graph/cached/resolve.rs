@@ -167,7 +167,7 @@ where
         path: Path<Lbl>,
     ) -> ProjEnvs<Lbl, Data> {
         let lower_paths = self.get_env_for_labels(lower_lbls, path.clone());
-        let max_path = self.get_env_for_label(max_lbl, path.clone());
+        let max_path = self.get_env_for_label(max_lbl, path);
         self.shadow(lower_paths, max_path)
     }
 
@@ -200,13 +200,21 @@ where
                         // in the cache, we want to store the path from the _data_ to the current scope.
                         // hence, every step we add the traversed label to the query result.
                         envs.iter_mut().for_each(|qr| {
-                            qr.path =
-                                qr.path
-                                    .step(label.clone(), path.target(), partial_reg.index());
+                            qr.path = qr
+                            .path
+                            .step(
+                                label.clone(),
+                                path.target(),
+                                partial_reg.index()
+                            );
                         });
                         (p, envs)
                     })
-                    .collect()
+                    .fold(ProjEnvs::default(), |mut acc, (p, mut envs)| {
+                        let e = acc.entry(p).or_default();
+                        e.append(&mut envs);
+                        acc
+                    })
             }
         }
     }
@@ -245,6 +253,8 @@ where
         for (proj, envs) in env_map {
             tracing::trace!("Cache env for path {}: {} envs", path.target(), envs.len());
             let key = (reg.index(), path.target());
+            // this is the entry for the path
+            // its a map of proj -> [envs]
             let entry = self.cache.entry(key).or_default();
             // this replaces any existing cache
             // but we will only ever have one entry for the given key (I assume)
