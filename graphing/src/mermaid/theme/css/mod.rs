@@ -37,12 +37,16 @@ impl StyleOptions {
     }
 
     pub(crate) fn write(&self, writer: &mut impl Write) -> RenderResult<()> {
+        let mut is_first = true;
         macro_rules! write_prop {
             ($key:literal, $prop:expr) => {
                 if let Some(x) = $prop {
+                    if !is_first {
+                        write!(writer, ", ")?;
+                    }
                     write!(writer, "{}: ", $key)?;
                     x.write(writer)?;
-                    // writeln!(writer, ";")?;
+                    is_first = false;
                 }
             };
         }
