@@ -8,8 +8,6 @@ members = [ "data-parse",
 ]
 
 [workspace.dependencies]
-
-regex = "1.11.1"
 scopegraphs= "0.3.3"
 winnow = {version = "0.6.20"}
 rand = "0.9.0"
