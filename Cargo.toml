@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = [
+members = [ "data-parse",
     "graphing",
     "sclang", # lil test language
     "scope-graph", # scope graph resolver
