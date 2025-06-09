@@ -16,54 +16,9 @@ use scopegraphs::{
     resolve::Resolve,
 };
 
-fn query_libgraph(graph: &mut LibGraph, num_queries: usize) {
-    let start_scope = scopegraphs::Scope(START_SCOPE);
-    let query = graph
-        .query()
-        .with_path_wellformedness(query_regex!(SgLabel: Parent*Declaration))
-        .with_label_order(label_order!(SgLabel:
-            Declaration < Parent,
-        ))
-        .with_data_wellformedness(|data: &SgData| -> bool { data.name() == "x" })
-        .with_data_equivalence(|d1: &SgData, d2: &SgData| -> bool { d1.name() == d2.name() });
-    for _ in 0..num_queries {
-        let envs = query.resolve(start_scope);
-        let _data = envs.into_iter().next().expect("Query failed").data();
-    }
-}
+use crate::common::{construct_base_graph, construct_cached_graph, construct_libgraph, query_graph, query_libgraph};
 
-fn query_graph<Sg>(
-    graph: &mut Sg,
-    num_queries: usize,
-    order: &LabelOrder<SgLabel>,
-    reg: &RegexAutomaton<SgLabel>,
-) -> Vec<QueryResult<SgLabel, SgData>>
-where
-    Sg: ScopeGraph<SgLabel, SgData>,
-{
-    let mut thread_rng = rand::rng();
-    let order = LabelOrderBuilder::new()
-        .push(SgLabel::Declaration, SgLabel::Parent)
-        .build();
-
-    // P*D;
-    let label_reg = Regex::concat(Regex::kleene(SgLabel::Parent), SgLabel::Declaration);
-    let reg = RegexAutomaton::from_regex(label_reg.clone());
-    let mut envs = Vec::new();
-    for _ in 0..num_queries {
-        // let start_scope = Scope(START_SCOPE);
-        let start_scope = Scope(thread_rng.random_range(200..300));
-
-        let m: Arc<str> = Arc::from("x");
-        // let m = matches[thread_rng.random_range(0..matches.len())].clone();
-
-        envs = graph.query_proj(start_scope, &reg, &order, SgProjection::VarName, m);
-    }
-    graph.reset_cache(); // make next benchmark run from scratch
-    envs
-}
-
-const START_SCOPE: usize = 280;
+mod common;
 
 fn get_pattern() -> Vec<GraphPattern> {
     vec![
@@ -89,66 +44,49 @@ fn get_pattern() -> Vec<GraphPattern> {
     ]
 }
 
-fn lib_graph_builder(graph: LibGraph) -> LibGraph {
-    GraphGenerator::new(graph)
-        .with_patterns(get_pattern())
-        .build_sg()
-}
-
-fn graph_builder<Sg>(graph: Sg) -> Sg
-where
-    Sg: ScopeGraph<SgLabel, SgData>,
-{
-    GraphGenerator::new(graph)
-        .with_patterns(get_pattern())
-        .build()
-}
-
 pub fn criterion_benchmark(c: &mut Criterion) {
+    let mut graph = construct_base_graph(get_pattern());
+    let mut bu_graph = construct_cached_graph(get_pattern());
     let storage = Storage::new();
-    unsafe {
-        let mut graph = graph_builder(BaseScopeGraph::new());
-        let mut bu_graph = CachedScopeGraph::from_base(graph.clone());
-        graph
-            .as_uml_diagram("title", false)
-            .render_to_file("output/bench/graph.puml")
-            .unwrap();
-        graph
-            .as_mmd_diagram("title", false)
-            .render_to_file("output/bench/graph.md")
-            .unwrap();
-        let mut lib_graph: LibGraph = LibGraph::new(&storage, UncheckedCompleteness::new());
-        lib_graph = lib_graph_builder(lib_graph);
-        lib_graph
-            .render_to("output/bench/libgraph.mmd", RenderSettings::default())
-            .unwrap();
+    let mut lib_graph = construct_libgraph(&storage, get_pattern());
 
-        let order = LabelOrderBuilder::new()
-            .push(SgLabel::Declaration, SgLabel::Parent)
-            .build();
+    bu_graph
+        .as_uml_diagram("title", false)
+        .render_to_file("output/bench/graph.puml")
+        .unwrap();
+    bu_graph
+        .as_mmd_diagram("title", false)
+        .render_to_file("output/bench/graph.md")
+        .unwrap();
+    lib_graph
+        .render_to("output/bench/libgraph.mmd", RenderSettings::default())
+        .unwrap();
 
-        // P*D;
-        let label_reg = Regex::concat(Regex::kleene(SgLabel::Parent), SgLabel::Declaration);
-        let matcher = RegexAutomaton::from_regex(label_reg.clone());
+    let order = LabelOrderBuilder::new()
+        .push(SgLabel::Declaration, SgLabel::Parent)
+        .build();
 
-        let mut group = c.benchmark_group("query");
-        // group.warm_up_time(Duration::from_secs(1));
-        // group.measurement_time(Duration::from_secs(1));
+    // P*D;
+    let label_reg = Regex::concat(Regex::kleene(SgLabel::Parent), SgLabel::Declaration);
+    let matcher = RegexAutomaton::from_regex(label_reg.clone());
 
-        for num_bench in [1, 2, 5] {
-            let s1 = format!("bench {}", num_bench);
-            let s2 = format!("cache bench {}", num_bench);
-            let s3 = format!("lib {}", num_bench);
-            group.bench_function(&s1, |b| {
-                b.iter(|| query_graph(&mut graph, num_bench, &order, &matcher))
-            });
-            group.bench_function(&s2, |b| {
-                b.iter(|| query_graph(&mut bu_graph, num_bench, &order, &matcher))
-            });
-            group.bench_function(&s3, |b| {
-                b.iter(|| query_libgraph(&mut lib_graph, num_bench))
-            });
-        }
+    let mut group = c.benchmark_group("query");
+    // group.warm_up_time(Duration::from_secs(1));
+    // group.measurement_time(Duration::from_secs(1));
+
+    for num_bench in [1, 2, 5] {
+        let s1 = format!("bench {}", num_bench);
+        let s2 = format!("cache bench {}", num_bench);
+        let s3 = format!("lib {}", num_bench);
+        group.bench_function(&s1, |b| {
+            b.iter(|| query_graph(&mut graph, num_bench, &order, &matcher))
+        });
+        group.bench_function(&s2, |b| {
+            b.iter(|| query_graph(&mut bu_graph, num_bench, &order, &matcher))
+        });
+        // group.bench_function(&s3, |b| {
+        //     b.iter(|| query_libgraph(&mut lib_graph, num_bench))
+        // });
     }
 }
 
