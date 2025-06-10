@@ -7,3 +7,5 @@ edition = "2024"
 derive_more = { version = "2.0.1", features = ["display", "from"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true, features = ["unbounded_depth"] }
+
+graphing = { path = "../graphing", features = ["mermaid", "plantuml"] }

@@ -149,9 +149,13 @@ impl PlantUmlItem {
         }
     }
 
+    fn sanitise_id(id: impl ToString) -> String {
+        id.to_string().replace("-", "_")
+    }
+
     pub fn node(id: impl ToString, contents: impl ToString, node_type: NodeType) -> Self {
         Self::new(PlantUmlItemKind::Node {
-            id: id.to_string(),
+            id: Self::sanitise_id(id),
             contents: contents.to_string(),
             node_type,
         })
@@ -164,8 +168,8 @@ impl PlantUmlItem {
         dir: EdgeDirection,
     ) -> Self {
         Self::new(PlantUmlItemKind::Edge {
-            from: from.to_string(),
-            to: to.to_string(),
+            from: Self::sanitise_id(from),
+            to: Self::sanitise_id(to),
             label: label.to_string(),
             dir,
         })
@@ -173,7 +177,7 @@ impl PlantUmlItem {
 
     pub fn note(to: impl ToString, contents: impl ToString) -> Self {
         Self::new(PlantUmlItemKind::Note {
-            to: to.to_string(),
+            to: Self::sanitise_id(to),
             contents: contents.to_string(),
         })
     }
