@@ -20,11 +20,11 @@ use crate::{
     regex::dfs::RegexAutomaton, scope::Scope,
 };
 
-mod base;
+// mod base;
 mod cached;
 mod resolve;
 
-pub use base::*;
+// pub use base::*;
 pub use cached::*;
 pub use resolve::QueryResult;
 

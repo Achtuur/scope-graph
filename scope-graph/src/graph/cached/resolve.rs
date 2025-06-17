@@ -6,15 +6,7 @@ use std::{
 use smallvec::SmallVec;
 
 use crate::{
-    ENABLE_CACHING,
-    data::ScopeGraphData,
-    graph::BaseScopeGraph,
-    label::{LabelOrEnd, ScopeGraphLabel},
-    order::LabelOrder,
-    path::{Path, ReversePath},
-    projection::ScopeGraphDataProjection,
-    regex::{RegexState, dfs::RegexAutomaton},
-    scope::Scope,
+    data::ScopeGraphData, graph::{CachedScopeGraph, ScopeMap}, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, projection::ScopeGraphDataProjection, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, ENABLE_CACHING
 };
 
 use super::{ProjEnvs, QueryCache, QueryResult, ScopeData};
@@ -35,7 +27,7 @@ where
     Proj: ScopeGraphDataProjection<Data>,
 {
     // scopegraph contains cache
-    scope_graph: &'r BaseScopeGraph<Lbl, Data>,
+    scope_graph: &'r ScopeMap<Lbl, Data>,
 
     cache: &'r mut QueryCache<Lbl, Data>,
 
@@ -56,7 +48,7 @@ where
     Proj: ScopeGraphDataProjection<Data>,
 {
     pub fn new(
-        scope_graph: &'r BaseScopeGraph<Lbl, Data>,
+        scope_graph: &'r ScopeMap<Lbl, Data>,
         cache: &'r mut QueryCache<Lbl, Data>,
         path_re: &'r RegexAutomaton<Lbl>,
         lbl_order: &'r LabelOrder<Lbl>,
@@ -235,7 +227,7 @@ where
     }
 
     fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>> {
-        self.scope_graph.scopes().get(&scope)
+        self.scope_graph.get(&scope)
     }
 
     fn cache_env(

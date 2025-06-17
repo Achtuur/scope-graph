@@ -4,7 +4,7 @@ use rand::Rng;
 use scope_graph::{
     LibGraph, SgData, SgLabel, SgProjection,
     generator::{GraphGenerator, GraphPattern},
-    graph::{BaseScopeGraph, CachedScopeGraph, QueryResult, ScopeGraph},
+    graph::{CachedScopeGraph, QueryResult, ScopeGraph},
     order::LabelOrder,
     regex::dfs::RegexAutomaton,
     scope::Scope,
@@ -23,15 +23,6 @@ pub fn construct_libgraph(storage: &Storage, pattern: Vec<GraphPattern>) -> LibG
 
 pub fn construct_cached_graph(pattern: Vec<GraphPattern>) -> CachedScopeGraph<SgLabel, SgData> {
     let graph = CachedScopeGraph::<SgLabel, SgData>::new();
-    let g = GraphGenerator::new(graph)
-        .with_patterns(pattern)
-        .build();
-    Scope::reset_counter();
-    g
-}
-
-pub fn construct_base_graph(pattern: Vec<GraphPattern>) -> BaseScopeGraph<SgLabel, SgData> {
-    let graph = BaseScopeGraph::<SgLabel, SgData>::new();
     let g = GraphGenerator::new(graph)
         .with_patterns(pattern)
         .build();
@@ -61,6 +52,35 @@ pub fn query_libgraph(graph: &mut LibGraph, num_queries: usize) {
 }
 
 pub fn query_graph<Sg>(
+    graph: &mut Sg,
+    num_queries: usize,
+    order: &LabelOrder<SgLabel>,
+    reg: &RegexAutomaton<SgLabel>,
+) -> Vec<QueryResult<SgLabel, SgData>>
+where
+    Sg: ScopeGraph<SgLabel, SgData>,
+{
+    let mut thread_rng = rand::rng();
+    let mut envs = Vec::new();
+    for _ in 0..num_queries {
+        let start_scope = Scope(thread_rng.random_range(200..300));
+        // let start_scope = Scope(START_SCOPE);
+
+        // let m: Arc<str> = Arc::from("x");
+        // let m = matches[thread_rng.random_range(0..matches.len())].clone();
+
+        envs = graph.query(
+            start_scope,
+            reg,
+            order,
+            |d1, d2| d1.name() == d2.name(),
+            |data: &SgData| data.name() == "x",
+        );
+    }
+    envs
+}
+
+pub fn query_graph_cached<Sg>(
     graph: &mut Sg,
     num_queries: usize,
     order: &LabelOrder<SgLabel>,

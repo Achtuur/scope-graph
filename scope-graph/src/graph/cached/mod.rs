@@ -11,15 +11,7 @@ use resolve::CachedResolver;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    BackgroundColor, ColorSet, ForeGroundColor,
-    data::ScopeGraphData,
-    graph::{BaseScopeGraph, ScopeData, ScopeMap},
-    label::ScopeGraphLabel,
-    order::LabelOrder,
-    path::Path,
-    projection::ScopeGraphDataProjection,
-    regex::dfs::RegexAutomaton,
-    scope::Scope,
+    data::ScopeGraphData, graph::{resolve::Resolver, Edge, ScopeData, ScopeMap}, label::ScopeGraphLabel, order::LabelOrder, path::Path, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackgroundColor, ColorSet, ForeGroundColor
 };
 
 use super::{ScopeGraph, resolve::QueryResult};
@@ -55,8 +47,7 @@ where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
 {
-    sg: BaseScopeGraph<Lbl, Data>,
-    // pub scopes: HashMap<Scope, ScopeData<Lbl, Data>>,
+    pub scopes: ScopeMap<Lbl, Data>,
     #[serde(skip)]
     resolve_cache: ScopeGraphCache<Lbl, Data>,
 }
@@ -70,47 +61,69 @@ where
         self.resolve_cache.clear();
     }
 
-    fn add_edge(&mut self, source: Scope, target: Scope, label: Lbl) {
-        self.sg.add_edge(source, target, label.clone());
+    fn add_scope(&mut self, scope: Scope, data: Data) -> Scope {
+        tracing::trace!("Adding scope: {} with data: {}", scope, data);
+        self.scopes.insert(scope, ScopeData::new(data));
+        scope
     }
 
+    fn add_edge(&mut self, source: Scope, target: Scope, label: Lbl) {
+        tracing::debug!(
+            "Adding edge: {} <-> {} with label: {}",
+            source,
+            target,
+            label
+        );
+
+        let edge_to_parent = Edge::new(target, label.clone());
+        self.scopes
+            .get_mut(&source)
+            .expect("Attempting to add edge to non-existant scope")
+            .outgoing_mut()
+            .push(edge_to_parent);
+
+        let edge_to_child = Edge::new(source, label);
+        self.scopes
+            .get_mut(&target)
+            .expect("Attempting to add edge to non-existant scope")
+            .incoming_mut()
+            .push(edge_to_child);
+    }
+
+    fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>> {
+        self.scopes.get(&scope)
+    }
+    
     fn scope_iter<'a>(&'a self) -> impl Iterator<Item = (&'a Scope, &'a ScopeData<Lbl, Data>)>
     where
         Lbl: 'a,
         Data: 'a,
     {
-        self.sg.scope_iter()
+        self.scopes.iter()
     }
 
     fn scope_holds_data(&self, scope: Scope) -> bool {
-        self.sg.scope_holds_data(scope)
-    }
-
-    fn find_scope(&self, scope_num: usize) -> Option<Scope> {
-        self.sg.find_scope(scope_num)
-    }
-
-    fn first_scope_without_data(&self, scope_num: usize) -> Option<Scope> {
-        self.sg.first_scope_without_data(scope_num)
-    }
-
-    fn add_scope(&mut self, scope: Scope, data: Data) -> Scope {
-        self.sg.add_scope(scope, data)
+        self.scopes
+            .get(&scope)
+            .map(|d| d.data.variant_has_data())
+            .unwrap_or_default()
     }
 
     fn query<DEq, DWfd>(
         &mut self,
-        _scope: Scope,
-        _path_regex: &RegexAutomaton<Lbl>,
-        _order: &LabelOrder<Lbl>,
-        _data_equiv: DEq,
-        _data_wellformedness: DWfd,
+        scope: Scope,
+        path_regex: &RegexAutomaton<Lbl>,
+        order: &LabelOrder<Lbl>,
+        data_equiv: DEq,
+        data_wellformedness: DWfd,
     ) -> Vec<QueryResult<Lbl, Data>>
     where
         DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
         DWfd: for<'da> Fn(&'da Data) -> bool,
     {
-        unreachable!("Use query_proj instead");
+        let mut resolver =
+            Resolver::new(self, path_regex, order, &data_equiv, &data_wellformedness);
+        resolver.resolve(Path::start(scope))
     }
 
     fn query_proj<Proj>(
@@ -131,7 +144,7 @@ where
             .entry((order.clone(), path_regex.clone(), proj_hash))
             .or_default();
         let mut resolver = CachedResolver::new(
-            &self.sg,
+           &self.scopes,
             cache_entry,
             path_regex,
             order,
@@ -243,10 +256,6 @@ where
             })
             .collect()
     }
-
-    fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>> {
-        self.sg.get_scope(scope)
-    }
 }
 
 impl<'s, Lbl, Data> Default for CachedScopeGraph<Lbl, Data>
@@ -266,20 +275,13 @@ where
 {
     pub fn new() -> Self {
         Self {
-            sg: BaseScopeGraph::new(),
-            resolve_cache: ScopeGraphCache::new(),
-        }
-    }
-
-    pub fn from_base(sg: BaseScopeGraph<Lbl, Data>) -> Self {
-        Self {
-            sg,
+            scopes: ScopeMap::new(),
             resolve_cache: ScopeGraphCache::new(),
         }
     }
 
     pub fn scopes(&self) -> &ScopeMap<Lbl, Data> {
-        self.sg.scopes()
+        self.scopes()
     }
 
     /// draw the path to the data in the cache for a specific scope

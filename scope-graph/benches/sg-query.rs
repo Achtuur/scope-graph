@@ -12,7 +12,7 @@ use scopegraphs::{
     Storage, render::RenderSettings,
 };
 
-use crate::common::{construct_base_graph, construct_cached_graph, construct_libgraph, query_graph};
+use crate::common::{construct_cached_graph, construct_libgraph, query_graph, query_graph_cached};
 
 mod common;
 
@@ -41,7 +41,6 @@ fn get_pattern() -> Vec<GraphPattern> {
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    let mut graph = construct_base_graph(get_pattern());
     let mut bu_graph = construct_cached_graph(get_pattern());
     let storage = Storage::new();
     let lib_graph = construct_libgraph(&storage, get_pattern());
@@ -73,12 +72,11 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     for num_bench in [1, 2, 5] {
         let s1 = format!("bench {}", num_bench);
         let s2 = format!("cache bench {}", num_bench);
-        let s3 = format!("lib {}", num_bench);
         group.bench_function(&s1, |b| {
-            b.iter(|| query_graph(&mut graph, num_bench, &order, &matcher))
+            b.iter(|| query_graph(&mut bu_graph, num_bench, &order, &matcher))
         });
         group.bench_function(&s2, |b| {
-            b.iter(|| query_graph(&mut bu_graph, num_bench, &order, &matcher))
+            b.iter(|| query_graph_cached(&mut bu_graph, num_bench, &order, &matcher))
         });
         // group.bench_function(&s3, |b| {
         //     b.iter(|| query_libgraph(&mut lib_graph, num_bench))

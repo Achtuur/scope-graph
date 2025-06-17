@@ -1,16 +1,11 @@
 use std::collections::HashSet;
 
 use crate::{
-    DRAW_MEM_ADDR,
-    data::ScopeGraphData,
-    label::{LabelOrEnd, ScopeGraphLabel},
-    order::LabelOrder,
-    path::{Path, ReversePath},
-    regex::{RegexState, dfs::RegexAutomaton},
-    scope::Scope,
+    data::ScopeGraphData, graph::CachedScopeGraph, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, DRAW_MEM_ADDR
 };
 
-use super::{BaseScopeGraph, ScopeData};
+use super::{ScopeData};
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QueryResult<Lbl, Data>
 where
@@ -51,7 +46,7 @@ where
     DWfd: for<'da> Fn(&'da Data) -> bool,
 {
     // scopegraph contains cache
-    pub scope_graph: &'r BaseScopeGraph<Lbl, Data>,
+    pub scope_graph: &'r CachedScopeGraph<Lbl, Data>,
     pub path_re: &'r RegexAutomaton<Lbl>,
     pub lbl_order: &'r LabelOrder<Lbl>,
     pub data_eq: DEq,
@@ -66,7 +61,7 @@ where
     DWfd: for<'da> Fn(&'da Data) -> bool,
 {
     pub fn new(
-        scope_graph: &'r BaseScopeGraph<Lbl, Data>,
+        scope_graph: &'r CachedScopeGraph<Lbl, Data>,
         path_re: &'r RegexAutomaton<Lbl>,
         lbl_order: &'r LabelOrder<Lbl>,
         data_eq: DEq,
