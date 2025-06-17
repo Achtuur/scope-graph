@@ -1,4 +1,3 @@
-use serde::Serialize;
 
 pub trait ScopeGraphData:
     PartialEq

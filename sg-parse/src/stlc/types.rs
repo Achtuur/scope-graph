@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use sclang::SclangType;
-use scope_graph::{graph::{CachedScopeGraph, ScopeGraph}, order::LabelOrderBuilder, regex::Regex, scope::Scope};
+use scope_graph::{graph::ScopeGraph, order::LabelOrderBuilder, regex::Regex, scope::Scope};
 use scopegraphs::{label_order, query_regex, resolve::Resolve};
 
 use crate::StlcLabel;
@@ -181,7 +181,7 @@ impl StlcType {
                         let StlcData::Variable(x_super, t_super) = &sup.data else {
                             panic!("Record subtype query somehow returned non-variable");
                         };
-                        x_sub == x_super && t_sub.is_subtype_of(&t_super, sg)
+                        x_sub == x_super && t_sub.is_subtype_of(t_super, sg)
                     })
                 });
                 is_subtype

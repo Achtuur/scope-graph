@@ -5,6 +5,7 @@ members = [ "data-parse",
     "sclang", # lil test language
     "scope-graph", # scope graph resolver
     "sg-parse", # parse using scope graph
+    "pattern-recog",
 ]
 
 [workspace.dependencies]

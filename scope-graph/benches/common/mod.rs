@@ -1,22 +1,20 @@
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
-use criterion::{Criterion, criterion_group, criterion_main};
-use graphing::Renderer;
 use rand::Rng;
 use scope_graph::{
     LibGraph, SgData, SgLabel, SgProjection,
     generator::{GraphGenerator, GraphPattern},
     graph::{BaseScopeGraph, CachedScopeGraph, QueryResult, ScopeGraph},
-    order::{LabelOrder, LabelOrderBuilder},
-    regex::{Regex, dfs::RegexAutomaton},
+    order::LabelOrder,
+    regex::dfs::RegexAutomaton,
     scope::Scope,
 };
 use scopegraphs::{
-    Storage, completeness::UncheckedCompleteness, label_order, query_regex, render::RenderSettings,
+    Storage, completeness::UncheckedCompleteness, label_order, query_regex,
     resolve::Resolve,
 };
 
-pub fn construct_libgraph<'a>(storage: &'a Storage, pattern: Vec<GraphPattern>) -> LibGraph<'a> {
+pub fn construct_libgraph(storage: &Storage, pattern: Vec<GraphPattern>) -> LibGraph<'_> {
     let lib_graph: LibGraph = unsafe {LibGraph::new(storage, UncheckedCompleteness::new()) };
     GraphGenerator::new(lib_graph)
         .with_patterns(pattern)
@@ -71,7 +69,7 @@ pub fn query_graph<Sg>(
 where
     Sg: ScopeGraph<SgLabel, SgData>,
 {
-    let mut thread_rng = rand::rng();
+    let thread_rng = rand::rng();
     let mut envs = Vec::new();
     for _ in 0..num_queries {
         let start_scope = Scope(START_SCOPE);
@@ -80,7 +78,7 @@ where
         let m: Arc<str> = Arc::from("x");
         // let m = matches[thread_rng.random_range(0..matches.len())].clone();
 
-        envs = graph.query_proj(start_scope, &reg, &order, SgProjection::VarName, m);
+        envs = graph.query_proj(start_scope, reg, order, SgProjection::VarName, m);
     }
     graph.reset_cache(); // make next benchmark run from scratch
     envs

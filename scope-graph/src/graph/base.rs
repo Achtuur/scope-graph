@@ -74,7 +74,7 @@ where
         self.scopes
             .get_mut(&target)
             .expect("Attempting to add edge to non-existant scope")
-            .incoming_mut()
+            .xincoming_mut()
             .push(edge_to_child);
     }
 

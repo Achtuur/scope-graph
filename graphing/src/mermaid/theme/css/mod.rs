@@ -36,6 +36,7 @@ impl StyleOptions {
         *self == Self::new()
     }
 
+    #[allow(unused_assignments)] // macro magic
     pub(crate) fn write(&self, writer: &mut impl Write) -> RenderResult<()> {
         let mut is_first = true;
         macro_rules! write_prop {

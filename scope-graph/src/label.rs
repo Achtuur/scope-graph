@@ -1,6 +1,5 @@
 use std::hash::Hash;
 
-use serde::Serialize;
 
 use crate::regex::RegexState;
 

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, io::Write, ops::Deref, path::PathBuf, str::FromStr};
+use std::{collections::HashMap, io::Write, ops::Deref};
 
 use item::MermaidItem;
 use theme::ElementStyle;

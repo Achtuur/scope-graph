@@ -1,22 +1,18 @@
-use std::{sync::Arc, time::Duration};
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use graphing::Renderer;
-use rand::Rng;
 use scope_graph::{
-    LibGraph, SgData, SgLabel, SgProjection,
-    generator::{GraphGenerator, GraphPattern},
-    graph::{BaseScopeGraph, CachedScopeGraph, QueryResult, ScopeGraph},
-    order::{LabelOrder, LabelOrderBuilder},
+    SgData, SgLabel,
+    generator::GraphPattern,
+    graph::ScopeGraph,
+    order::LabelOrderBuilder,
     regex::{Regex, dfs::RegexAutomaton},
-    scope::Scope,
 };
 use scopegraphs::{
-    Storage, completeness::UncheckedCompleteness, label_order, query_regex, render::RenderSettings,
-    resolve::Resolve,
+    Storage, render::RenderSettings,
 };
 
-use crate::common::{construct_base_graph, construct_cached_graph, construct_libgraph, query_graph, query_libgraph};
+use crate::common::{construct_base_graph, construct_cached_graph, construct_libgraph, query_graph};
 
 mod common;
 
@@ -48,7 +44,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let mut graph = construct_base_graph(get_pattern());
     let mut bu_graph = construct_cached_graph(get_pattern());
     let storage = Storage::new();
-    let mut lib_graph = construct_libgraph(&storage, get_pattern());
+    let lib_graph = construct_libgraph(&storage, get_pattern());
 
     bu_graph
         .as_uml_diagram("title", false)

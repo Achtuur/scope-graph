@@ -1,0 +1,8 @@
+[package]
+name = "pattern-recog"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+vf2 = { version = "1.0.1" }
+graphing = { path = "../graphing", features = ["plantuml", "mermaid"]}

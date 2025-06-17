@@ -252,7 +252,9 @@ impl PlantUmlItem {
             } => {
                 write!(writer, "{} -{}-> {}", from, dir.uml_str(), to)?;
                 self.write_class(writer)?;
-                write!(writer, " : {}", label)?;
+                if !label.is_empty() {
+                    write!(writer, " : {}", label)?;
+                }
             }
             // note left of {to} {classes}\n\t{contents}\nend note
             PlantUmlItemKind::Note { to, contents } => {
