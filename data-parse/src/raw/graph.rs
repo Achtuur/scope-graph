@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::raw::{ArgValue, ConstructorArg, IgnoredFields, JavaType, JavaValue};
 
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct RawScopeGraph {
     // key is scope name, value is data
     pub data: HashMap<String, JavaValue>,
@@ -13,7 +13,7 @@ pub struct RawScopeGraph {
     pub edges: HashMap<RawEdgeKey, RawEdgeHead>,
 }
 
-#[derive(Deserialize, Debug, Hash, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Hash, PartialEq, Eq)]
 #[serde(try_from = "String")]
 pub struct RawEdgeKey {
     pub s1: String,
@@ -49,16 +49,17 @@ impl TryFrom<String> for RawEdgeKey {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(tag="op", rename="Label")]
 pub struct RawLabel {
     /// arg0.value contains scope name
     pub arg0: ArgValue,
     #[serde(flatten)]
+    #[serde(skip_serializing)]
     ignored: IgnoredFields,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum RawEdge {
     Head(RawEdgeHead),
     Tail(RawEdgeTail),
@@ -88,7 +89,7 @@ impl RawEdge {
 }
 
 /// head/tail is a linked list, convert to a vec by just taking all unique values
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(tag="op", rename="Edge")]
 pub struct RawEdgeHead {
     /// Head always has a head
@@ -97,7 +98,7 @@ pub struct RawEdgeHead {
     pub tail: Box<RawEdgeTail>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(tag="op", rename="Edge")]
 pub struct RawEdgeTail {
     pub head: Option<RawScope>,
@@ -113,7 +114,7 @@ impl RawEdgeTail {
     }
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag="op", rename="Scope")]
 pub struct RawScope {
     // /// arg1.value contains resource name,
@@ -123,11 +124,13 @@ pub struct RawScope {
     // pub arg1: ArgValue,
     /// [0].value is resource name (prevent duplicates)
     /// [1].value is scope name
-    pub args: Vec<ArgValue>,
+    // pub args: Vec<ArgValue>,
     pub name: String,
+    pub resource: String,
 
     // value: String,
     #[serde(flatten)]
+    #[serde(skip_serializing)]
     ignored: IgnoredFields,
     // #[serde(flatten)]
     // data: serde_json::Value,
