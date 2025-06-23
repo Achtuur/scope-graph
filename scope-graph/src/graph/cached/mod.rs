@@ -281,7 +281,7 @@ where
     }
 
     pub fn scopes(&self) -> &ScopeMap<Lbl, Data> {
-        self.scopes()
+        &self.scopes
     }
 
     /// draw the path to the data in the cache for a specific scope
