@@ -236,7 +236,7 @@ where
                 true => (
                     NodeType::Card,
                     "data-scope",
-                    format!("{} > {}", s, d.data.render_string()),
+                    format!("{} ⊢ {}", s, d.data.render_string()),
                 ),
                 false => (NodeType::Node, "scope", s.to_string()),
             };
@@ -245,14 +245,22 @@ where
                 .add_class(BackgroundColor::get_class_name(s.0))
         });
 
+        let mut decl_dir = false;
+
         let edges = self.scope_iter().flat_map(move |(s, d)| {
             d.outgoing().iter().map(move |edge| {
                 let dir = match self.scope_holds_data(edge.target()) {
-                    true => EdgeDirection::Right,
+                    true =>  {
+                        decl_dir = !decl_dir;
+                        match decl_dir {
+                            true => EdgeDirection::Left,
+                            false => EdgeDirection::Right,
+                        }
+                    },
                     false => EdgeDirection::Up,
                 };
 
-                PlantUmlItem::edge(s.uml_id(), edge.target().uml_id(), edge.lbl().str(), dir)
+                PlantUmlItem::edge(s.uml_id(), edge.target().uml_id(), edge.lbl().char(), dir)
                     .add_class("scope_edge")
             })
         });
@@ -317,7 +325,7 @@ where
             .scope_iter()
             .map(|(s, d)| match d.data.variant_has_data() {
                 true => {
-                    let contents = format!("{} > {}", s, d.data.render_string());
+                    let contents = format!("{} ⊢ {}", s, d.data.render_string());
                     MermaidItem::node(s.uml_id(), contents, ItemShape::Rounded)
                         .add_class("data-scope")
                 }
@@ -334,7 +342,7 @@ where
                 MermaidItem::edge(
                     s.uml_id(),
                     edge.target().uml_id(),
-                    edge.lbl().str(),
+                    edge.lbl().char(),
                     EdgeType::Thick,
                 )
                 .add_class("scope-edge")

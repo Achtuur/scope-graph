@@ -201,12 +201,32 @@ impl GraphPattern {
     }
 }
 
-pub struct GraphGenerator<G> {
+pub struct GraphGenerator<G> 
+{
     patterns: Vec<GraphPattern>,
     graph: G,
 }
 
-impl<G> GraphGenerator<G> {
+impl<G> GraphGenerator<G>
+where G: Default
+{
+    pub fn from_pattern(pattern: GraphPattern) -> Self {
+        Self {
+            patterns: vec![pattern],
+            graph: G::default(),
+        }
+    }
+
+    pub fn from_pattern_iter(iter: impl IntoIterator<Item = GraphPattern>) -> Self {
+        Self {
+            patterns: iter.into_iter().collect(),
+            graph: G::default(),
+        }
+    }
+}
+
+impl<G> GraphGenerator<G> 
+{
     pub fn new(graph: G) -> Self {
         Self {
             patterns: Vec::new(),

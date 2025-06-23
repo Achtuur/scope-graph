@@ -26,6 +26,7 @@ pub mod graph;
 pub mod order;
 pub mod projection;
 pub mod regex;
+mod slides;
 
 /// Enable caching when doing forward resolution
 pub const ENABLE_CACHING: bool = true;
@@ -192,6 +193,20 @@ pub enum SgLabel {
     // C,
     // /// Debug path that should never be taken
     // NeverTake,
+}
+
+#[cfg(test)]
+impl From<char> for SgLabel {
+    fn from(c: char) -> Self {
+        match c {
+            'P' => Self::Parent,
+            'D' => Self::Declaration,
+            // 'A' => Self::A,
+            // 'B' => Self::B,
+            // 'C' => Self::C,
+            _ => panic!("Invalid SgLabel character: {}", c),
+        }
+    }
 }
 
 impl std::fmt::Display for SgLabel {

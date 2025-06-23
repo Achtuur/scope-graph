@@ -8,6 +8,12 @@ static SCOPE_COUNTER: AtomicUsize = AtomicUsize::new(0);
 #[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Scope(pub usize);
 
+impl From<usize> for Scope {
+    fn from(id: usize) -> Self {
+        Scope(id)
+    }
+}
+
 impl Scope {
     /// Create a new scope with the given id.
     pub fn new() -> Self {

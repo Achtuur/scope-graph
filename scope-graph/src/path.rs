@@ -28,15 +28,15 @@ impl<Lbl: ScopeGraphLabel> Path<Lbl>
 where
     Lbl: ScopeGraphLabel + Clone,
 {
-    pub fn start(start: Scope) -> Self {
-        Self::Start(start)
+    pub fn start(start: impl Into<Scope>) -> Self {
+        Self::Start(start.into())
     }
 
     /// Step forward (p -> new p)
-    pub fn step(&self, label: Lbl, scope: Scope, automaton_idx: usize) -> Self {
+    pub fn step(&self, label: Lbl, scope: impl Into<Scope>, automaton_idx: usize) -> Self {
         Self::Step {
             label,
-            target: scope,
+            target: scope.into(),
             from: Rc::new(self.clone()),
             automaton_idx,
         }
@@ -114,7 +114,6 @@ where
             Self::Start(_) => Vec::new(),
             Self::Step {
                 from,
-                label,
                 target,
                 ..
             } => {
@@ -126,7 +125,7 @@ where
                 let item = PlantUmlItem::edge(
                     from_scope.uml_id(),
                     to_scope.uml_id(),
-                    label.char(),
+                    "",
                     EdgeDirection::Norank,
                 )
                 .add_class(class.clone())
@@ -300,7 +299,7 @@ mod tests {
 
     #[test]
     fn test_rev() {
-        let path = Path::Start(Scope(1))
+        let path: Path<char> = Path::Start(Scope(1))
             .step('c', Scope(2), 0)
             .step('d', Scope(3), 0);
         println!("{}", path);
@@ -310,18 +309,18 @@ mod tests {
 
     #[test]
     fn test_is_circular() {
-        let path = Path::Start(Scope(1))
+        let path: Path<char> = Path::Start(Scope(1))
             .step('c', Scope(2), 0)
             .step('d', Scope(3), 0);
         assert!(!path.is_circular(0));
 
-        let path = Path::Start(Scope(1))
+        let path: Path<char> = Path::Start(Scope(1))
             .step('c', Scope(2), 0)
             .step('d', Scope(3), 0)
             .step('c', Scope(2), 0);
         assert!(path.is_circular(0));
 
-        let path = Path::Start(Scope(1))
+        let path: Path<char> = Path::Start(Scope(1))
             .step('c', Scope(2), 0)
             .step('d', Scope(3), 0)
             .step('c', Scope(2), 1);
