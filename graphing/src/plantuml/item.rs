@@ -150,7 +150,14 @@ impl PlantUmlItem {
     }
 
     fn sanitise_id(id: impl ToString) -> String {
-        id.to_string().replace("-", "_")
+        id.to_string().chars().fold(String::new(), |mut s, c| {
+            match c {
+                _ if c.is_ascii_alphanumeric() => s.push(c),
+                '_' => s.push(c),
+                _ => (),
+            }
+            s
+        })
     }
 
     pub fn node(id: impl ToString, contents: impl ToString, node_type: NodeType) -> Self {

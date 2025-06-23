@@ -33,6 +33,11 @@ impl PlantUmlDiagram {
         }
     }
 
+    /// Returns number of items in the diagram.
+    pub fn num_items(&self) -> usize {
+        self.items.len()
+    }
+
     pub fn set_style_sheet(&mut self, style: PlantUmlStyleSheet) {
         self.style = style;
     }
