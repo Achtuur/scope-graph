@@ -13,18 +13,22 @@ mod slides_examples {
         ];
 
         let graph: CachedScopeGraph<_, _> = GraphGenerator::from_pattern_iter(pattern).build();
+        let mut diagram = graph.as_uml_diagram("Example Graph", false);
+        diagram.render_to_file("output/slides_example_query_2_data/graph.puml").unwrap();
 
         let path = Path::start(3)
             .step(SgLabel::Parent, 0, 0)
             .step(SgLabel::Declaration, 1, 0);
-
-        let mut diagram = graph.as_uml_diagram("Example Graph", false);
-
-        diagram.render_to_file("output/slides_example_query_2_data.puml").unwrap();
-
         let class = ForeGroundColor::next_class();
         diagram.extend(path.as_uml(class, false));
-        diagram.render_to_file("output/slides_example_query_2_data_path.puml").unwrap();
+        diagram.render_to_file("output/slides_example_query_2_data/path1.puml").unwrap();
+
+        let path2 = Path::start(3)
+            .step(SgLabel::Parent, 0, 0)
+            .step(SgLabel::Declaration, 2, 0);
+        let class = ForeGroundColor::next_class();
+        diagram.extend(path2.as_uml(class, false));
+        diagram.render_to_file("output/slides_example_query_2_data/path2.puml").unwrap();
     }
 
     #[test]
@@ -38,7 +42,7 @@ mod slides_examples {
         let graph: CachedScopeGraph<_, _> = GraphGenerator::from_pattern_iter(pattern).build();
 
         graph.as_uml_diagram("Example Graph", false)
-            .render_to_file("output/slides_example_query_2_data_diamond.puml")
+            .render_to_file("output/slides_example_query_2_data_diamond/graph.puml")
             .unwrap();
     }
 }
