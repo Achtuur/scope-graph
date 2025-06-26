@@ -21,15 +21,15 @@ fn graph_builder() -> UsedScopeGraph<SgLabel, SgData> {
         GraphPattern::Decl(SgData::var("x", "int")),
         GraphPattern::Tree(7),
         GraphPattern::ReverseTree(3),
-        // GraphPattern::Decl(SgData::var("x1", "int")),
-        // GraphPattern::Decl(SgData::var("x2", "int")),
-        // GraphPattern::Decl(SgData::var("x3", "int")),
-        // GraphPattern::Decl(SgData::var("x4", "int")),
-        // GraphPattern::Linear(3),
-        // GraphPattern::Linear(1),
-        // GraphPattern::Diamond(5),
-        // GraphPattern::Decl(SgData::var("y", "int")),
-        // GraphPattern::Linear(10),
+        GraphPattern::Decl(SgData::var("x1", "int")),
+        GraphPattern::Decl(SgData::var("x2", "int")),
+        GraphPattern::Decl(SgData::var("x3", "int")),
+        GraphPattern::Decl(SgData::var("x4", "int")),
+        GraphPattern::Linear(3),
+        GraphPattern::Linear(1),
+        GraphPattern::Diamond(5),
+        GraphPattern::Decl(SgData::var("y", "int")),
+        GraphPattern::Linear(10),
     ];
     let graph = GraphGenerator::new(graph).with_patterns(patterns).build();
     graph
@@ -50,7 +50,7 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
 
     // P*D;
     let label_reg = Regex::concat(
-        Regex::concat(SgLabel::Parent, SgLabel::Parent),
+        Regex::kleene(SgLabel::Parent),
         SgLabel::Declaration,
     );
     let matcher = RegexAutomaton::from_regex(label_reg.clone());
@@ -58,7 +58,7 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
     matcher.to_mmd().render_to_file("output/regex.md").unwrap();
 
     let x_match: Arc<str> = Arc::from("y");
-    let query_scope_set = [(x_match.clone(), vec![2]), (x_match.clone(), vec![2])];
+    let query_scope_set = [(x_match.clone(), vec![32]), (x_match.clone(), vec![39])];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
         let title = format!(
@@ -128,7 +128,7 @@ fn main() {
     // slides_example();
 
     // let mut graph = graph_builder();
-    let mut graph = circular_graph();
+    let mut graph = graph_builder();
     query_test(&mut graph);
 
     if SAVE_GRAPH {

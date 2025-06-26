@@ -108,7 +108,7 @@ fn parsed_scopegraph_data() -> ParseResult<()> {
 
     let mut scope_vec = json.scopes.keys().cloned().collect::<Vec<_>>();
     scope_vec.sort();
-    let scope = scope_vec.get(550).unwrap(); 
+    let scope = scope_vec.get(550).unwrap();
     let (scopes, relevant_edges) = get_scopegraph_section(scope, &scope_vec, &json.edges, 200, 0);
 
     let mut graph = PlantUmlDiagram::new("raw_data");

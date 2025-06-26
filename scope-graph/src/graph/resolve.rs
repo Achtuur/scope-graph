@@ -1,10 +1,46 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::atomic::AtomicUsize};
 
 use crate::{
-    data::ScopeGraphData, graph::CachedScopeGraph, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, DRAW_MEM_ADDR
+    data::ScopeGraphData, graph::{CachedScopeGraph, ScopeMap}, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, DRAW_MEM_ADDR
 };
 
 use super::{ScopeData};
+
+
+#[derive(Debug, Default)]
+pub struct QueryProfiler {
+    pub edges_traversed: AtomicUsize,
+    pub nodes_visited: AtomicUsize,
+    pub cache_reads: AtomicUsize,
+    pub cache_writes: AtomicUsize,
+    pub cache_hits: AtomicUsize,
+    /// size estimate in bytes
+    /// assuming that hashmap is simply a list of [(K, V)] for simplicity
+    pub cache_size_estimate: AtomicUsize,
+}
+
+impl QueryProfiler {
+    pub fn inc_edges_traversed(&self) {
+        self.edges_traversed.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    pub fn inc_nodes_visited(&self) {
+        self.nodes_visited.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    pub fn inc_cache_reads(&self) {
+        self.cache_reads.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    pub fn inc_cache_writes(&self) {
+        self.cache_writes.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    pub fn inc_cache_hits(&self) {
+        self.cache_hits.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    }
+}
+
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QueryResult<Lbl, Data>
@@ -46,11 +82,12 @@ where
     DWfd: for<'da> Fn(&'da Data) -> bool,
 {
     // scopegraph contains cache
-    pub scope_graph: &'r CachedScopeGraph<Lbl, Data>,
+    pub scope_map: &'r ScopeMap<Lbl, Data>,
     pub path_re: &'r RegexAutomaton<Lbl>,
     pub lbl_order: &'r LabelOrder<Lbl>,
     pub data_eq: DEq,
     pub data_wfd: DWfd,
+    pub profiler: QueryProfiler,
 }
 
 impl<'r, Lbl, Data, DEq, DWfd> Resolver<'r, Lbl, Data, DEq, DWfd>
@@ -61,18 +98,19 @@ where
     DWfd: for<'da> Fn(&'da Data) -> bool,
 {
     pub fn new(
-        scope_graph: &'r CachedScopeGraph<Lbl, Data>,
+        scope_map: &'r ScopeMap<Lbl, Data>,
         path_re: &'r RegexAutomaton<Lbl>,
         lbl_order: &'r LabelOrder<Lbl>,
         data_eq: DEq,
         data_wfd: DWfd,
     ) -> Resolver<'r, Lbl, Data, DEq, DWfd> {
         Self {
-            scope_graph,
+            scope_map,
             path_re,
             lbl_order,
             data_eq,
             data_wfd,
+            profiler: QueryProfiler::default(),
         }
     }
 
@@ -101,6 +139,7 @@ where
         reg: RegexState<'r, Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
         let scope = self.get_scope(path.target()).expect("Scope not found");
+        self.profiler.inc_nodes_visited();
 
         let mut labels = scope
             .outgoing()
@@ -185,7 +224,10 @@ where
                             .step(e.lbl().clone(), e.target(), partial_reg.index())
                     })
                     .filter(|p| !p.is_circular(partial_reg.index()))
-                    .flat_map(|p| self.resolve_all(p, partial_reg.clone())) // resolve new paths
+                    .flat_map(|p| {
+                        self.profiler.inc_edges_traversed();
+                        self.resolve_all(p, partial_reg.clone())
+                    }) // resolve new paths
                     .collect::<Vec<_>>()
             }
         }
@@ -204,6 +246,6 @@ where
     }
 
     fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>> {
-        self.scope_graph.scopes().get(&scope)
+        self.scope_map.get(&scope)
     }
 }

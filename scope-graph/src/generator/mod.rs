@@ -1,3 +1,5 @@
+use rand::Rng;
+
 use crate::{LibGraph, LibScope, SgData, SgLabel, graph::ScopeGraph, scope::Scope};
 
 pub enum GraphPattern {
@@ -17,6 +19,10 @@ pub enum GraphPattern {
     ///  |
     /// (N)
     Linear(usize),
+    /// Linear with random chance for declarations
+    ///
+    /// Name of variable is `x_{i}`, with i between 0 and length
+    LinearDecl(usize),
     LinearLabel(usize, SgLabel),
     /// Tree pattern with number of children,
     ///
@@ -47,6 +53,26 @@ impl GraphPattern {
                         let child_scope = graph.add_scope_default();
                         graph.add_edge(child_scope, cur_scope, *label);
                         cur_scope = child_scope
+                    }
+                    new_child_scopes.push(cur_scope);
+                }
+                new_child_scopes
+            }
+            Self::LinearDecl(length) => {
+                let mut new_child_scopes = Vec::new();
+                let mut rng = rand::rng();
+                for child in child_scopes {
+                    let mut cur_scope = child;
+                    for i in 0..*length {
+                        let child_scope = graph.add_scope_default();
+                        graph.add_edge(child_scope, cur_scope, SgLabel::Parent);
+                        cur_scope = child_scope;
+
+                        if rng.random_bool(0.1) {
+                            let decl_data = SgData::var(format!("x_{i}"), "int");
+                            let _ = graph.add_decl(cur_scope, SgLabel::Declaration, decl_data);
+                        }
+
                     }
                     new_child_scopes.push(cur_scope);
                 }
@@ -197,11 +223,12 @@ impl GraphPattern {
                 }
                 child_scopes
             }
+            _ => todo!("implement pattern for libgraph"),
         }
     }
 }
 
-pub struct GraphGenerator<G> 
+pub struct GraphGenerator<G>
 {
     patterns: Vec<GraphPattern>,
     graph: G,
@@ -225,7 +252,7 @@ where G: Default
     }
 }
 
-impl<G> GraphGenerator<G> 
+impl<G> GraphGenerator<G>
 {
     pub fn new(graph: G) -> Self {
         Self {

@@ -14,6 +14,25 @@ use scopegraphs::{
     resolve::Resolve,
 };
 
+const HEAD_RANGE: std::ops::RangeInclusive<usize> = 1..=50;
+const TAIL_RANGE: std::ops::RangeInclusive<usize> = 1..=50;
+
+
+pub fn construct_graph(pattern: GraphPattern) -> (CachedScopeGraph<SgLabel, SgData>, usize, usize) {
+    let mut rand = rand::rng();
+    let head_size = rand.random_range(1..=20);
+    let tail_size = rand.random_range(1..=20);
+    let pattern = [
+        GraphPattern::Decl(SgData::var("x", "int")),
+        GraphPattern::LinearDecl(head_size),
+        pattern,
+        GraphPattern::Linear(tail_size),
+    ];
+    let graph = construct_cached_graph(pattern);
+    (graph, head_size, tail_size)
+}
+
+
 pub fn construct_libgraph(storage: &Storage, pattern: Vec<GraphPattern>) -> LibGraph<'_> {
     let lib_graph: LibGraph = unsafe {LibGraph::new(storage, UncheckedCompleteness::new()) };
     GraphGenerator::new(lib_graph)
@@ -21,7 +40,7 @@ pub fn construct_libgraph(storage: &Storage, pattern: Vec<GraphPattern>) -> LibG
         .build_sg()
 }
 
-pub fn construct_cached_graph(pattern: Vec<GraphPattern>) -> CachedScopeGraph<SgLabel, SgData> {
+pub fn construct_cached_graph(pattern: impl IntoIterator<Item = GraphPattern>) -> CachedScopeGraph<SgLabel, SgData> {
     let graph = CachedScopeGraph::<SgLabel, SgData>::new();
     let g = GraphGenerator::new(graph)
         .with_patterns(pattern)
@@ -30,7 +49,6 @@ pub fn construct_cached_graph(pattern: Vec<GraphPattern>) -> CachedScopeGraph<Sg
     g
 }
 
-const START_SCOPE: usize = 280;
 
 pub fn query_libgraph(graph: &mut LibGraph, num_queries: usize) {
     let mut thread_rng = rand::rng();
@@ -53,6 +71,7 @@ pub fn query_libgraph(graph: &mut LibGraph, num_queries: usize) {
 
 pub fn query_graph<Sg>(
     graph: &mut Sg,
+    start_scope_range: std::ops::Range<usize>,
     num_queries: usize,
     order: &LabelOrder<SgLabel>,
     reg: &RegexAutomaton<SgLabel>,
@@ -63,18 +82,20 @@ where
     let mut thread_rng = rand::rng();
     let mut envs = Vec::new();
     for _ in 0..num_queries {
-        let start_scope = Scope(thread_rng.random_range(200..300));
+        let start_scope = Scope(thread_rng.random_range(start_scope_range.clone()));
         // let start_scope = Scope(START_SCOPE);
 
         // let m: Arc<str> = Arc::from("x");
         // let m = matches[thread_rng.random_range(0..matches.len())].clone();
+        let x = thread_rng.random_range(HEAD_RANGE.clone());
+        let m = format!("x_{}", x);
 
         envs = graph.query(
             start_scope,
             reg,
             order,
             |d1, d2| d1.name() == d2.name(),
-            |data: &SgData| data.name() == "x",
+            |data: &SgData| data.name() == m.as_str(),
         );
     }
     envs
@@ -82,6 +103,7 @@ where
 
 pub fn query_graph_cached<Sg>(
     graph: &mut Sg,
+    start_scope_range: std::ops::Range<usize>,
     num_queries: usize,
     order: &LabelOrder<SgLabel>,
     reg: &RegexAutomaton<SgLabel>,
@@ -89,16 +111,17 @@ pub fn query_graph_cached<Sg>(
 where
     Sg: ScopeGraph<SgLabel, SgData>,
 {
-    let thread_rng = rand::rng();
+    let mut thread_rng = rand::rng();
     let mut envs = Vec::new();
     for _ in 0..num_queries {
-        let start_scope = Scope(START_SCOPE);
-        // let start_scope = Scope(thread_rng.random_range(200..250));
+        let start_scope = Scope(thread_rng.random_range(start_scope_range.clone()));
 
-        let m: Arc<str> = Arc::from("x");
+        let x = thread_rng.random_range(HEAD_RANGE.clone());
+        let m = format!("x_{}", x);
+        let m_wfd: Arc<str> = Arc::from(m.as_str());
         // let m = matches[thread_rng.random_range(0..matches.len())].clone();
 
-        envs = graph.query_proj(start_scope, reg, order, SgProjection::VarName, m);
+        envs = graph.query_proj(start_scope, reg, order, SgProjection::VarName, m_wfd);
     }
     graph.reset_cache(); // make next benchmark run from scratch
     envs

@@ -69,7 +69,7 @@ where
 
     fn add_edge(&mut self, source: Scope, target: Scope, label: Lbl) {
         tracing::debug!(
-            "Adding edge: {} <-> {} with label: {}",
+            "Adding edge: {} -> {} with label: {}",
             source,
             target,
             label
@@ -122,7 +122,7 @@ where
         DWfd: for<'da> Fn(&'da Data) -> bool,
     {
         let mut resolver =
-            Resolver::new(self, path_regex, order, &data_equiv, &data_wellformedness);
+            Resolver::new(&self.scopes, path_regex, order, &data_equiv, &data_wellformedness);
         resolver.resolve(Path::start(scope))
     }
 
@@ -152,6 +152,7 @@ where
             proj_wfd,
         );
         let envs = resolver.resolve(Path::start(scope));
+        tracing::info!("{:?}", resolver.profiler);
         tracing::info!(
             "Resolved query: {}, {}, {}, found:",
             scope,

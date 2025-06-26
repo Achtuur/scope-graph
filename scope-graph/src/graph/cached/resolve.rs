@@ -6,7 +6,7 @@ use std::{
 use smallvec::SmallVec;
 
 use crate::{
-    data::ScopeGraphData, graph::{CachedScopeGraph, ScopeMap}, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, projection::ScopeGraphDataProjection, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, ENABLE_CACHING
+    data::ScopeGraphData, graph::{resolve::{QueryProfiler, Resolver}, CachedScopeGraph, ScopeMap}, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, projection::ScopeGraphDataProjection, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, ENABLE_CACHING
 };
 
 use super::{ProjEnvs, QueryCache, QueryResult, ScopeData};
@@ -39,6 +39,7 @@ where
     ///
     /// `DWfd := |data: &Data| data_proj(data) == proj_wfd`
     proj_wfd: Proj::Output,
+    pub profiler: QueryProfiler,
 }
 
 impl<'r, Lbl, Data, Proj> CachedResolver<'r, Lbl, Data, Proj>
@@ -62,6 +63,7 @@ where
             lbl_order,
             data_proj,
             proj_wfd,
+            profiler: QueryProfiler::default(),
         }
     }
 
@@ -96,6 +98,7 @@ where
     fn get_env(&mut self, path: Path<Lbl>, reg: RegexState<'r, Lbl>) -> ProjEnvs<Lbl, Data> {
         // all edges where brzozowski derivative != 0
         let scope = self.get_scope(path.target()).expect("Scope not found");
+        self.profiler.inc_nodes_visited();
 
         tracing::debug!("Checking cache for path {}", path);
         let cached_env = self.get_cached_env(&path, &reg);
@@ -186,7 +189,10 @@ where
                     .filter(|e| e.lbl() == label)
                     .map(|e| path.step(e.lbl().clone(), e.target(), partial_reg.index())) // create new paths
                     .filter(|p| !p.is_circular(partial_reg.index())) // create new paths
-                    .flat_map(|p| self.resolve_all(p, partial_reg.clone())) // resolve new paths
+                    .flat_map(|p| {
+                        self.profiler.inc_edges_traversed();
+                        self.resolve_all(p, partial_reg.clone())
+                    }) // resolve new paths
                     .fold(ProjEnvs::default(), |mut acc, (p, mut envs)| {
                         // path is a path from the starting scope to the current one.
                         // in the cache, we want to store the path from the _data_ to the current scope.
@@ -210,6 +216,7 @@ where
         }
     }
 
+    #[allow(clippy::map_entry)] // makes code more reabable imo
     fn shadow(
         &self,
         mut envs1: ProjEnvs<Lbl, Data>,
@@ -218,10 +225,9 @@ where
         tracing::trace!("Shadowing...");
         for (proj, e2) in envs2 {
             // env1 shadows env2 always, so if env1 has a P, we know a2 is shadowed
-            if envs1.contains_key(&proj) {
-                continue;
+            if !envs1.contains_key(&proj) {
+                envs1.insert(proj, e2);
             }
-            envs1.insert(proj, e2);
         }
         envs1
     }
@@ -249,6 +255,7 @@ where
             let entry = self.cache.entry(key).or_default();
             // this replaces any existing cache
             // but we will only ever have one entry for the given key (I assume)
+            self.profiler.inc_cache_writes();
             entry.insert(*proj, envs.clone());
         }
     }
@@ -257,8 +264,15 @@ where
         if !ENABLE_CACHING {
             return ProjEnvs::default();
         }
+        self.profiler.inc_cache_reads();
 
         let key = (reg.index(), path.target());
-        self.cache.get(&key).cloned().unwrap_or_default()
+        match self.cache.get(&key) {
+            Some(entry) => {
+                self.profiler.inc_cache_hits();
+                entry.clone()
+            }
+            None => ProjEnvs::default(),
+        }
     }
 }
