@@ -221,7 +221,7 @@ where
         style_sheet.merge(bg);
         style_sheet.merge(bg_line);
 
-        let mut diagram = PlantUmlDiagram::new("scope graph");
+        let mut diagram = PlantUmlDiagram::new(title);
         diagram.set_style_sheet(style_sheet);
         diagram.extend(self.generate_graph_uml());
         if draw_caches {
@@ -261,7 +261,7 @@ where
                 };
 
                 PlantUmlItem::edge(s.uml_id(), edge.target().uml_id(), edge.lbl().char(), dir)
-                    .add_class("scope_edge")
+                    .add_class("scope-edge")
             })
         });
 

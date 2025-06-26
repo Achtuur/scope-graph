@@ -33,6 +33,10 @@ impl PlantUmlDiagram {
         }
     }
 
+    pub fn set_title(&mut self, title: impl ToString) {
+        self.title = title.to_string();
+    }
+
     /// Returns number of items in the diagram.
     pub fn num_items(&self) -> usize {
         self.items.len()
