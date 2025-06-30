@@ -1,3 +1,5 @@
+use std::sync::atomic::Ordering;
+
 use criterion::{Criterion, criterion_group, criterion_main};
 use rand::{Rng, rngs::ThreadRng};
 use scope_graph::{
@@ -8,13 +10,13 @@ use scope_graph::{
     regex::{Regex, dfs::RegexAutomaton},
 };
 
-use crate::common::{construct_cached_graph, construct_graph, query_graph, query_graph_cached};
+use crate::common::{construct_cached_graph, construct_graph, query_graph, query_graph_cached, SEED};
 
 mod common;
 
 const NUM_QUERIES: [usize; 3] = [1, 2, 5];
 // const SIZES: [usize; 6] = [2, 4, 8, 16, 32, 64];
-const SIZES: [usize; 1] = [32];
+const SIZES: [usize; 3] = [4, 16, 64];
 
 pub fn benchmark_pattern(c: &mut Criterion, name: &str, pattern_fn: fn(usize) -> GraphPattern) {
     let order = LabelOrderBuilder::new()
@@ -28,6 +30,7 @@ pub fn benchmark_pattern(c: &mut Criterion, name: &str, pattern_fn: fn(usize) ->
     // group.sample_size(10);
     for num_queries in NUM_QUERIES {
         for n in SIZES {
+            SEED.fetch_and(0, Ordering::SeqCst);
             group.bench_function(format!("{name}_{num_queries}_{n}"), |b| {
                 let (mut graph, head_size, tail_size) = construct_graph(pattern_fn(n));
                 let start_range = (head_size + n)..(head_size + n + tail_size);
@@ -43,6 +46,7 @@ pub fn benchmark_pattern(c: &mut Criterion, name: &str, pattern_fn: fn(usize) ->
                 });
             });
 
+            SEED.fetch_and(0, Ordering::SeqCst);
             group.bench_function(format!("{name}_cached_{num_queries}_{n}"), |b| {
                 let (mut graph, head_size, tail_size) = construct_graph(pattern_fn(n));
                 let start_range = (head_size + n)..(head_size + n + tail_size);

@@ -22,4 +22,4 @@ harness= false
 
 [[bench]]
 name="sg-simple"
-harness=false
+harness = false

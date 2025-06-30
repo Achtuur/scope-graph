@@ -1,6 +1,6 @@
-use std::sync::Arc;
+use std::sync::{atomic::AtomicUsize, Arc};
 
-use rand::Rng;
+use rand::{rngs::{SmallRng, ThreadRng}, Rng, SeedableRng};
 use scope_graph::{
     LibGraph, SgData, SgLabel, SgProjection,
     generator::{GraphGenerator, GraphPattern},
@@ -17,11 +17,12 @@ use scopegraphs::{
 const HEAD_RANGE: std::ops::RangeInclusive<usize> = 1..=50;
 const TAIL_RANGE: std::ops::RangeInclusive<usize> = 1..=50;
 
+pub static SEED: AtomicUsize = AtomicUsize::new(0);
 
 pub fn construct_graph(pattern: GraphPattern) -> (CachedScopeGraph<SgLabel, SgData>, usize, usize) {
-    let mut rand = rand::rng();
-    let head_size = rand.random_range(1..=20);
-    let tail_size = rand.random_range(1..=20);
+    let mut rand = SmallRng::seed_from_u64(SEED.fetch_add(1, std::sync::atomic::Ordering::Relaxed) as u64);
+    let head_size = rand.random_range(HEAD_RANGE);
+    let tail_size = rand.random_range(TAIL_RANGE);
     let pattern = [
         GraphPattern::Decl(SgData::var("x", "int")),
         GraphPattern::LinearDecl(head_size),

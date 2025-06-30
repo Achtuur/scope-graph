@@ -89,6 +89,10 @@ criterion_main!(benches);
 
 #[cfg(test)]
 mod tests {
+    use scope_graph::{generator::GraphPattern, graph::ScopeGraph};
+
+    use crate::common::construct_graph;
+
 
     #[test]
     fn test_query() {
@@ -130,4 +134,19 @@ mod tests {
             .write_to_file("output/bench/graph.md")
             .unwrap();
     }
+    #[test]
+    fn test_rand() {
+        let (g1, _, _) = construct_graph(GraphPattern::Diamond(2));
+        SEED.fetch_and(0, std::sync::atomic::Ordering::SeqCst);
+        let (g2, _, _) = construct_graph(GraphPattern::Diamond(2));
+
+        g1.as_uml_diagram("yea", false)
+            .write_to_file("output/bench/graph1.puml")
+            .unwrap();
+        g2.as_uml_diagram("yea", false)
+            .write_to_file("output/bench/graph2.puml")
+            .unwrap();
+
+    }
 }
+
