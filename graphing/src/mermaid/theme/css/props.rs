@@ -42,7 +42,12 @@ impl Default for AnimationSettings {
 
 impl CssProperty for AnimationSettings {
     fn write(&self, writer: &mut impl std::io::Write) -> crate::RenderResult<()> {
-        write!(writer, "dash {}s {} infinite", self.speed.as_num(), self.style)
+        write!(
+            writer,
+            "dash {}s {} infinite",
+            self.speed.as_num(),
+            self.style
+        )
         .map_err(Into::into)
     }
 }

@@ -33,6 +33,7 @@ where
     }
 
     /// Step forward (p -> new p)
+    #[inline]
     pub fn step(&self, label: Lbl, scope: impl Into<Scope>, automaton_idx: usize) -> Self {
         Self::Step {
             label,
@@ -42,6 +43,7 @@ where
         }
     }
 
+    #[inline]
     pub fn target(&self) -> Scope {
         match self {
             Self::Start(s) => *s,
@@ -112,11 +114,7 @@ where
     pub fn as_uml(&self, class: String, reverse: bool) -> Vec<PlantUmlItem> {
         match self {
             Self::Start(_) => Vec::new(),
-            Self::Step {
-                from,
-                target,
-                ..
-            } => {
+            Self::Step { from, target, .. } => {
                 let (from_scope, to_scope) = match reverse {
                     false => (from.target(), *target),
                     true => (*target, from.target()),

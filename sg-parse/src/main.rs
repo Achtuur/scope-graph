@@ -83,14 +83,12 @@ fn scopegraph_mine() {
     println!("Creating scope graph took {:?}", timer.elapsed());
 
     const DRAW_CACHE: bool = true;
-    sg
-    .as_mmd_diagram("first_example", DRAW_CACHE)
-    .render_to_file("output/first_example.md")
-    .unwrap();
-    sg
-    .as_uml_diagram("first_example", DRAW_CACHE)
-    .render_to_file("output/first_example.puml")
-    .unwrap();
+    sg.as_mmd_diagram("first_example", DRAW_CACHE)
+        .render_to_file("output/first_example.md")
+        .unwrap();
+    sg.as_uml_diagram("first_example", DRAW_CACHE)
+        .render_to_file("output/first_example.puml")
+        .unwrap();
 }
 
 #[allow(unused)]

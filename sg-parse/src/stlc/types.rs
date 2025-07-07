@@ -158,7 +158,8 @@ impl StlcType {
                 let reg = Regex::concat(
                     Regex::kleene(Regex::or(StlcLabel::Record, StlcLabel::Extension)),
                     StlcLabel::Declaration,
-                ).compile();
+                )
+                .compile();
                 let order = LabelOrderBuilder::new()
                     .push(StlcLabel::Declaration, StlcLabel::Record)
                     .push(StlcLabel::Declaration, StlcLabel::Extension)
@@ -166,12 +167,19 @@ impl StlcType {
                     .build();
 
                 let res_sub = sg.query_proj(
-                    Scope(*r1), &reg, &order, StlcProjection::IsVar, "yes".to_string()
+                    Scope(*r1),
+                    &reg,
+                    &order,
+                    StlcProjection::IsVar,
+                    "yes".to_string(),
                 );
                 let res_super = sg.query_proj(
-                    Scope(*r2), &reg, &order, StlcProjection::IsVar, "yes".to_string()
+                    Scope(*r2),
+                    &reg,
+                    &order,
+                    StlcProjection::IsVar,
+                    "yes".to_string(),
                 );
-
 
                 let is_subtype = res_sub.iter().all(|sub| {
                     let StlcData::Variable(x_sub, t_sub) = &sub.data else {

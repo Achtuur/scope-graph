@@ -1,4 +1,7 @@
-use std::{io::Write, sync::atomic::{AtomicUsize, Ordering}};
+use std::{
+    io::Write,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 use crate::{Color, RenderResult};
 
@@ -23,7 +26,7 @@ impl EdgeDirection {
             EdgeDirection::Left => "l",
             EdgeDirection::Right => "r",
             EdgeDirection::Up => "u",
-            EdgeDirection::Bottom => "b",
+            EdgeDirection::Bottom => "d",
             EdgeDirection::Unspecified => "",
             EdgeDirection::Norank => "[norank]",
         }
@@ -241,13 +244,7 @@ impl PlantUmlItem {
                 contents,
                 node_type,
             } => {
-                write!(
-                    writer,
-                    "{} \"{}\" as {}",
-                    node_type.uml_str(),
-                    contents,
-                    id,
-                )?;
+                write!(writer, "{} \"{}\" as {}", node_type.uml_str(), contents, id,)?;
                 self.write_class(writer)?;
             }
             // {from} -{dir}-> {to} {classes} : {label}

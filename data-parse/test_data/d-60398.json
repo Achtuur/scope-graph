@@ -1,0 +1,89 @@
+{
+            "isGround": 0,
+            "hashCode": -1738736760,
+            "op": "",
+            "arg0": {
+                "isGround": 0,
+                "hashCode": -1018200515,
+                "op": "Id",
+                "arg0": {
+                    "hashCode": -1018274760,
+                    "value": "TYPE_INT_RGB",
+                    "ground": true
+                },
+                "args": [
+                    {
+                        "hashCode": -1018274760,
+                        "value": "TYPE_INT_RGB",
+                        "ground": true
+                    }
+                ],
+                "arity": 1,
+                "ground": true
+            },
+            "arg1": {
+                "isGround": 3,
+                "hashCode": -239293789,
+                "resource": "/./jdk8",
+                "name": "s_var-3580",
+                "args": [
+                    {
+                        "hashCode": 126603799,
+                        "value": "/./jdk8",
+                        "ground": true
+                    },
+                    {
+                        "hashCode": 1954855436,
+                        "value": "s_var-3580",
+                        "ground": true
+                    }
+                ],
+                "op": "Scope",
+                "arity": 2,
+                "ground": true
+            },
+            "args": [
+                {
+                    "isGround": 3,
+                    "hashCode": -1018200515,
+                    "op": "Id",
+                    "arg0": {
+                        "hashCode": -1018274760,
+                        "value": "TYPE_INT_RGB",
+                        "ground": true
+                    },
+                    "args": [
+                        {
+                            "hashCode": -1018274760,
+                            "value": "TYPE_INT_RGB",
+                            "ground": true
+                        }
+                    ],
+                    "arity": 1,
+                    "ground": true
+                },
+                {
+                    "isGround": 3,
+                    "hashCode": -239293789,
+                    "resource": "/./jdk8",
+                    "name": "s_var-3580",
+                    "args": [
+                        {
+                            "hashCode": 126603799,
+                            "value": "/./jdk8",
+                            "ground": true
+                        },
+                        {
+                            "hashCode": 1954855436,
+                            "value": "s_var-3580",
+                            "ground": true
+                        }
+                    ],
+                    "op": "Scope",
+                    "arity": 2,
+                    "ground": true
+                }
+            ],
+            "arity": 2,
+            "ground": true
+        }

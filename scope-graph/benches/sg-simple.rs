@@ -1,22 +1,21 @@
 use std::sync::atomic::Ordering;
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use rand::{Rng, rngs::ThreadRng};
 use scope_graph::{
-    SgData, SgLabel,
+    SgLabel,
     generator::GraphPattern,
-    graph::CachedScopeGraph,
     order::LabelOrderBuilder,
     regex::{Regex, dfs::RegexAutomaton},
 };
 
-use crate::common::{construct_cached_graph, construct_graph, query_graph, query_graph_cached, SEED};
+use crate::common::{SEED, construct_graph, query_graph, query_graph_cached};
 
 mod common;
 
 const NUM_QUERIES: [usize; 3] = [1, 2, 5];
 // const SIZES: [usize; 6] = [2, 4, 8, 16, 32, 64];
-const SIZES: [usize; 3] = [4, 16, 64];
+// const SIZES: [usize; 3] = [4, 16, 64];
+const SIZES: [usize; 1] = [16];
 
 pub fn benchmark_pattern(c: &mut Criterion, name: &str, pattern_fn: fn(usize) -> GraphPattern) {
     let order = LabelOrderBuilder::new()
@@ -63,7 +62,6 @@ pub fn benchmark_pattern(c: &mut Criterion, name: &str, pattern_fn: fn(usize) ->
         }
     }
     group.finish();
-
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {

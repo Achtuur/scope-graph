@@ -1,6 +1,6 @@
-use std::sync::{atomic::AtomicUsize, Arc};
+use std::sync::{Arc, atomic::AtomicUsize};
 
-use rand::{rngs::{SmallRng, ThreadRng}, Rng, SeedableRng};
+use rand::{Rng, SeedableRng, rngs::SmallRng};
 use scope_graph::{
     LibGraph, SgData, SgLabel, SgProjection,
     generator::{GraphGenerator, GraphPattern},
@@ -10,17 +10,17 @@ use scope_graph::{
     scope::Scope,
 };
 use scopegraphs::{
-    Storage, completeness::UncheckedCompleteness, label_order, query_regex,
-    resolve::Resolve,
+    Storage, completeness::UncheckedCompleteness, label_order, query_regex, resolve::Resolve,
 };
 
-const HEAD_RANGE: std::ops::RangeInclusive<usize> = 1..=50;
-const TAIL_RANGE: std::ops::RangeInclusive<usize> = 1..=50;
+const HEAD_RANGE: std::ops::RangeInclusive<usize> = 1..=20;
+const TAIL_RANGE: std::ops::RangeInclusive<usize> = 1..=20;
 
 pub static SEED: AtomicUsize = AtomicUsize::new(0);
 
 pub fn construct_graph(pattern: GraphPattern) -> (CachedScopeGraph<SgLabel, SgData>, usize, usize) {
-    let mut rand = SmallRng::seed_from_u64(SEED.fetch_add(1, std::sync::atomic::Ordering::Relaxed) as u64);
+    let mut rand =
+        SmallRng::seed_from_u64(SEED.fetch_add(1, std::sync::atomic::Ordering::Relaxed) as u64);
     let head_size = rand.random_range(HEAD_RANGE);
     let tail_size = rand.random_range(TAIL_RANGE);
     let pattern = [
@@ -33,23 +33,21 @@ pub fn construct_graph(pattern: GraphPattern) -> (CachedScopeGraph<SgLabel, SgDa
     (graph, head_size, tail_size)
 }
 
-
 pub fn construct_libgraph(storage: &Storage, pattern: Vec<GraphPattern>) -> LibGraph<'_> {
-    let lib_graph: LibGraph = unsafe {LibGraph::new(storage, UncheckedCompleteness::new()) };
+    let lib_graph: LibGraph = unsafe { LibGraph::new(storage, UncheckedCompleteness::new()) };
     GraphGenerator::new(lib_graph)
         .with_patterns(pattern)
         .build_sg()
 }
 
-pub fn construct_cached_graph(pattern: impl IntoIterator<Item = GraphPattern>) -> CachedScopeGraph<SgLabel, SgData> {
+pub fn construct_cached_graph(
+    pattern: impl IntoIterator<Item = GraphPattern>,
+) -> CachedScopeGraph<SgLabel, SgData> {
     let graph = CachedScopeGraph::<SgLabel, SgData>::new();
-    let g = GraphGenerator::new(graph)
-        .with_patterns(pattern)
-        .build();
+    let g = GraphGenerator::new(graph).with_patterns(pattern).build();
     Scope::reset_counter();
     g
 }
-
 
 pub fn query_libgraph(graph: &mut LibGraph, num_queries: usize) {
     let mut thread_rng = rand::rng();

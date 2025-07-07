@@ -127,7 +127,7 @@ impl ElementStyle {
 
     pub(crate) fn write(&self, writer: &mut impl Write, class_name: &str) -> RenderResult<()> {
         if self.style.is_empty() {
-            return Ok(())
+            return Ok(());
         }
         write!(writer, "classDef {} ", class_name)?;
         self.style.write(writer)?;

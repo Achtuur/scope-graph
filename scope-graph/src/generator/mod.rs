@@ -72,7 +72,6 @@ impl GraphPattern {
                             let decl_data = SgData::var(format!("x_{i}"), "int");
                             let _ = graph.add_decl(cur_scope, SgLabel::Declaration, decl_data);
                         }
-
                     }
                     new_child_scopes.push(cur_scope);
                 }
@@ -228,14 +227,14 @@ impl GraphPattern {
     }
 }
 
-pub struct GraphGenerator<G>
-{
+pub struct GraphGenerator<G> {
     patterns: Vec<GraphPattern>,
     graph: G,
 }
 
 impl<G> GraphGenerator<G>
-where G: Default
+where
+    G: Default,
 {
     pub fn from_pattern(pattern: GraphPattern) -> Self {
         Self {
@@ -252,8 +251,7 @@ where G: Default
     }
 }
 
-impl<G> GraphGenerator<G>
-{
+impl<G> GraphGenerator<G> {
     pub fn new(graph: G) -> Self {
         Self {
             patterns: Vec::new(),

@@ -63,15 +63,14 @@ impl ScopeGraphDataProjection<StlcData> for StlcProjection {
 
     fn project(&self, data: &StlcData) -> Self::Output
     where
-        StlcData: ScopeGraphData {
+        StlcData: ScopeGraphData,
+    {
         match self {
             StlcProjection::VarName => data.name(),
-            StlcProjection::IsVar => {
-                match data {
-                    StlcData::Variable(_, _) => String::from("yes"),
-                    _ => String::from("no"),
-                }
-            }
+            StlcProjection::IsVar => match data {
+                StlcData::Variable(_, _) => String::from("yes"),
+                _ => String::from("no"),
+            },
         }
     }
 }

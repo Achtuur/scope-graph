@@ -1,0 +1,105 @@
+{
+    "isGround": 0,
+    "hashCode": -556687665,
+    "op": "",
+    "arg0": {
+        "isGround": 0,
+        "hashCode": -1804377536,
+        "op": "Id",
+        "arg0": {
+            "hashCode": -1804451781,
+            "value": "ExtendedBufferedReader",
+            "ground": true
+        },
+        "args": [
+            {
+                "hashCode": -1804451781,
+                "value": "ExtendedBufferedReader",
+                "ground": true
+            }
+        ],
+        "arity": 1,
+        "ground": true
+    },
+    "arg1": {
+        "isGround": 0,
+        "hashCode": -455560819,
+        "op": "Scope",
+        "arg0": {
+            "hashCode": -1147633054,
+            "value": "/./org/apache/commons/csv/ExtendedBufferedReader.jav",
+            "ground": true
+        },
+        "arg1": {
+            "hashCode": -1709742111,
+            "value": "s_type_7-0",
+            "ground": true
+        },
+        "args": [
+            {
+                "hashCode": -1147633054,
+                "value": "/./org/apache/commons/csv/ExtendedBufferedReader.jav",
+                "ground": true
+            },
+            {
+                "hashCode": -1709742111,
+                "value": "s_type_7-0",
+                "ground": true
+            }
+        ],
+        "arity": 2,
+        "ground": true
+    },
+    "args": [
+        {
+            "isGround": 3,
+            "hashCode": -1804377536,
+            "op": "Id",
+            "arg0": {
+                "hashCode": -1804451781,
+                "value": "ExtendedBufferedReader",
+                "ground": true
+            },
+            "args": [
+                {
+                    "hashCode": -1804451781,
+                    "value": "ExtendedBufferedReader",
+                    "ground": true
+                }
+            ],
+            "arity": 1,
+            "ground": true
+        },
+        {
+            "isGround": 3,
+            "hashCode": -455560819,
+            "op": "Scope",
+            "arg0": {
+                "hashCode": -1147633054,
+                "value": "/./org/apache/commons/csv/ExtendedBufferedReader.jav",
+                "ground": true
+            },
+            "arg1": {
+                "hashCode": -1709742111,
+                "value": "s_type_7-0",
+                "ground": true
+            },
+            "args": [
+                {
+                    "hashCode": -1147633054,
+                    "value": "/./org/apache/commons/csv/ExtendedBufferedReader.jav",
+                    "ground": true
+                },
+                {
+                    "hashCode": -1709742111,
+                    "value": "s_type_7-0",
+                    "ground": true
+                }
+            ],
+            "arity": 2,
+            "ground": true
+        }
+    ],
+    "arity": 2,
+    "ground": true
+}

@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::raw::{ArgValue, ConstructorArg, IgnoredFields, JavaType, JavaValue};
-
+use crate::raw::{ArgValue, IgnoredFields, JavaValue};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RawScopeGraph {
@@ -40,7 +39,11 @@ impl TryFrom<String> for RawEdgeKey {
             .ok_or("Invalid edge format")?;
         let label_name = parts
             .next()
-            .map(|s| s.trim().trim_start_matches("Label(\"").trim_end_matches("\")"))
+            .map(|s| {
+                s.trim()
+                    .trim_start_matches("Label(\"")
+                    .trim_end_matches("\")")
+            })
             .ok_or("Invalid edge format")?;
         Ok(Self {
             s1: scope_name.to_string(),
@@ -50,7 +53,7 @@ impl TryFrom<String> for RawEdgeKey {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(tag="op", rename="Label")]
+#[serde(tag = "op", rename = "Label")]
 pub struct RawLabel {
     /// arg0.value contains scope name
     pub arg0: ArgValue,
@@ -90,7 +93,7 @@ impl RawEdge {
 
 /// head/tail is a linked list, convert to a vec by just taking all unique values
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(tag="op", rename="Edge")]
+#[serde(tag = "op", rename = "Edge")]
 pub struct RawEdgeHead {
     /// Head always has a head
     pub head: RawScope,
@@ -99,7 +102,7 @@ pub struct RawEdgeHead {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(tag="op", rename="Edge")]
+#[serde(tag = "op", rename = "Edge")]
 pub struct RawEdgeTail {
     pub head: Option<RawScope>,
     pub tail: Option<Box<RawEdgeTail>>,
@@ -115,23 +118,25 @@ impl RawEdgeTail {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(tag="op", rename="Scope")]
-pub struct RawScope {
-    // /// arg1.value contains resource name,
-    // /// to prevent duplicate names
-    // pub arg0: ArgValue,
-    // /// arg1.value contains scope name
-    // pub arg1: ArgValue,
-    /// [0].value is resource name (prevent duplicates)
-    /// [1].value is scope name
-    // pub args: Vec<ArgValue>,
-    pub name: String,
-    pub resource: String,
+#[serde(untagged)]
+pub enum RawScope {
+    /// Sometimes there's directly a name and resource field available
+    Direct { name: String, resource: String },
+    /// ...and sometimes it's in "arg" format
+    InArgs {
+        // arg0 is resource
+        arg0: ArgValue,
+        // arg1 is scope name
+        arg1: ArgValue,
+    },
+}
 
-    // value: String,
-    #[serde(flatten)]
-    #[serde(skip_serializing)]
-    ignored: IgnoredFields,
-    // #[serde(flatten)]
-    // data: serde_json::Value,
+impl RawScope {
+    /// Returns (name, resource) pair
+    pub fn into_name_resource(self) -> (String, String) {
+        match self {
+            Self::Direct { name, resource } => (name, resource),
+            Self::InArgs { arg0, arg1 } => (arg1.value, arg0.value),
+        }
+    }
 }

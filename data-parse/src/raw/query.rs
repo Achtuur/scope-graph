@@ -36,7 +36,6 @@ pub struct DataOrdBody {
     vars: Vec<DataOrdVar>,
     name: String,
     message: String,
-    
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -53,12 +52,11 @@ pub struct PathWf {
     is_final: bool,
 }
 
-
 #[derive(Deserialize, Debug, Clone)]
 #[serde(untagged)]
 pub enum DataWfParams {
     // empty tag is array of params
-    // 
+    //
     // array of length 2 represents an environment,
     // [0] is the path, [1] is the data
     Arr(ArrParams),

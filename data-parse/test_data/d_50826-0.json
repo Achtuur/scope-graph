@@ -1,0 +1,67 @@
+{
+    "isGround": 0,
+    "hashCode": 1846166655,
+    "op": "REF",
+    "arg0": {
+        "isGround": 0,
+        "hashCode": 1843654322,
+        "op": "Scope",
+        "arg0": {
+            "hashCode": 126603799,
+            "value": "/./jdk8",
+            "ground": true
+        },
+        "arg1": {
+            "hashCode": -257163749,
+            "value": "s_ty-1781",
+            "ground": true
+        },
+        "args": [
+            {
+                "hashCode": 126603799,
+                "value": "/./jdk8",
+                "ground": true
+            },
+            {
+                "hashCode": -257163749,
+                "value": "s_ty-1781",
+                "ground": true
+            }
+        ],
+        "arity": 2,
+        "ground": true
+    },
+    "args": [
+        {
+            "isGround": 3,
+            "hashCode": 1843654322,
+            "op": "Scope",
+            "arg0": {
+                "hashCode": 126603799,
+                "value": "/./jdk8",
+                "ground": true
+            },
+            "arg1": {
+                "hashCode": -257163749,
+                "value": "s_ty-1781",
+                "ground": true
+            },
+            "args": [
+                {
+                    "hashCode": 126603799,
+                    "value": "/./jdk8",
+                    "ground": true
+                },
+                {
+                    "hashCode": -257163749,
+                    "value": "s_ty-1781",
+                    "ground": true
+                }
+            ],
+            "arity": 2,
+            "ground": true
+        }
+    ],
+    "arity": 1,
+    "ground": true
+}

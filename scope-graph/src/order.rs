@@ -183,10 +183,8 @@ where
             .iter()
             .flat_map(|(lbl, less_thans)| {
                 less_thans
-                .iter()
-                .map(|lt| {
-                    format!("{} {} {}", lbl.char(), FULLWIDTH_LT, lt.char())
-                })
+                    .iter()
+                    .map(|lt| format!("{} {} {}", lbl.char(), FULLWIDTH_LT, lt.char()))
                 // let less_than_str = less_thans
                 // .iter()
                 // .fold(String::new(), |mut s, lt| {

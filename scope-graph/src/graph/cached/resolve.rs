@@ -6,11 +6,23 @@ use std::{
 use smallvec::SmallVec;
 
 use crate::{
-    data::ScopeGraphData, graph::{resolve::{QueryProfiler, Resolver}, CachedScopeGraph, ScopeMap}, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, projection::ScopeGraphDataProjection, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, ENABLE_CACHING
+    ENABLE_CACHING,
+    data::ScopeGraphData,
+    graph::{
+        ScopeMap,
+        resolve::{DisplayMap, DisplayVec, QueryProfiler},
+    },
+    label::{LabelOrEnd, ScopeGraphLabel},
+    order::LabelOrder,
+    path::{Path, ReversePath},
+    projection::ScopeGraphDataProjection,
+    regex::{RegexState, dfs::RegexAutomaton},
+    scope::Scope,
 };
 
 use super::{ProjEnvs, QueryCache, QueryResult, ScopeData};
 
+#[inline(always)]
 pub(super) fn hash<T: Hash>(t: &T) -> u64 {
     let mut hasher = DefaultHasher::new();
     t.hash(&mut hasher);
@@ -39,6 +51,7 @@ where
     ///
     /// `DWfd := |data: &Data| data_proj(data) == proj_wfd`
     proj_wfd: Proj::Output,
+    proj_wfd_hash: u64,
     pub profiler: QueryProfiler,
 }
 
@@ -62,6 +75,7 @@ where
             path_re,
             lbl_order,
             data_proj,
+            proj_wfd_hash: hash(&proj_wfd),
             proj_wfd,
             profiler: QueryProfiler::default(),
         }
@@ -101,7 +115,9 @@ where
         self.profiler.inc_nodes_visited();
 
         tracing::debug!("Checking cache for path {}", path);
+        // let timer = std::time::Instant::now();
         let cached_env = self.get_cached_env(&path, &reg);
+        // println!("cache read: {:?}", timer.elapsed());
         if !cached_env.is_empty() {
             tracing::debug!("Cache hit for {}", path);
             return cached_env;
@@ -127,7 +143,9 @@ where
         }
 
         let envs = self.get_env_for_labels(&labels, path.clone());
+        // let timer = std::time::Instant::now();
         self.cache_env(&path, reg, &envs);
+        // println!("cache write: {:?}", timer.elapsed());
         envs
     }
 
@@ -136,13 +154,16 @@ where
         labels: &'a [LabelOrEnd<'r, Lbl>],
         path: Path<Lbl>,
     ) -> ProjEnvs<Lbl, Data> {
-        tracing::trace!("Resolving labels: {:?} for {:?}", labels, path.target());
+        if labels.is_empty() {
+            return ProjEnvs::default();
+        }
+        tracing::trace!("Resolving labels: {} for {}", DisplayVec(labels), path);
         labels
             .iter()
             .filter(|l1| !labels.iter().any(|l2| self.lbl_order.is_less(l1, l2)))
             // 'max' labels ie all labels with lowest priority
             // max refers to the numerical worth, ie a < b, b would be max
-            .flat_map(|max_lbl| {
+            .map(|max_lbl| {
                 // all labels that are lower priority than `lbl`
                 let lower_labels = labels
                     .iter()
@@ -150,9 +171,17 @@ where
                     .cloned()
                     .collect::<SmallVec<[_; 8]>>();
 
+                tracing::trace!("Resolving envs {} < {}", max_lbl, DisplayVec(&lower_labels));
                 self.get_shadowed_env(max_lbl, &lower_labels, path.clone())
             })
-            .collect()
+            .fold(ProjEnvs::default(), |mut acc, envs| {
+                // merge all envs into one
+                for (proj, mut new_envs) in envs {
+                    let e = acc.entry(proj).or_default();
+                    e.append(&mut new_envs);
+                }
+                acc
+            })
     }
 
     fn get_shadowed_env<'a>(
@@ -193,25 +222,18 @@ where
                         self.profiler.inc_edges_traversed();
                         self.resolve_all(p, partial_reg.clone())
                     }) // resolve new paths
-                    .fold(ProjEnvs::default(), |mut acc, (p, mut envs)| {
+                    .map(|(p, mut envs)|{
                         // path is a path from the starting scope to the current one.
                         // in the cache, we want to store the path from the _data_ to the current scope.
                         // hence, every step we add the traversed label to the query result.
                         for qr in &mut envs {
-                            qr.path = qr
-                            .path
-                            .step(
-                                label.clone(),
-                                path.target(),
-                                partial_reg.index()
-                            );
+                            qr.path =
+                                qr.path
+                                    .step(label.clone(), path.target(), partial_reg.index());
                         }
-
-                        // add to acc
-                        let e = acc.entry(p).or_default();
-                        e.append(&mut envs);
-                        acc
+                        (p, envs)
                     })
+                    .collect()
             }
         }
     }
@@ -222,7 +244,7 @@ where
         mut envs1: ProjEnvs<Lbl, Data>,
         envs2: ProjEnvs<Lbl, Data>,
     ) -> ProjEnvs<Lbl, Data> {
-        tracing::trace!("Shadowing...");
+        tracing::trace!("Shadowing {} < {}", DisplayMap(&envs1), DisplayMap(&envs2));
         for (proj, e2) in envs2 {
             // env1 shadows env2 always, so if env1 has a P, we know a2 is shadowed
             if !envs1.contains_key(&proj) {
@@ -248,7 +270,11 @@ where
 
         tracing::debug!("Caching envs...");
         for (proj, envs) in env_map {
-            tracing::trace!("Cache env for path {}: {} envs", path.target(), envs.len());
+            tracing::trace!(
+                "Cache env for path {}: {} envs",
+                path.target(),
+                DisplayVec(envs)
+            );
             let key = (reg.index(), path.target());
             // this is the entry for the path
             // its a map of proj -> [envs]
@@ -256,6 +282,12 @@ where
             // this replaces any existing cache
             // but we will only ever have one entry for the given key (I assume)
             self.profiler.inc_cache_writes();
+            // let cached_envs = entry.entry(*proj).or_default();
+            // for e in envs {
+            //     // if !cached_envs.contains(e) {
+            //     // }
+            //     cached_envs.push(e.clone());
+            // }
             entry.insert(*proj, envs.clone());
         }
     }
@@ -267,12 +299,18 @@ where
         self.profiler.inc_cache_reads();
 
         let key = (reg.index(), path.target());
+        // let proj_wfd_hash = hash(&self.proj_wfd);
         match self.cache.get(&key) {
+            // this makes it about 2x slower??
+            // Some(entry) if entry.contains_key(&self.proj_wfd_hash) => {
+            //     self.profiler.inc_cache_hits();
+            //     entry.clone()
+            // }
             Some(entry) => {
                 self.profiler.inc_cache_hits();
                 entry.clone()
             }
-            None => ProjEnvs::default(),
+            _ => ProjEnvs::default(),
         }
     }
 }

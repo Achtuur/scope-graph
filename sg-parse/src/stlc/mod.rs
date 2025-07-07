@@ -1,6 +1,11 @@
-use scope_graph::{graph::{CachedScopeGraph, ScopeGraph}, order::LabelOrderBuilder, regex::Regex, scope::Scope};
+use scope_graph::{
+    graph::{CachedScopeGraph, ScopeGraph},
+    order::LabelOrderBuilder,
+    regex::Regex,
+    scope::Scope,
+};
 use scopegraphs::{
-    completeness::ImplicitClose, label_order, query_regex, resolve::Resolve, 
+    completeness::ImplicitClose, label_order, query_regex, resolve::Resolve,
     ScopeGraph as LibScopeGraph,
 };
 
@@ -15,9 +20,7 @@ pub use types::*;
 pub type LibGraph<'s> = LibScopeGraph<'s, StlcLabel, StlcData, ImplicitClose<StlcLabel>>;
 pub type LibScope = scopegraphs::Scope;
 
-
 pub type MyGraph = CachedScopeGraph<StlcLabel, StlcData>;
-
 
 pub struct SgExpression<'a>(&'a sclang::SclangExpression);
 
@@ -210,7 +213,6 @@ impl<'a> SgExpression<'a> {
         }
     }
 
-    
     pub fn expr_type(&self, sg: &mut MyGraph, prev_scope: Scope) -> StlcType {
         use sclang::SclangExpression as E;
         match &self.0 {
@@ -218,9 +220,13 @@ impl<'a> SgExpression<'a> {
             E::Boolean(_) => StlcType::Bool,
             E::Var(name) => {
                 let reg = Regex::concat(
-                    Regex::kleene(Regex::or(Regex::or(StlcLabel::Parent, StlcLabel::Record), StlcLabel::Extension)),
+                    Regex::kleene(Regex::or(
+                        Regex::or(StlcLabel::Parent, StlcLabel::Record),
+                        StlcLabel::Extension,
+                    )),
                     StlcLabel::Declaration,
-                ).compile();
+                )
+                .compile();
                 let order = LabelOrderBuilder::new()
                     .push(StlcLabel::Declaration, StlcLabel::Parent)
                     .push(StlcLabel::Declaration, StlcLabel::Record)
@@ -229,13 +235,14 @@ impl<'a> SgExpression<'a> {
                     .push(StlcLabel::Record, StlcLabel::Extension)
                     .build();
 
-                let envs = sg.query_proj(prev_scope, &reg, &order, StlcProjection::VarName, name.to_owned());
-                match envs
-                    .into_iter()
-                    .nth(0)
-                    .expect("Variable not found")
-                    .data
-                {
+                let envs = sg.query_proj(
+                    prev_scope,
+                    &reg,
+                    &order,
+                    StlcProjection::VarName,
+                    name.to_owned(),
+                );
+                match envs.into_iter().nth(0).expect("Variable not found").data {
                     StlcData::Variable(_, ty) => ty.clone(),
                     _ => panic!("Variable found but no type"),
                 }
@@ -326,7 +333,8 @@ impl<'a> SgExpression<'a> {
                 let reg = Regex::concat(
                     Regex::kleene(Regex::or(StlcLabel::Record, StlcLabel::Extension)),
                     StlcLabel::Declaration,
-                ).compile();
+                )
+                .compile();
                 let order = LabelOrderBuilder::new()
                     .push(StlcLabel::Declaration, StlcLabel::Record)
                     .push(StlcLabel::Declaration, StlcLabel::Extension)
@@ -334,9 +342,14 @@ impl<'a> SgExpression<'a> {
                     .build();
 
                 let envs = sg.query_proj(
-                    Scope(scope_num), &reg, &order, StlcProjection::VarName, field.to_owned()
+                    Scope(scope_num),
+                    &reg,
+                    &order,
+                    StlcProjection::VarName,
+                    field.to_owned(),
                 );
-                envs.first().expect("field not found")
+                envs.first()
+                    .expect("field not found")
                     .data
                     .datatype()
                     .expect("Data has no type")

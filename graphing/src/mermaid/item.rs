@@ -1,8 +1,11 @@
-use std::{io::Write, sync::atomic::{AtomicUsize, Ordering}};
+use std::{
+    io::Write,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 use crate::RenderResult;
 
-use super::{sanitise_label, theme::EdgeType, MermaidStyleSheet};
+use super::{MermaidStyleSheet, sanitise_label, theme::EdgeType};
 
 static EDGE_CTR: AtomicUsize = AtomicUsize::new(0);
 

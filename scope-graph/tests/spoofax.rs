@@ -517,19 +517,13 @@ fn test_relations_have_multiset_behavior() {
     let _ = graph.add_decl(s, TestLabel::D, TestData::var("x"));
 
     graph
-    .as_mmd_diagram("test_relations_have_multiset_behaviour", false)
-    .render_to_file("output/tests/test_relations_have_multiset_behaviour.md")
-    .unwrap();
+        .as_mmd_diagram("test_relations_have_multiset_behaviour", false)
+        .render_to_file("output/tests/test_relations_have_multiset_behaviour.md")
+        .unwrap();
 
     let regex = Regex::from(TestLabel::D).compile();
     let lo = LabelOrderBuilder::new().build();
-    let envs = graph.query_proj(
-        s,
-        &regex,
-        &lo,
-        TestProjection::Name,
-        String::from("x")
-    );
+    let envs = graph.query_proj(s, &regex, &lo, TestProjection::Name, String::from("x"));
 
     println!("envs: {0:?}", envs);
 

@@ -1,15 +1,24 @@
 #![allow(unused)]
-use std::{collections::{HashMap, HashSet}, fs::{File, OpenOptions}, io::{BufReader, BufWriter}, str::FromStr};
-
-mod raw;
-mod parsed;
-mod error;
-
-pub use error::*;
-use graphing::{mermaid::{item::{ItemShape, MermaidItem}, theme::EdgeType, MermaidDiagram}, plantuml::{EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem}, Renderer};
+use data_parse::*;
+use graphing::{
+    Color, Renderer,
+    mermaid::{
+        MermaidDiagram,
+        item::{ItemShape, MermaidItem},
+        theme::EdgeType,
+    },
+    plantuml::{
+        EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem,
+        theme::{CssClass, ElementCss, PlantUmlStyleSheet},
+    },
+};
 use serde::Deserialize;
-
-use crate::{parsed::{ParsedEdge, ParsedLabel, ParsedScope, ParsedScopeGraph, ScopeData}, raw::{JavaType, JavaValue, RawEdge, RawLabel, RawQueryData, RawScope, RawScopeGraph, RefType}};
+use std::{
+    collections::{HashMap, HashSet},
+    fs::{File, OpenOptions},
+    io::{BufReader, BufWriter},
+    str::FromStr,
+};
 
 const BASE_PATH: &str = "./raw";
 const QUERIES_FILE: &str = "commons-csv.queries.json";
@@ -68,164 +77,121 @@ fn queries_data() -> ParseResult<()> {
 }
 
 fn parsed_scopegraph_data() -> ParseResult<()> {
-    // slightly faster to deserialize
-    let file =
-        File::open(format!("{}/{}", BASE_PATH, "scopegraph_cache.json"))?;
-    let mut buf = BufReader::new(file);
+    let mut parsed_graph =
+        ParsedScopeGraph::from_file(format!("{}/{}", BASE_PATH, SCOPEGRAPH_FILE))?;
 
-    let timer = std::time::Instant::now();
-    let mut deserializer = serde_json::Deserializer::from_reader(&mut buf);
-    deserializer.disable_recursion_limit();
-    let mut json: ParsedScopeGraph = Deserialize::deserialize(&mut deserializer)?;
-    println!("{:?}", timer.elapsed());
+    println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
+    parsed_graph.filter_scopes(|s| s.resource.contains("commons") || s.name.to_ascii_lowercase().contains("object"));
+    println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
+    parsed_graph.combine_scopes();
+    println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
+    parsed_graph.filter_edges(|e| !matches!(e.label, JavaLabel::WithKind | JavaLabel::WithType | JavaLabel::LocalType));
+    // println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
+    // parsed_graph.filter_edges(|e| matches!(e.label, JavaLabel::Extend | JavaLabel::Impl));
 
+    // parsed_graph.filter_scope_by_edge_labels(|_, e_in, e_out| {
+    //     let in_label = e_in.as_ref().map(|e| &e.label);
+    //     let out_label = e_out.as_ref().map(|e| &e.label);
 
-    // scopes that hold a reference to scope_550
-    let scope_550_ref = json.scopes.iter()
-        .filter(|(_, data)| matches!(data, ScopeData::Ref(s) if s.name == "s_ty-550"))
-        .map(|(s, _)| s)
-        .collect::<Vec<_>>();
+    //     matches!(in_label, Some(JavaLabel::Impl)) && matches!(out_label, Some(JavaLabel::Extend))
+    // });
+    println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
+    parsed_graph.to_cosmograph_csv("output/cosmo.csv")?;
+    println!("Written cosmo");
 
-    let edge_to_scope_550 = json.edges.iter()
-        .filter(|e| scope_550_ref.contains(&&e.to))
-        .fold(HashMap::new(), |mut acc, e| {
-            let occurences: &mut usize = acc.entry(&e.label).or_default();
-            *occurences += 1;
-            acc
-        });
-
-    println!("edge_to_scope_550: {0:#?}", edge_to_scope_550);
-
-    let x = json.edges.iter()
-    .filter(|e| e.label.contains("return"))
-    .find(|e| scope_550_ref.contains(&&e.to));
-
-    println!("x: {0:#?}", x);
-
-    // let scopes = json.scopes.keys().take(1000).collect::<Vec<_>>();
-    // let edges = json.edges.iter().filter(|e| scopes.contains(&&e.from) || scopes.contains(&&e.to)).collect::<Vec<_>>();
-
-
-    let mut scope_vec = json.scopes.keys().cloned().collect::<Vec<_>>();
+    let mut scope_vec = parsed_graph.scopes.keys().cloned().collect::<Vec<_>>();
     scope_vec.sort();
-    let scope = scope_vec.get(550).unwrap();
-    let (scopes, relevant_edges) = get_scopegraph_section(scope, &scope_vec, &json.edges, 200, 0);
+    let scope = scope_vec.get(2).cloned().unwrap();
+    let full_graph = ScopeGraph::new(scope_vec, parsed_graph.edges);
+    let mut partial_graph = get_scopegraph_section(&scope, &full_graph, 3);
+
+    // partial_graph.filter_scopes(|s| !s.is_data());
+
+    let mut style = PlantUmlStyleSheet::new();
+    style.push(CssClass::new_class(
+        "starting_scope".to_string(),
+        ElementCss::new().background_color(Color::LIGHT_CYAN),
+    ));
 
     let mut graph = PlantUmlDiagram::new("raw_data");
-    for e in relevant_edges {
-        let from = PlantUmlItem::node(e.from.id(), &e.from.name, NodeType::Node);
-        let to = PlantUmlItem::node(e.to.id(), &e.to.name, NodeType::Node);
+    graph.set_style_sheet(style);
+    for s in full_graph.scopes {
+        let mut item = PlantUmlItem::node(s.id(), &s.name, s.graph_node_type());
+        if s == scope {
+            item = item.add_class("starting_scope");
+        }
+        graph.push(item);
+    }
+    for e in full_graph.edges {
         let item = PlantUmlItem::edge(e.from.id(), e.to.id(), &e.label, EdgeDirection::Up);
-        graph.push(from);
-        graph.push(to);
         graph.push(item);
     }
 
-
     println!("graph.num_items(): {0:?}", graph.num_items());
-
     graph.render_to_file("output/parsed_graph.puml")?;
 
     Ok(())
 }
 
-fn scopegraph_data() -> ParseResult<()> {
-    let file =
-        File::open(format!("{}/{}", BASE_PATH, SCOPEGRAPH_FILE))?;
-    let mut buf = BufReader::new(file);
-
-    let timer = std::time::Instant::now();
-    let mut deserializer = serde_json::Deserializer::from_reader(&mut buf);
-    deserializer.disable_recursion_limit();
-    let mut json: RawScopeGraph = Deserialize::deserialize(&mut deserializer)?;
-    println!("{:?}", timer.elapsed());
-
-
-    let parsed_graph = ParsedScopeGraph::try_from(json)?;
-    let mut cache_file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open(format!("{}/{}", BASE_PATH, "scopegraph_cache.json"))?;
-    let mut buf = BufWriter::new(cache_file);
-    serde_json::to_writer_pretty(&mut buf, &parsed_graph)?;
-
-    // println!("json.data.len(): {0:?}", json.data.len());
-    // println!("json.edges.len(): {0:?}", json.edges.len());
-    // println!("json.labels.len(): {0:?}", json.labels.len());
-
-    // let parsed_edges = json.edges.into_iter()
-    // .flat_map(|(key, edge)| {
-    //     ParsedEdge::from_raw(key, RawEdge::Head(edge)).unwrap()
-    // })
-    // .collect::<Vec<_>>();
-
-
-
-    // let mut scopes = json.data.into_keys()
-    // .map(|s| ParsedScope::from_str(&s))
-    // .collect::<ParseResult<Vec<_>>>()?;
-
-
-    // let scope = scopes.get(165).unwrap();
-    // let (scopes, relevant_edges) = get_scopegraph_section(scope, &scopes, &parsed_edges, 20, 0);
-
-    // // let scope = scopes.get(150).unwrap();
-    // // let (scopes, relevant_edges) = get_scopegraph_section(scope, &scopes, &parsed_edges, 5);
-
-    // // let scopes = json.data.into_keys().take(25).collect::<Vec<_>>();
-    // // let relevant_edges = parsed_edges.into_iter().filter(|e| {
-    // //     scopes.contains(&e.from) || scopes.contains(&e.to)
-    // // })
-    // // .collect::<Vec<_>>();
-
-    // let mut graph = PlantUmlDiagram::new("raw data");
-    // for s in scopes {
-    //     let item = PlantUmlItem::node(&s.name, &s.name, NodeType::Node);
-    //     // let item = MermaidItem::node(&s.name, &s.name, ItemShape::Circle);
-    //     graph.push(item);
-    // }
-
-    // for e in relevant_edges {
-    //     let item = MermaidItem::edge(&e.from.name, &e.to.name, &e.label, EdgeType::Solid);
-    //     let item = PlantUmlItem::edge(&e.from.name, &e.to.name, &e.label, EdgeDirection::Unspecified);
-    //     graph.push(item);
-    // }
-
-    // graph.render_to_file("output/parsed_graph.puml")?;
-    Ok(())
+#[derive(Default)]
+struct ScopeGraph {
+    scopes: HashSet<ParsedScope>,
+    edges: HashSet<ParsedEdge>,
 }
 
-const MAX_DEPTH: usize = 15;
-fn get_scopegraph_section(scope: &ParsedScope, scopes: &[ParsedScope], edges: &[ParsedEdge], size: usize, depth: usize) -> (Vec<ParsedScope>, Vec<ParsedEdge>) {
-    // take a scope and find all edges that connect to it
-    // recursively find all those scopes and do the same
-
-    if depth > MAX_DEPTH {
-        return (Vec::new(), Vec::new())
-    }
-
-    let mut new_scopes = vec![scope.clone()];
-    let mut found_edges = Vec::new();
-    let adj_edges = edges.iter().filter(|e| &e.from == scope || &e.to == scope);
-    for edge in adj_edges {
-        // println!("edge: {0:?}", edge);
-        let other_scope = if &edge.from == scope {
-            scopes.iter().find(|s| s == &&edge.to)
-        } else {
-            scopes.iter().find(|s| s == &&edge.from)
-        };
-
-        if other_scope.is_none() {
-            continue;
-        }
-        let (child_scopes, child_edges) = get_scopegraph_section(other_scope.unwrap(), scopes, edges, size, depth + 1);
-        found_edges.push(edge.clone());
-        found_edges.extend(child_edges);
-        new_scopes.extend(child_scopes);
-        if new_scopes.len() >= size {
-            break;
+impl ScopeGraph {
+    pub fn new(
+        scope: impl IntoIterator<Item = ParsedScope>,
+        edges: impl IntoIterator<Item = ParsedEdge>,
+    ) -> Self {
+        Self {
+            scopes: scope.into_iter().collect(),
+            edges: edges.into_iter().collect(),
         }
     }
-    (new_scopes, found_edges)
+
+    pub fn combine(&mut self, other: ScopeGraph) {
+        self.scopes.extend(other.scopes);
+        self.edges.extend(other.edges);
+    }
+
+    pub fn filter_scopes(&mut self, filter: impl Fn(&ParsedScope) -> bool) {
+        self.scopes.retain(&filter);
+        self.edges.retain(|e| filter(&e.from) && filter(&e.to));
+    }
+}
+
+fn get_scopegraph_section(
+    scope: &ParsedScope,
+    full_graph: &ScopeGraph,
+    depth: usize,
+) -> ScopeGraph {
+    let mut graph = ScopeGraph::default();
+    graph.scopes.insert(scope.clone());
+    // queue with scopes that are reached with a "from" edge
+    let mut scope_queue = HashSet::from([scope]);
+
+    for _ in 0..depth {
+        // consume entire queue
+        let mut new_queue = HashSet::new();
+        for cur_scope in scope_queue {
+            let adj_edges = full_graph
+                .edges
+                .iter()
+                .filter(|e| &e.from == cur_scope || &e.to == cur_scope);
+            for edge in adj_edges {
+                graph.scopes.insert(edge.from.clone());
+                graph.scopes.insert(edge.to.clone());
+                graph.edges.insert(edge.clone());
+                if &edge.from != cur_scope {
+                    new_queue.insert(&edge.from);
+                }
+                if &edge.to != cur_scope {
+                    new_queue.insert(&edge.to);
+                }
+            }
+        }
+        scope_queue = new_queue;
+    }
+    graph
 }

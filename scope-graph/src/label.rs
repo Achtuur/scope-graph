@@ -1,6 +1,5 @@
 use std::hash::Hash;
 
-
 use crate::regex::RegexState;
 
 pub trait ScopeGraphLabel:
@@ -28,4 +27,13 @@ where
     Label((Lbl, RegexState<'a, Lbl>)),
     /// $
     End,
+}
+
+impl<Lbl: ScopeGraphLabel> std::fmt::Display for LabelOrEnd<'_, Lbl> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LabelOrEnd::Label((lbl, _)) => write!(f, "{}", lbl),
+            LabelOrEnd::End => write!(f, "$"),
+        }
+    }
 }

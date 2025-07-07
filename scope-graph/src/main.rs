@@ -12,23 +12,24 @@ use scope_graph::{
     regex::{Regex, dfs::RegexAutomaton},
 };
 
-pub type UsedScopeGraph<Lbl, Data> = CachedScopeGraph<Lbl, Data>;
+pub type UsedScopeGraph = CachedScopeGraph<SgLabel, SgData>;
 
-fn graph_builder() -> UsedScopeGraph<SgLabel, SgData> {
-    let graph = UsedScopeGraph::<SgLabel, SgData>::new();
+fn graph_builder() -> UsedScopeGraph {
+    let graph = UsedScopeGraph::new();
     let patterns = [
         GraphPattern::Linear(1),
         GraphPattern::Decl(SgData::var("x", "int")),
-        GraphPattern::Tree(7),
+        GraphPattern::Tree(4),
         GraphPattern::ReverseTree(3),
         GraphPattern::Decl(SgData::var("x1", "int")),
         GraphPattern::Decl(SgData::var("x2", "int")),
         GraphPattern::Decl(SgData::var("x3", "int")),
         GraphPattern::Decl(SgData::var("x4", "int")),
-        GraphPattern::Linear(3),
-        GraphPattern::Linear(1),
+        // GraphPattern::Linear(3),
+        // GraphPattern::Linear(1),
         GraphPattern::Diamond(5),
         GraphPattern::Decl(SgData::var("y", "int")),
+        GraphPattern::Decl(SgData::var("x", "int")),
         GraphPattern::Linear(10),
     ];
     let graph = GraphGenerator::new(graph).with_patterns(patterns).build();
@@ -43,32 +44,35 @@ fn graph_builder() -> UsedScopeGraph<SgLabel, SgData> {
     graph
 }
 
-fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
+fn query_test(graph: &mut UsedScopeGraph) {
     let order = LabelOrderBuilder::new()
         .push(SgLabel::Declaration, SgLabel::Parent)
         .build();
 
     // P*D;
-    let label_reg = Regex::concat(
-        Regex::kleene(SgLabel::Parent),
-        SgLabel::Declaration,
-    );
+    let label_reg = Regex::concat(Regex::kleene(SgLabel::Parent), SgLabel::Declaration);
     let matcher = RegexAutomaton::from_regex(label_reg.clone());
-    matcher.to_uml().render_to_file("output/regex.puml").unwrap();
+    matcher
+        .to_uml()
+        .render_to_file("output/regex.puml")
+        .unwrap();
     matcher.to_mmd().render_to_file("output/regex.md").unwrap();
 
     let x_match: Arc<str> = Arc::from("y");
-    let query_scope_set = [(x_match.clone(), vec![32]), (x_match.clone(), vec![39])];
+    let query_scope_set = [(x_match.clone(), vec![24]), (x_match.clone(), vec![30])];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
         let title = format!(
             "Query sets {:?}, label_reg={}, label_order={}, proj={}",
-            set, label_reg, order, SgProjection::VarName
+            set,
+            label_reg,
+            order,
+            SgProjection::VarName
         );
 
         let p = set.0;
         let start_scopes = set.1;
-
+        let timer = std::time::Instant::now();
         let (res_uml, res_mmd) = start_scopes
             .into_iter()
             .flat_map(|s| {
@@ -84,6 +88,7 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
                 (uml_acc, mmd_acc)
             });
 
+        println!("{:?}", timer.elapsed());
         // mmd
         // let cache_mmd = graph.cache_path_mmd(11);
         let mut mmd_diagram = graph.as_mmd_diagram(&title, DRAW_CACHES);
@@ -103,7 +108,7 @@ fn query_test(graph: &mut UsedScopeGraph<SgLabel, SgData>) {
     }
 }
 
-fn circular_graph() -> UsedScopeGraph<SgLabel, SgData> {
+fn circular_graph() -> UsedScopeGraph {
     let mut graph = CachedScopeGraph::new();
     let s1 = graph.add_scope_default();
     let s2 = graph.add_scope_default();
@@ -120,12 +125,70 @@ fn circular_graph() -> UsedScopeGraph<SgLabel, SgData> {
     graph
 }
 
+fn aron_example() {
+    let mut graph = UsedScopeGraph::new();
+    let s1 = graph.add_scope_default();
+    let s2 = graph.add_scope_default();
+    let s3 = graph.add_scope_default();
+    let s4 = graph.add_scope_default();
+    graph.add_edge(s1, s2, SgLabel::Parent);
+    graph.add_edge(s2, s3, SgLabel::Parent);
+    graph.add_edge(s3, s4, SgLabel::Parent);
+    graph.add_edge(s4, s1, SgLabel::Parent);
+    graph.add_decl(s1, SgLabel::Declaration, SgData::var("x", "int"));
+    graph.add_decl(s3, SgLabel::Declaration, SgData::var("y", "int"));
+
+    graph
+        .as_uml_diagram("circle sg", true)
+        .render_to_file("output/aron0.puml")
+        .unwrap();
+
+    let reg = Regex::concat(Regex::kleene(SgLabel::Parent), SgLabel::Declaration).compile();
+    let label_order = LabelOrderBuilder::new()
+        .push(SgLabel::Declaration, SgLabel::Parent)
+        .build();
+    let env = graph.query_proj(
+        s2,
+        &reg,
+        &label_order,
+        SgProjection::VarName,
+        Arc::from("x"),
+    );
+
+    let mut diagram = graph.as_uml_diagram("circle sg 1st query", true);
+    let q_uml = env
+        .into_iter()
+        .flat_map(|r| r.path.as_uml(ForeGroundColor::next_class(), true))
+        .collect::<Vec<_>>();
+    diagram.extend(q_uml);
+
+    diagram.render_to_file("output/aron1.puml").unwrap();
+
+    let env = graph.query_proj(
+        s4,
+        &reg,
+        &label_order,
+        SgProjection::VarName,
+        Arc::from("y"),
+    );
+
+    let mut diagram = graph.as_uml_diagram("circle sg 2nd query", true);
+    let q_uml = env
+        .into_iter()
+        .flat_map(|r| r.path.as_uml(ForeGroundColor::next_class(), true))
+        .collect::<Vec<_>>();
+    diagram.extend(q_uml);
+
+    diagram.render_to_file("output/aron2.puml").unwrap();
+}
+
 fn main() {
     tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::DEBUG)
+        .with_max_level(tracing::Level::WARN)
         .init();
+    // aron_example();
 
-    // slides_example();
+    // return;
 
     // let mut graph = graph_builder();
     let mut graph = graph_builder();
@@ -142,7 +205,7 @@ fn main() {
     }
 }
 
-fn save_graph(graph: &UsedScopeGraph<SgLabel, SgData>, fname: &str) {
+fn save_graph(graph: &UsedScopeGraph, fname: &str) {
     let file = std::fs::OpenOptions::new()
         .write(true)
         .create(true)

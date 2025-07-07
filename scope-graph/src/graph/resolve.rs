@@ -1,11 +1,17 @@
 use std::{collections::HashSet, sync::atomic::AtomicUsize};
 
 use crate::{
-    data::ScopeGraphData, graph::{CachedScopeGraph, ScopeMap}, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, DRAW_MEM_ADDR
+    DRAW_MEM_ADDR,
+    data::ScopeGraphData,
+    graph::ScopeMap,
+    label::{LabelOrEnd, ScopeGraphLabel},
+    order::LabelOrder,
+    path::{Path, ReversePath},
+    regex::{RegexState, dfs::RegexAutomaton},
+    scope::Scope,
 };
 
-use super::{ScopeData};
-
+use super::ScopeData;
 
 #[derive(Debug, Default)]
 pub struct QueryProfiler {
@@ -20,27 +26,86 @@ pub struct QueryProfiler {
 }
 
 impl QueryProfiler {
+    #[inline(always)]
     pub fn inc_edges_traversed(&self) {
-        self.edges_traversed.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.edges_traversed
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 
+    #[inline(always)]
     pub fn inc_nodes_visited(&self) {
-        self.nodes_visited.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.nodes_visited
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 
+    #[inline(always)]
     pub fn inc_cache_reads(&self) {
-        self.cache_reads.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.cache_reads
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 
+    #[inline(always)]
     pub fn inc_cache_writes(&self) {
-        self.cache_writes.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.cache_writes
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 
+    #[inline(always)]
     pub fn inc_cache_hits(&self) {
-        self.cache_hits.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.cache_hits
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 }
 
+pub struct DisplayVec<'a, T: std::fmt::Display>(pub &'a [T]);
+
+impl<T: std::fmt::Display> std::fmt::Display for DisplayVec<'_, T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.0.is_empty() {
+            write!(f, "[]")
+        } else {
+            write!(
+                f,
+                "[{}]",
+                self.0
+                    .iter()
+                    .map(|e| e.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )
+        }
+    }
+}
+
+pub struct DisplayMap<'a, K: std::fmt::Display, V>(pub &'a std::collections::HashMap<K, V>);
+
+// impl <K: std::fmt::Display, V: std::fmt::Display> std::fmt::Display for DisplayMap<'_, K, V> {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         if self.0.is_empty() {
+//             write!(f, "{{}}")
+//         } else {
+//             write!(f, "{{{}}}", self.0.iter().map(|(k, v)| format!("{}: {}", k, v)).collect::<Vec<_>>().join(", "))
+//         }
+//     }
+// }
+
+impl<K: std::fmt::Display, T: std::fmt::Display> std::fmt::Display for DisplayMap<'_, K, Vec<T>> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.0.is_empty() {
+            write!(f, "{{}}")
+        } else {
+            write!(
+                f,
+                "{{{}}}",
+                self.0
+                    .iter()
+                    .map(|(k, v)| format!("{}: {}", k, DisplayVec(v)))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QueryResult<Lbl, Data>
@@ -62,13 +127,13 @@ where
             true => {
                 write!(
                     f,
-                    "{} > {}",
+                    "{} ⊢ {}",
                     self.data.render_string(),
                     self.path.as_mem_addr()
                 )
             }
             false => {
-                write!(f, "{} > {}", self.data.render_string(), self.path)
+                write!(f, "{} ⊢ {}", self.data.render_string(), self.path)
             }
         }
     }

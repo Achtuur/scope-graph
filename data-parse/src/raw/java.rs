@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::raw::{RawScope};
-
+use crate::raw::RawScope;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct IgnoredFields {
@@ -36,7 +35,7 @@ impl JavaValue {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(tag="op")]
+#[serde(tag = "op")]
 pub enum JavaType {
     /// Direct scope declarations
     #[serde(rename = "Scope")]
@@ -44,9 +43,10 @@ pub enum JavaType {
 
     #[serde(rename = "REF")]
     Ref(RefType),
+    #[serde(rename = "")] // empty string is on purpose
+    MethodOrClass(MethodOrClassData),
     #[serde(other)]
     Unknown,
-
     // #[serde(rename = "BYTE")]
     // Byte(ByteData),
     // #[serde(rename = "ARRAY")]
@@ -81,6 +81,7 @@ pub enum JavaType {
 pub enum RefType {
     /// Ref to a scope object? I guess this creates a new scope?
     ScopeRef(JavaRef<RawScope>),
+    MethodOrClass(MethodOrClassData),
     #[serde(skip_serializing)]
     Ref(serde_json::Value),
 }
@@ -94,14 +95,18 @@ pub enum ConstructorArg {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ArgValue {
     pub value: String,
-    #[serde(flatten)]
-    #[serde(skip_serializing)]
-    ignored: IgnoredFields,
+    // #[serde(flatten)]
+    // #[serde(skip_serializing)]
+    // ignored: IgnoredFields,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RawId {
+    // arg0.value is the id
+    pub arg0: ArgValue,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(tag="op", rename="TYPED")]
 pub struct TypedData {
     arg0: serde_json::Value,
     #[serde(flatten)]
@@ -110,7 +115,6 @@ pub struct TypedData {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename = "BYTE", tag="op")]
 pub struct ByteData {
     // #[serde(flatten)]
     // ignored: IgnoredFields,
@@ -118,11 +122,72 @@ pub struct ByteData {
     data: serde_json::Value,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct JavaRef<T> {
+    // arg0 is the objec that is being referenced
+    pub arg0: T,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(tag="op", rename="REF")]
-pub struct JavaRef<T>
-{
-    // arg0 is the objec that is being referenced
-    pub arg0: T
+#[serde(untagged)]
+pub enum MethodOrClassData {
+    Method(MethodData),
+    Class(ClassData),
+}
+
+impl MethodOrClassData {
+    pub fn into_id_scope(self) -> (String, RawScope) {
+        match self {
+            MethodOrClassData::Method(data) => (data.arg0.arg0.value, data.arg2),
+            MethodOrClassData::Class(data) => (data.arg0.arg0.value, data.arg1),
+        }
+    }
+
+    pub fn id(&self) -> &str {
+        match self {
+            MethodOrClassData::Method(data) => &data.arg0.arg0.value,
+            MethodOrClassData::Class(data) => &data.arg0.arg0.value,
+        }
+    }
+
+    /// Scope that this method is defined in
+    pub fn scope(&self) -> &RawScope {
+        match self {
+            MethodOrClassData::Method(data) => &data.arg2,
+            MethodOrClassData::Class(data) => &data.arg1,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct MethodData {
+    arg0: RawId,
+    arg2: RawScope,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ClassData {
+    arg0: RawId,
+    arg1: RawScope,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_class_or_method() {
+        let file = std::fs::File::open("./test_data/d-60398.json").unwrap();
+
+        let parsed: JavaType = serde_json::from_reader(file).unwrap();
+        println!("parsed: {0:?}", parsed);
+    }
+
+    #[test]
+    fn test_parse_ref_type() {
+        let file = std::fs::File::open("./test_data/d_50826-0.json").unwrap();
+
+        let parsed: JavaType = serde_json::from_reader(file).unwrap();
+        println!("parsed: {0:?}", parsed);
+    }
 }

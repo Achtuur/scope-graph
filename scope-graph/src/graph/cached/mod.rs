@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use graphing::{
     mermaid::{
@@ -11,7 +11,15 @@ use resolve::CachedResolver;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    data::ScopeGraphData, graph::{resolve::Resolver, Edge, ScopeData, ScopeMap}, label::ScopeGraphLabel, order::LabelOrder, path::Path, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackgroundColor, ColorSet, ForeGroundColor
+    BackgroundColor, ColorSet, ForeGroundColor,
+    data::ScopeGraphData,
+    graph::{Edge, ScopeData, ScopeMap, resolve::Resolver},
+    label::ScopeGraphLabel,
+    order::LabelOrder,
+    path::Path,
+    projection::ScopeGraphDataProjection,
+    regex::dfs::RegexAutomaton,
+    scope::Scope,
 };
 
 use super::{ScopeGraph, resolve::QueryResult};
@@ -20,7 +28,6 @@ mod resolve;
 
 type ProjHash = u64;
 
-// type ProjEnvs<Lbl, Data> = HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
 type ProjEnvs<Lbl, Data> = HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
 
 /// Key for the cache.
@@ -93,7 +100,7 @@ where
     fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>> {
         self.scopes.get(&scope)
     }
-    
+
     fn scope_iter<'a>(&'a self) -> impl Iterator<Item = (&'a Scope, &'a ScopeData<Lbl, Data>)>
     where
         Lbl: 'a,
@@ -121,8 +128,13 @@ where
         DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
         DWfd: for<'da> Fn(&'da Data) -> bool,
     {
-        let mut resolver =
-            Resolver::new(&self.scopes, path_regex, order, &data_equiv, &data_wellformedness);
+        let mut resolver = Resolver::new(
+            &self.scopes,
+            path_regex,
+            order,
+            &data_equiv,
+            &data_wellformedness,
+        );
         resolver.resolve(Path::start(scope))
     }
 
@@ -137,14 +149,13 @@ where
     where
         Proj: ScopeGraphDataProjection<Data>,
     {
-
         let proj_hash = resolve::hash(&data_proj);
         let cache_entry = self
             .resolve_cache
             .entry((order.clone(), path_regex.clone(), proj_hash))
             .or_default();
         let mut resolver = CachedResolver::new(
-           &self.scopes,
+            &self.scopes,
             cache_entry,
             path_regex,
             order,
@@ -169,7 +180,12 @@ where
         self.resolve_cache
             .iter()
             .flat_map(|(query_params, query_cache)| {
-                let params_str = format!("({}, {}, {})", query_params.0, query_params.1, query_params.2 % 256);
+                let params_str = format!(
+                    "({}, {}, {})",
+                    query_params.0,
+                    query_params.1,
+                    query_params.2 % 256
+                );
                 query_cache
                     .iter()
                     .filter(|(key, _)| !self.scope_holds_data(key.1))
@@ -199,7 +215,8 @@ where
                             .collect::<Vec<String>>()
                             .join("\n");
 
-                        let cache_str = format!("<i>{}</i>\n<b>{:?}</b>\n{}", params_str.clone(), key, vals);
+                        let cache_str =
+                            format!("<i>{}</i>\n<b>{:?}</b>\n{}", params_str.clone(), key, vals);
                         let item = PlantUmlItem::note(key.uml_id(), cache_str)
                             .add_class("cache-entry")
                             .add_class(BackgroundColor::get_class_name(key.0));

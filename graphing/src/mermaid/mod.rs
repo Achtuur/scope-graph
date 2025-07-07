@@ -102,7 +102,8 @@ impl MermaidDiagram {
 
 impl Renderer for MermaidDiagram {
     fn render_to_writer(&self, writer: &mut impl Write) -> crate::RenderResult<()> {
-        writeln!(writer,
+        writeln!(
+            writer,
             "```mermaid\n\
             ---\n\
             title: \"{}\"\n\

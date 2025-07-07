@@ -243,12 +243,15 @@ impl ScopeGraphLabel for SgLabel {
 pub enum SgData {
     #[default]
     NoData,
-    Variable(String, String),
+    Variable(Arc<str>, Arc<str>),
 }
 
 impl SgData {
     pub fn var(x: impl ToString, t: impl ToString) -> Self {
-        Self::Variable(x.to_string(), t.to_string())
+        Self::Variable(
+            Arc::from(x.to_string()),
+            Arc::from(t.to_string()),
+        )
     }
 
     pub fn name(&self) -> &str {

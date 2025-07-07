@@ -2,7 +2,12 @@
 mod slides_examples {
     use graphing::Renderer;
 
-    use crate::{generator::{GraphGenerator, GraphPattern}, graph::{CachedScopeGraph, ScopeGraph}, order::LabelOrderBuilder, path::Path, projection::ScopeGraphDataProjection, regex::Regex, scope::Scope, ColorSet, ForeGroundColor, SgData, SgLabel, SgProjection};
+    use crate::{
+        ColorSet, ForeGroundColor, SgData, SgLabel,
+        generator::{GraphGenerator, GraphPattern},
+        graph::{CachedScopeGraph, ScopeGraph},
+        path::Path,
+    };
 
     #[test]
     fn slides_example_query_2_data() {
@@ -12,9 +17,11 @@ mod slides_examples {
             GraphPattern::Linear(1),
         ];
 
-        let mut graph: CachedScopeGraph<_, _> = GraphGenerator::from_pattern_iter(pattern).build();
+        let graph: CachedScopeGraph<_, _> = GraphGenerator::from_pattern_iter(pattern).build();
         let mut diagram = graph.as_uml_diagram("graph", false);
-        diagram.render_to_file("output/slides_example_query_2_data/graph.puml").unwrap();
+        diagram
+            .render_to_file("output/slides_example_query_2_data/graph.puml")
+            .unwrap();
 
         let path = Path::start(3)
             .step(SgLabel::Parent, 0, 0)
@@ -22,7 +29,9 @@ mod slides_examples {
         let class = ForeGroundColor::next_class();
         diagram.extend(path.as_uml(class, false));
         diagram.set_title("path1");
-        diagram.render_to_file("output/slides_example_query_2_data/path1.puml").unwrap();
+        diagram
+            .render_to_file("output/slides_example_query_2_data/path1.puml")
+            .unwrap();
 
         let path2 = Path::start(3)
             .step(SgLabel::Parent, 0, 0)
@@ -30,14 +39,16 @@ mod slides_examples {
         let class = ForeGroundColor::next_class();
         diagram.extend(path2.as_uml(class, false));
         diagram.set_title("path2");
-        diagram.render_to_file("output/slides_example_query_2_data/path2.puml").unwrap();
-
+        diagram
+            .render_to_file("output/slides_example_query_2_data/path2.puml")
+            .unwrap();
 
         let mut diagram = graph.as_uml_diagram("cache", false);
         diagram.extend(path.as_uml(ForeGroundColor::next_class(), false));
         diagram.extend(path2.as_uml(ForeGroundColor::next_class(), true));
-        diagram.render_to_file("output/slides_example_query_2_data/cache.puml").unwrap();
-
+        diagram
+            .render_to_file("output/slides_example_query_2_data/cache.puml")
+            .unwrap();
 
         // // cache
         // let reg = Regex::concat(Regex::kleene(SgLabel::Parent), SgLabel::Declaration).compile();
@@ -53,7 +64,6 @@ mod slides_examples {
         // diagram.render_to_file("output/slides_example_query_2_data/cache.puml").unwrap();
     }
 
-
     #[test]
     fn slides_example_query_2_data_long() {
         let pattern = [
@@ -63,8 +73,10 @@ mod slides_examples {
         ];
 
         let graph: CachedScopeGraph<_, _> = GraphGenerator::from_pattern_iter(pattern).build();
-        let mut diagram = graph.as_uml_diagram("graph", false);
-        diagram.render_to_file("output/slides_example_query_2_data_long/graph.puml").unwrap();
+        let diagram = graph.as_uml_diagram("graph", false);
+        diagram
+            .render_to_file("output/slides_example_query_2_data_long/graph.puml")
+            .unwrap();
     }
 
     #[test]
@@ -75,49 +87,62 @@ mod slides_examples {
             GraphPattern::Linear(10),
         ];
 
-        let mut graph: CachedScopeGraph<_, _> = GraphGenerator::from_pattern_iter(pattern).build();
+        let graph: CachedScopeGraph<_, _> = GraphGenerator::from_pattern_iter(pattern).build();
         let diagram = graph.as_uml_diagram("graph", false);
-        diagram.render_to_file("output/slides_example_query_2_data_longer/graph.puml").unwrap();
+        diagram
+            .render_to_file("output/slides_example_query_2_data_longer/graph.puml")
+            .unwrap();
     }
 
     #[test]
     fn slides_example_graph_no_data_diamond() {
-        let pattern = [
-            GraphPattern::Diamond(2),
-        ];
+        let pattern = [GraphPattern::Diamond(2)];
 
         let graph: CachedScopeGraph<_, _> = GraphGenerator::from_pattern_iter(pattern).build();
 
-        graph.as_uml_diagram("Example Graph", false)
+        graph
+            .as_uml_diagram("Example Graph", false)
             .render_to_file("output/slides_example_no_data_diamond/graph.puml")
             .unwrap();
     }
 
-
     #[test]
     fn slides_example_graph_no_data_linear() {
-        let pattern = [
-            GraphPattern::Linear(2),
-        ];
+        let pattern = [GraphPattern::Linear(2)];
 
         let graph: CachedScopeGraph<_, _> = GraphGenerator::from_pattern_iter(pattern).build();
 
-        graph.as_uml_diagram("Example Graph", false)
+        graph
+            .as_uml_diagram("Example Graph", false)
             .render_to_file("output/slides_example_graph_no_data_linear/graph.puml")
             .unwrap();
     }
 
-
     #[test]
     fn slides_example_graph_no_data_tree() {
+        let pattern = [GraphPattern::Tree(2)];
+
+        let graph: CachedScopeGraph<_, _> = GraphGenerator::from_pattern_iter(pattern).build();
+
+        graph
+            .as_uml_diagram("Example Graph", false)
+            .render_to_file("output/slides_example_graph_no_data_tree/graph.puml")
+            .unwrap();
+    }
+
+    #[test]
+    fn slides_example_graph_no_data_fanout() {
         let pattern = [
-            GraphPattern::Tree(2),
+            GraphPattern::Decl(SgData::var("x", "int")),
+            GraphPattern::Decl(SgData::var("y", "int")),
+            GraphPattern::Decl(SgData::var("print()", "void -> void")),
         ];
 
         let graph: CachedScopeGraph<_, _> = GraphGenerator::from_pattern_iter(pattern).build();
 
-        graph.as_uml_diagram("Example Graph", false)
-            .render_to_file("output/slides_example_graph_no_data_tree/graph.puml")
+        graph
+            .as_uml_diagram("Example Graph", false)
+            .render_to_file("output/slides_example_graph_no_data_fanout/graph.puml")
             .unwrap();
     }
 }

@@ -9,7 +9,7 @@ rand.workspace = true
 tracing = {workspace = true, features = ["release_max_level_error"]}
 tracing-subscriber = {workspace = true}
 serde_json = {workspace = true}
-serde = {workspace = true}
+serde = {workspace = true, features = ["derive", "rc"]}
 scopegraphs = "0.3.3"
 smallvec = "1.15.0"
 

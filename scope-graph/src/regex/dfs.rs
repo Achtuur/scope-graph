@@ -258,9 +258,9 @@ mod tests {
         let automata = RegexAutomaton::from_regex(regex);
         let timer = std::time::Instant::now();
         automata
-        .to_uml()
-        .render_to_file("output/regex/automata.puml")
-        .unwrap();
+            .to_uml()
+            .render_to_file("output/regex/automata.puml")
+            .unwrap();
         println!("{:?}", timer.elapsed());
     }
 

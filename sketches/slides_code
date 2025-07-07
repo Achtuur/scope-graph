@@ -1,0 +1,8 @@
+// c
+int i;
+
+// js
+let i;
+
+// java
+Class i {}

@@ -1,18 +1,5 @@
-
 use criterion::{Criterion, criterion_group, criterion_main};
-use graphing::Renderer;
-use scope_graph::{
-    SgData, SgLabel,
-    generator::GraphPattern,
-    graph::ScopeGraph,
-    order::LabelOrderBuilder,
-    regex::{Regex, dfs::RegexAutomaton},
-};
-use scopegraphs::{
-    Storage, render::RenderSettings,
-};
-
-use crate::common::{construct_cached_graph, construct_libgraph, query_graph, query_graph_cached};
+use scope_graph::{SgData, generator::GraphPattern};
 
 mod common;
 
@@ -89,10 +76,6 @@ criterion_main!(benches);
 
 #[cfg(test)]
 mod tests {
-    use scope_graph::{generator::GraphPattern, graph::ScopeGraph};
-
-    use crate::common::construct_graph;
-
 
     #[test]
     fn test_query() {
@@ -146,7 +129,5 @@ mod tests {
         g2.as_uml_diagram("yea", false)
             .write_to_file("output/bench/graph2.puml")
             .unwrap();
-
     }
 }
-

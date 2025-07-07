@@ -245,18 +245,20 @@ where
                 .add_class(BackgroundColor::get_class_name(s.0))
         });
 
-        let mut decl_dir = false;
+        let mut decl_dir = 0;
 
         let edges = self.scope_iter().flat_map(move |(s, d)| {
             d.outgoing().iter().map(move |edge| {
                 let dir = match self.scope_holds_data(edge.target()) {
-                    true =>  {
-                        decl_dir = !decl_dir;
+                    true => {
+                        decl_dir = (decl_dir + 1) % 4;
                         match decl_dir {
-                            true => EdgeDirection::Left,
-                            false => EdgeDirection::Right,
+                            0 => EdgeDirection::Bottom,
+                            1 => EdgeDirection::Left,
+                            2 => EdgeDirection::Right,
+                            _ => EdgeDirection::Up,
                         }
-                    },
+                    }
                     false => EdgeDirection::Up,
                 };
 
