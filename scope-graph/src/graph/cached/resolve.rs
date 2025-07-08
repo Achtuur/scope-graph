@@ -222,7 +222,7 @@ where
                         self.profiler.inc_edges_traversed();
                         self.resolve_all(p, partial_reg.clone())
                     }) // resolve new paths
-                    .map(|(p, mut envs)|{
+                    .map(|(p, mut envs)| {
                         // path is a path from the starting scope to the current one.
                         // in the cache, we want to store the path from the _data_ to the current scope.
                         // hence, every step we add the traversed label to the query result.

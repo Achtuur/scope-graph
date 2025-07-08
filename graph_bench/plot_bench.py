@@ -87,7 +87,7 @@ class BenchResult:
 
 
 
-def load_estimates(name: str) -> tuple[list[Estimate], list[Estimate]]:
+def load_estimates(name: str) -> tuple[list[BenchResult], list[BenchResult]]:
     paths = [
         f"../target/criterion/{name}/{name}_1_32/base/estimates.json",
         f"../target/criterion/{name}/{name}_2_32/base/estimates.json",
@@ -109,7 +109,7 @@ def load_estimates(name: str) -> tuple[list[Estimate], list[Estimate]]:
     return result, result_cached
 
 
-ds = "sg_circle"
+ds = "sg_linear"
 diamond_no_cache, diamond_cached = load_estimates(ds)
 
 print(diamond_no_cache)

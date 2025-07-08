@@ -19,17 +19,17 @@ fn graph_builder() -> UsedScopeGraph {
     let patterns = [
         GraphPattern::Linear(1),
         GraphPattern::Decl(SgData::var("x", "int")),
-        GraphPattern::Tree(4),
+        GraphPattern::Tree(8),
         GraphPattern::ReverseTree(3),
         GraphPattern::Decl(SgData::var("x1", "int")),
         GraphPattern::Decl(SgData::var("x2", "int")),
         GraphPattern::Decl(SgData::var("x3", "int")),
         GraphPattern::Decl(SgData::var("x4", "int")),
-        // GraphPattern::Linear(3),
-        // GraphPattern::Linear(1),
+        GraphPattern::Linear(3),
+        GraphPattern::Linear(1),
         GraphPattern::Diamond(5),
         GraphPattern::Decl(SgData::var("y", "int")),
-        GraphPattern::Decl(SgData::var("x", "int")),
+        // GraphPattern::Decl(SgData::var("x", "int")),
         GraphPattern::Linear(10),
     ];
     let graph = GraphGenerator::new(graph).with_patterns(patterns).build();

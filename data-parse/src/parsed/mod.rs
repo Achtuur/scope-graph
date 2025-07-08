@@ -158,15 +158,17 @@ impl ParsedScopeGraph {
     {
         self.scopes.retain(|s, _| {
             let incoming_edges = self.edges.iter().filter(|e| &e.to == s).collect::<Vec<_>>();
-            let outgoing_edges = self.edges.iter().filter(|e| &e.from == s).collect::<Vec<_>>();
+            let outgoing_edges = self
+                .edges
+                .iter()
+                .filter(|e| &e.from == s)
+                .collect::<Vec<_>>();
 
             if incoming_edges.is_empty() {
                 outgoing_edges.iter().any(|e| filter(s, None, Some(e)))
-            }
-            else if outgoing_edges.is_empty() {
+            } else if outgoing_edges.is_empty() {
                 incoming_edges.iter().any(|e| filter(s, Some(e), None))
-            }
-            else {
+            } else {
                 for e_in in incoming_edges {
                     for e_out in &outgoing_edges {
                         if filter(s, Some(e_in), Some(e_out)) {
@@ -176,16 +178,14 @@ impl ParsedScopeGraph {
                 }
                 false
             }
-
         });
 
         // for scope in remove_scopes.iter() {
         //     self.scopes.remove(scope);
         // }
 
-        self.edges.retain(|e| {
-            self.scopes.contains_key(&e.from) && self.scopes.contains_key(&e.to)
-        });
+        self.edges
+            .retain(|e| self.scopes.contains_key(&e.from) && self.scopes.contains_key(&e.to));
     }
 
     pub fn filter_edges(&mut self, filter: fn(&ParsedEdge) -> bool) {

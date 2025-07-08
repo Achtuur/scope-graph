@@ -4,6 +4,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 class FigSize(Enum):
     SMALL = (8, 6)
     MEDIUM = (12, 9)

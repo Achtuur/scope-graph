@@ -1,17 +1,21 @@
-use std::{collections::{HashSet, LinkedList}, rc::Rc};
+use std::rc::Rc;
 
-use crate::{MatchableLabel, Scope, ScopeGraph};
+use crate::{
+    MatchableLabel, Scope, ScopeGraph,
+    pattern::{MatchedPattern, PatternMatcher},
+};
 
 const CHAIN_LABELS: &[MatchableLabel] = &[MatchableLabel::Parent, MatchableLabel::ExtendImpl];
+const MIN_SIZE: usize = 3;
 
 #[derive(Clone, Debug)]
-struct ChainScope {
-    s: Scope,
-    parent: Option<Rc<ChainScope>>,
+pub(crate) struct ChainScope {
+    pub(crate) s: Scope,
+    pub(crate) parent: Option<Rc<ChainScope>>,
 }
 
-pub struct ChainScopeIter<'a> {
-    current: Option<&'a ChainScope>,
+pub(crate) struct ChainScopeIter<'a> {
+    pub(crate) current: Option<&'a ChainScope>,
 }
 
 impl<'a> Iterator for ChainScopeIter<'a> {
@@ -24,7 +28,6 @@ impl<'a> Iterator for ChainScopeIter<'a> {
     }
 }
 
-
 #[derive(Clone, Debug)]
 pub struct ChainMatch {
     nodes: ChainScope,
@@ -33,12 +36,19 @@ pub struct ChainMatch {
 impl ChainMatch {
     pub fn from_scope(scope: Scope) -> Self {
         ChainMatch {
-            nodes: ChainScope {s: scope, parent: None},
+            nodes: ChainScope {
+                s: scope,
+                parent: None,
+            },
         }
     }
 
     pub fn tail(&self) -> Scope {
         self.nodes.s
+    }
+
+    pub fn contains(&self, c: &Scope) -> bool {
+        self.scopes().any(|s| s == c)
     }
 
     pub fn step(self, scope: Scope) -> Self {
@@ -50,7 +60,15 @@ impl ChainMatch {
         }
     }
 
-    pub fn len(&self) -> usize {
+    pub fn to_vec(&self) -> Vec<Scope> {
+        let mut s = self.scopes().copied().collect::<Vec<_>>();
+        s.reverse();
+        s
+    }
+}
+
+impl MatchedPattern for ChainMatch {
+    fn size(&self) -> usize {
         let mut count = 0;
         let mut current = &self.nodes;
         while let Some(parent) = &current.parent {
@@ -60,75 +78,105 @@ impl ChainMatch {
         count + 1 // include the tail node
     }
 
-    pub fn scopes(&self) -> impl Iterator<Item = &Scope> {
+    fn scopes(&self) -> impl Iterator<Item = &Scope> {
         ChainScopeIter {
             current: Some(&self.nodes),
         }
     }
 
-    pub fn to_vec(&self) -> Vec<Scope> {
+    fn to_vec(&self) -> Vec<Scope> {
         let mut s = self.scopes().copied().collect::<Vec<_>>();
         s.reverse();
         s
     }
-
-    // pub fn contains(&self, node: &Scope) -> bool {
-    //     self.nodes.contains(node)
-    // }
-
-    // pub fn extend(&mut self, other: ChainMatch) {
-    //     self.nodes.extend(other.nodes);
-    // }
 }
 
-/// Find all trees in the graph
-pub fn find_chain(graph: &ScopeGraph) -> Vec<ChainMatch> {
-    let mut matches = Vec::<ChainMatch>::new();
+pub struct ChainMatcher;
 
-    let scopes = &graph.scopes;
-    let mut available_scopes  = scopes.iter().cloned().collect::<HashSet<_>>();
+impl PatternMatcher for ChainMatcher {
+    type Match = ChainMatch;
+    const EXCLUSIVE: bool = true;
+    const NAME: &str = "Chain";
 
-    for s in scopes {
-        if !available_scopes.contains(s) {
-            // already found a match for this scope, skip it
-            continue;
-        }
+    /// Find all chains starting in `cur_scope`
+    fn find_pattern_for_scope(graph: &ScopeGraph, cur_scope: Scope) -> Vec<Self::Match> {
+        let mut cur_matches = vec![ChainMatch::from_scope(cur_scope)];
+        let mut finished = Vec::new();
 
-        let new_matches = find_chains_recursive(graph, *s);
+        while let Some(m) = cur_matches.pop() {
+            let mut outgoing_edges = graph
+                .get_outgoing_edges_with_labels(m.tail(), CHAIN_LABELS)
+                .peekable();
 
-        for m in new_matches {
-            for s in m.scopes() {
-                available_scopes.remove(s);
-            }
-            matches.push(m);
-        }
-    }
-
-    matches
-}
-
-/// Find a tree starting in `cur_scope`
-fn find_chains_recursive(graph: &ScopeGraph, cur_scope: Scope) -> Vec<ChainMatch> {
-    let mut cur_matches = vec![ChainMatch::from_scope(cur_scope)];
-    let mut finished = Vec::new();
-
-    while let Some(m) = cur_matches.pop() {
-        let outgoing_edges = graph.get_outgoing_edges_with_labels(m.tail(), CHAIN_LABELS).collect::<Vec<_>>();
-
-        match outgoing_edges.len() {
-            // leaf node
-            0 => {
-                if m.len() > 1 {
-                    // only add matches with more than one node
-                    finished.push(m);
+            match outgoing_edges.peek() {
+                // leaf node
+                None => {
+                    if m.size() > MIN_SIZE {
+                        // only add matches with more than one node
+                        finished.push(m);
+                    }
                 }
-            }
-            _ => {
-                for edge in outgoing_edges {
-                    cur_matches.push(m.clone().step(edge.to));
+                _ => {
+                    for edge in outgoing_edges {
+                        if !m.contains(&edge.to) {
+                            cur_matches.push(m.clone().step(edge.to));
+                        }
+                    }
                 }
             }
         }
+        finished
     }
-    finished
 }
+
+// /// Find all trees in the graph
+// pub fn find_chain(graph: &ScopeGraph) -> Vec<ChainMatch> {
+//     let mut matches = Vec::<ChainMatch>::new();
+
+//     let scopes = &graph.scopes;
+//     let mut available_scopes  = scopes.iter().cloned().collect::<HashSet<_>>();
+
+//     for s in scopes {
+//         if !available_scopes.contains(s) {
+//             // already found a match for this scope, skip it
+//             continue;
+//         }
+
+//         let new_matches = find_chains_recursive(graph, *s);
+
+//         for m in new_matches {
+//             for s in m.scopes() {
+//                 available_scopes.remove(s);
+//             }
+//             matches.push(m);
+//         }
+//     }
+
+//     matches
+// }
+
+// /// Find a tree starting in `cur_scope`
+// fn find_chains_recursive(graph: &ScopeGraph, cur_scope: Scope) -> Vec<ChainMatch> {
+//     let mut cur_matches = vec![ChainMatch::from_scope(cur_scope)];
+//     let mut finished = Vec::new();
+
+//     while let Some(m) = cur_matches.pop() {
+//         let outgoing_edges = graph.get_outgoing_edges_with_labels(m.tail(), CHAIN_LABELS).collect::<Vec<_>>();
+
+//         match outgoing_edges.len() {
+//             // leaf node
+//             0 => {
+//                 if m.len() > 1 {
+//                     // only add matches with more than one node
+//                     finished.push(m);
+//                 }
+//             }
+//             _ => {
+//                 for edge in outgoing_edges {
+//                     cur_matches.push(m.clone().step(edge.to));
+//                 }
+//             }
+//         }
+//     }
+//     finished
+// }

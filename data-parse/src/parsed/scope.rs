@@ -62,7 +62,7 @@ impl ParsedScope {
             s if s.is_method() => "#fa98e3",
             s if s.is_method_body() => "#fabbeb",
             s if s.is_var() => "#94fc88",
-            _ => "#f07070"
+            _ => "#f07070",
         }
     }
 

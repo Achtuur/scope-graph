@@ -1,65 +1,145 @@
-
 use std::{
-    cell::LazyCell, collections::{HashMap, HashSet}, fs::OpenOptions, io::{BufWriter, Write}, sync::{Arc, LazyLock}
+    collections::{HashMap, HashSet},
+    io::Write,
 };
 
-use data_parse::{JavaLabel, ParsedScopeGraph};
-use graphing::{
-    plantuml::{EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem}, Color, Renderer
-};
-use serde::{Deserialize, Serialize};
+use indicatif::{ProgressBar, ProgressStyle};
 
-use crate::{stat::Stats, MatchableLabel, ScopeGraph};
+use crate::{MatchableLabel, Scope, ScopeGraph, stat::Stats};
 
 mod chain;
-mod tree;
+mod diamond;
 mod fanout;
+mod tree;
+mod circle;
 pub use chain::*;
+pub use diamond::*;
 pub use fanout::*;
 pub use tree::*;
-
+pub use circle::*;
 
 #[derive(Debug)]
 pub struct PatternMatches {
     chain_matches: Vec<ChainMatch>,
     fanout_matches: Vec<FanoutMatch>,
     tree_matches: Vec<TreeMatch>,
+    diamond_matches: Vec<DiamondMatch>,
+    circle_matches: Vec<CircleMatch>,
 }
 
 impl PatternMatches {
     pub fn from_graph(graph: &ScopeGraph) -> Self {
         let timer = std::time::Instant::now();
-        let chain_matches = find_chain(graph);
+        let chain_matches = ChainMatcher::search(graph);
+        // let chain_matches = Vec::new();
         println!("chain: {:?}", timer.elapsed());
         let timer = std::time::Instant::now();
-        let fanout_matches = find_fanout(graph);
+        let fanout_matches = FanoutMatcher::search(graph);
         println!("fanout: {:?}", timer.elapsed());
         let timer = std::time::Instant::now();
-        let tree_matches = find_tree(graph);
+        let tree_matches = TreeMatcher::search(graph);
         println!("tree: {:?}", timer.elapsed());
+        let timer = std::time::Instant::now();
+        let diamond_matches = DiamondMatcher::search(graph);
+        println!("diamond: {:?}", timer.elapsed());
+        let timer = std::time::Instant::now();
+        let circle_matches = CircleMatcher::search(graph);
+        println!("diamond: {:?}", timer.elapsed());
 
         Self {
             chain_matches,
             fanout_matches,
             tree_matches,
+            diamond_matches,
+            circle_matches,
         }
     }
 }
 
 impl std::fmt::Display for PatternMatches {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let chain_stats = self.chain_matches.iter().map(|m| m.len()).collect::<Stats>();
-        let fanout_stats = self.fanout_matches.iter().map(|m| m.len()).collect::<Stats>();
-        let tree_stats = self.tree_matches.iter().map(|m| m.len()).collect::<Stats>();
+        macro_rules! size_stats {
+            ($matches:expr) => {
+                $matches
+                    .iter()
+                    .map(|m| m.size())
+                    .collect::<Stats>()
+            };
+        }
 
-        writeln!(f, "Chain: {}", chain_stats)?;
-        writeln!(f, "Fanout: {}", fanout_stats)?;
-        writeln!(f, "Tree: {}", tree_stats)?;
+        let chain_stats = size_stats!(self.chain_matches);
+        let fanout_stats = size_stats!(self.fanout_matches);
+        let tree_stats = size_stats!(self.tree_matches);
+        let diamond_stats = size_stats!(self.diamond_matches);
+        let circle_stats = size_stats!(self.circle_matches);
+
+        writeln!(f, "Chain: {:?}", chain_stats)?;
+        writeln!(f, "Fanout: {:?}", fanout_stats)?;
+        writeln!(f, "Tree: {:?}", tree_stats)?;
+        writeln!(f, "Diamond: {:?}", diamond_stats)?;
+        writeln!(f, "Circle: {:?}", circle_stats)?;
 
         Ok(())
     }
 }
 
+pub trait MatchedPattern {
+    /// Size of this pattern, depends on pattern what this size means.
+    fn size(&self) -> usize;
+    fn scopes(&self) -> impl Iterator<Item = &Scope>;
+
+    fn to_vec(&self) -> Vec<Scope> {
+        self.scopes().copied().collect()
+    }
+}
+
+pub trait PatternMatcher {
+    type Match: MatchedPattern;
+    /// If true, then a scope can only be part of one match.
+    const EXCLUSIVE: bool = false;
+    const NAME: &str;
+
+    fn find_pattern_for_scope(graph: &ScopeGraph, scope: Scope) -> Vec<Self::Match>;
+
+    fn search(graph: &ScopeGraph) -> Vec<Self::Match> {
+        let mut matches = Vec::<Self::Match>::new();
+
+        let scopes = &graph.scopes;
+        let bar = ProgressBar::new(scopes.len() as u64).with_message(Self::NAME);
+
+        bar.set_style(
+            ProgressStyle::with_template(
+                "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
+            )
+            .unwrap()
+            .progress_chars("##-"),
+        );
+
+        let mut available_scopes = scopes.iter().cloned().collect::<HashSet<_>>();
+
+        for s in scopes {
+            bar.inc(1);
+            bar.set_message(format!("{} ({} matches)", Self::NAME, matches.len()));
+            if Self::EXCLUSIVE && !available_scopes.contains(s) {
+                // already found a match for this scope, skip it
+                continue;
+            }
+
+            let new_matches = Self::find_pattern_for_scope(graph, *s);
+            for m in new_matches {
+                if Self::EXCLUSIVE {
+                    for s in m.scopes() {
+                        available_scopes.remove(s);
+                    }
+                }
+                matches.push(m);
+            }
+        }
+
+        bar.finish();
+        matches
+    }
+}
 
 #[derive(Clone, Debug)]
 pub enum Pattern {

@@ -81,11 +81,18 @@ fn parsed_scopegraph_data() -> ParseResult<()> {
         ParsedScopeGraph::from_file(format!("{}/{}", BASE_PATH, SCOPEGRAPH_FILE))?;
 
     println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
-    parsed_graph.filter_scopes(|s| s.resource.contains("commons") || s.name.to_ascii_lowercase().contains("object"));
+    parsed_graph.filter_scopes(|s| {
+        s.resource.contains("commons") || s.name.to_ascii_lowercase().contains("object")
+    });
     println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
     parsed_graph.combine_scopes();
     println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
-    parsed_graph.filter_edges(|e| !matches!(e.label, JavaLabel::WithKind | JavaLabel::WithType | JavaLabel::LocalType));
+    parsed_graph.filter_edges(|e| {
+        !matches!(
+            e.label,
+            JavaLabel::WithKind | JavaLabel::WithType | JavaLabel::LocalType
+        )
+    });
     // println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
     // parsed_graph.filter_edges(|e| matches!(e.label, JavaLabel::Extend | JavaLabel::Impl));
 

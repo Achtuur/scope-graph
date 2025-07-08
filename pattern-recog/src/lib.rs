@@ -1,11 +1,12 @@
 use std::{
-    cell::LazyCell, collections::{HashMap, HashSet}, fs::OpenOptions, io::{BufWriter, Write}, sync::{Arc, LazyLock}
+    collections::HashMap,
+    fs::OpenOptions,
+    io::{BufWriter, Write},
+    sync::LazyLock,
 };
 
 use data_parse::{JavaLabel, ParsedScopeGraph};
-use graphing::{
-    plantuml::{EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem}, Color, Renderer
-};
+use graphing::plantuml::{EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem};
 use serde::{Deserialize, Serialize};
 
 use crate::pattern::Pattern;
@@ -13,13 +14,15 @@ use crate::pattern::Pattern;
 pub mod pattern;
 pub mod stat;
 
+/// Use labels when matching patterns.
+const STRICT_LABELS: bool = true;
+
 static TIMESTAMP: LazyLock<usize> = LazyLock::new(|| {
     let now = std::time::SystemTime::now();
     now.duration_since(std::time::UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs() as usize
 });
-
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Scope(usize);
@@ -65,13 +68,11 @@ impl std::fmt::Display for MatchableLabel {
 impl From<JavaLabel> for MatchableLabel {
     fn from(value: JavaLabel) -> Self {
         match value {
-            JavaLabel::VarDecl
-            | JavaLabel::Method
-            | JavaLabel::StaticMember => MatchableLabel::ClassMember,
-            JavaLabel::StaticParent
-            | JavaLabel::Parent => MatchableLabel::Parent,
-            JavaLabel::Impl
-            | JavaLabel::Extend => MatchableLabel::ExtendImpl,
+            JavaLabel::VarDecl | JavaLabel::Method | JavaLabel::StaticMember => {
+                MatchableLabel::ClassMember
+            }
+            JavaLabel::StaticParent | JavaLabel::Parent => MatchableLabel::Parent,
+            JavaLabel::Impl | JavaLabel::Extend => MatchableLabel::ExtendImpl,
             _ => MatchableLabel::Other,
         }
     }
@@ -124,12 +125,17 @@ impl From<ParsedScopeGraph> for ScopeGraph {
             })
             .collect::<Vec<_>>();
 
-        let (from_edge_map, to_edge_map) = edges.iter()
-        .fold((HashMap::new(), HashMap::new()), |(mut from_map, mut to_map), e| {
-            from_map.entry(e.from).or_insert_with(Vec::new).push(e.clone());
-            to_map.entry(e.to).or_insert_with(Vec::new).push(e.clone());
-            (from_map, to_map)
-        });
+        let (from_edge_map, to_edge_map) = edges.iter().fold(
+            (HashMap::new(), HashMap::new()),
+            |(mut from_map, mut to_map), e| {
+                from_map
+                    .entry(e.from)
+                    .or_insert_with(Vec::new)
+                    .push(e.clone());
+                to_map.entry(e.to).or_insert_with(Vec::new).push(e.clone());
+                (from_map, to_map)
+            },
+        );
 
         ScopeGraph {
             scopes,
@@ -137,6 +143,12 @@ impl From<ParsedScopeGraph> for ScopeGraph {
             from_edge_map,
             to_edge_map,
         }
+    }
+}
+
+impl Default for ScopeGraph {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -158,7 +170,12 @@ impl ScopeGraph {
         self.add_edge_labeled(from, to, MatchableLabel::Other);
     }
 
-    pub fn add_edge_labeled<S: Into<Scope>, L: Into<MatchableLabel>>(&mut self, from: S, to: S, lbl: L) {
+    pub fn add_edge_labeled<S: Into<Scope>, L: Into<MatchableLabel>>(
+        &mut self,
+        from: S,
+        to: S,
+        lbl: L,
+    ) {
         let edge = Edge {
             from: from.into(),
             to: to.into(),
@@ -168,34 +185,56 @@ impl ScopeGraph {
             .entry(edge.from)
             .or_default()
             .push(edge.clone());
-        self.to_edge_map.entry(edge.to).or_default().push(edge.clone());
+        self.to_edge_map
+            .entry(edge.to)
+            .or_default()
+            .push(edge.clone());
         self.edges.push(edge);
     }
 
-    pub fn get_outgoing_edges_with_labels(&self, s: impl Into<Scope>, lbls: &[MatchableLabel]) -> impl Iterator<Item =&Edge> {
+    pub fn get_outgoing_edges_with_labels(
+        &self,
+        s: impl Into<Scope>,
+        lbls: &[MatchableLabel],
+    ) -> impl Iterator<Item = &Edge> {
         let s = s.into();
         self.from_edge_map
             .get(&s)
             .into_iter()
             // .flatten()
             .flat_map(|edges| {
-                edges.iter().filter(|e| lbls.contains(&e.lbl))
+                edges.iter().filter(|e| {
+                    match STRICT_LABELS && !lbls.is_empty() {
+                        true => lbls.contains(&e.lbl),
+                        false => true, // accept all edges
+                    }
+                })
             })
     }
 
-    pub fn get_incoming_edges_with_labels(&self, s: impl Into<Scope>, lbls: &[MatchableLabel]) -> impl Iterator<Item = &Edge> {
+    pub fn get_incoming_edges_with_labels(
+        &self,
+        s: impl Into<Scope>,
+        lbls: &[MatchableLabel],
+    ) -> impl Iterator<Item = &Edge> {
         let s = s.into();
         self.to_edge_map
             .get(&s)
             .into_iter()
             // .flatten()
             .flat_map(|edges| {
-                edges.iter().filter(|e| lbls.contains(&e.lbl))
+                edges.iter().filter(|e| {
+                    match STRICT_LABELS {
+                        true => lbls.contains(&e.lbl),
+                        false => true, // accept all edges
+                    }
+                })
             })
     }
 
-    pub fn from_edges<S: Into<Scope>, L: Into<MatchableLabel>>(edges: impl IntoIterator<Item = (S, L, S)>) -> Self
-    {
+    pub fn from_edges<S: Into<Scope>, L: Into<MatchableLabel>>(
+        edges: impl IntoIterator<Item = (S, L, S)>,
+    ) -> Self {
         let mut graph = Self::new();
         for (from, l, to) in edges {
             let (from, to) = (from.into(), to.into());

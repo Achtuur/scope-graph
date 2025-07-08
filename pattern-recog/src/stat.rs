@@ -1,3 +1,4 @@
+#[derive(Clone, Debug)]
 pub struct Stats {
     data_points: Vec<f32>,
 }
@@ -26,13 +27,10 @@ macro_rules! impl_traits {
 
 impl_traits!(f32, usize, u32, u64, i32, i64);
 
-
 impl Stats {
     pub fn new(mut data_points: Vec<f32>) -> Self {
         data_points.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-        Self {
-            data_points,
-        }
+        Self { data_points }
     }
 
     pub fn avg(&self) -> f32 {
@@ -67,8 +65,14 @@ impl Stats {
 
 impl std::fmt::Display for Stats {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-
-        write!(f, "Stats {{count: {}, avg: {:.2}, median: {:.2}, min: {:.2}, max: {:.2}}}",
-               self.data_points.len(), self.avg(), self.median(), self.min(), self.max())
+        write!(
+            f,
+            "Stats {{count: {}, avg: {:.2}, median: {:.2}, min: {:.2}, max: {:.2}}}",
+            self.data_points.len(),
+            self.avg(),
+            self.median(),
+            self.min(),
+            self.max()
+        )
     }
 }

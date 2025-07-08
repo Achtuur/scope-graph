@@ -248,10 +248,7 @@ pub enum SgData {
 
 impl SgData {
     pub fn var(x: impl ToString, t: impl ToString) -> Self {
-        Self::Variable(
-            Arc::from(x.to_string()),
-            Arc::from(t.to_string()),
-        )
+        Self::Variable(Arc::from(x.to_string()), Arc::from(t.to_string()))
     }
 
     pub fn name(&self) -> &str {
