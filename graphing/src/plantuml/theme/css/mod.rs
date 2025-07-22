@@ -178,7 +178,7 @@ impl ElementCss {
             };
         }
 
-        write_prop!("FontFamily", self.font_family);
+        write_prop!("FontName", self.font_family);
         write_prop!("FontColor", self.font_color);
         write_prop!("FontSize", self.font_size);
         write_prop!("FontStyle", self.font_style);

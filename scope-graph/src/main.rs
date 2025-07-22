@@ -5,11 +5,7 @@ use std::{
 
 use graphing::Renderer;
 use scope_graph::{
-    ColorSet, DRAW_CACHES, ForeGroundColor, SAVE_GRAPH, SgData, SgLabel, SgProjection,
-    generator::{GraphGenerator, GraphPattern},
-    graph::{CachedScopeGraph, ScopeGraph},
-    order::LabelOrderBuilder,
-    regex::{Regex, dfs::RegexAutomaton},
+    generator::{GraphGenerator, GraphPattern}, graph::{CachedScopeGraph, GraphRenderOptions, ScopeGraph}, order::LabelOrderBuilder, regex::{dfs::RegexAutomaton, Regex}, ColorSet, ForeGroundColor, SgData, SgLabel, SgProjection, DRAW_CACHES, SAVE_GRAPH
 };
 
 pub type UsedScopeGraph = CachedScopeGraph<SgLabel, SgData>;
@@ -19,22 +15,22 @@ fn graph_builder() -> UsedScopeGraph {
     let patterns = [
         GraphPattern::Linear(1),
         GraphPattern::Decl(SgData::var("x", "int")),
-        GraphPattern::Tree(8),
-        GraphPattern::ReverseTree(3),
-        GraphPattern::Decl(SgData::var("x1", "int")),
-        GraphPattern::Decl(SgData::var("x2", "int")),
-        GraphPattern::Decl(SgData::var("x3", "int")),
-        GraphPattern::Decl(SgData::var("x4", "int")),
+        // GraphPattern::Tree(100),
+        // GraphPattern::ReverseTree(7),
+        // GraphPattern::Decl(SgData::var("x1", "int")),
+        // GraphPattern::Decl(SgData::var("x2", "int")),
+        // GraphPattern::Decl(SgData::var("x3", "int")),
+        // GraphPattern::Decl(SgData::var("x4", "int")),
         GraphPattern::Linear(3),
         GraphPattern::Linear(1),
-        GraphPattern::Diamond(5),
+        GraphPattern::Diamond(2, 1),
         GraphPattern::Decl(SgData::var("y", "int")),
         // GraphPattern::Decl(SgData::var("x", "int")),
         GraphPattern::Linear(10),
     ];
     let graph = GraphGenerator::new(graph).with_patterns(patterns).build();
     graph
-        .as_uml_diagram("graph", DRAW_CACHES)
+        .as_uml_diagram("graph", &GraphRenderOptions::default())
         .render_to_file("output/output0.puml")
         .unwrap();
     graph
@@ -59,7 +55,7 @@ fn query_test(graph: &mut UsedScopeGraph) {
     matcher.to_mmd().render_to_file("output/regex.md").unwrap();
 
     let x_match: Arc<str> = Arc::from("y");
-    let query_scope_set = [(x_match.clone(), vec![24]), (x_match.clone(), vec![30])];
+    let query_scope_set = [(x_match.clone(), vec![9]), (x_match.clone(), vec![13])];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
         let title = format!(
@@ -97,7 +93,11 @@ fn query_test(graph: &mut UsedScopeGraph) {
 
         // uml
         // let cache_uml = graph.cache_path_uml(11);
-        let mut uml_diagram = graph.as_uml_diagram(&title, DRAW_CACHES);
+        let options = GraphRenderOptions {
+            draw_caches: true,
+            ..Default::default()
+        };
+        let mut uml_diagram = graph.as_uml_diagram(&title, &options);
         // uml_diagram.extend(cache_uml);
         uml_diagram.extend(res_uml);
 
@@ -127,19 +127,19 @@ fn circular_graph() -> UsedScopeGraph {
 
 fn aron_example() {
     let mut graph = UsedScopeGraph::new();
+    let s0 = graph.add_scope_default();
     let s1 = graph.add_scope_default();
     let s2 = graph.add_scope_default();
     let s3 = graph.add_scope_default();
-    let s4 = graph.add_scope_default();
+    graph.add_edge(s0, s1, SgLabel::Parent);
     graph.add_edge(s1, s2, SgLabel::Parent);
     graph.add_edge(s2, s3, SgLabel::Parent);
-    graph.add_edge(s3, s4, SgLabel::Parent);
-    graph.add_edge(s4, s1, SgLabel::Parent);
-    graph.add_decl(s1, SgLabel::Declaration, SgData::var("x", "int"));
-    graph.add_decl(s3, SgLabel::Declaration, SgData::var("y", "int"));
+    graph.add_edge(s3, s0, SgLabel::Parent);
+    graph.add_decl(s0, SgLabel::Declaration, SgData::var("x", "int"));
+    graph.add_decl(s2, SgLabel::Declaration, SgData::var("y", "int"));
 
     graph
-        .as_uml_diagram("circle sg", true)
+        .as_uml_diagram("circle sg", &GraphRenderOptions::default())
         .render_to_file("output/aron0.puml")
         .unwrap();
 
@@ -148,14 +148,17 @@ fn aron_example() {
         .push(SgLabel::Declaration, SgLabel::Parent)
         .build();
     let env = graph.query_proj(
-        s2,
+        s1,
         &reg,
         &label_order,
         SgProjection::VarName,
         Arc::from("x"),
     );
 
-    let mut diagram = graph.as_uml_diagram("circle sg 1st query", true);
+    let mut diagram = graph.as_uml_diagram("circle sg 1st query", &GraphRenderOptions {
+        draw_caches: true,
+        ..Default::default()
+    });
     let q_uml = env
         .into_iter()
         .flat_map(|r| r.path.as_uml(ForeGroundColor::next_class(), true))
@@ -165,14 +168,14 @@ fn aron_example() {
     diagram.render_to_file("output/aron1.puml").unwrap();
 
     let env = graph.query_proj(
-        s4,
+        s3,
         &reg,
         &label_order,
         SgProjection::VarName,
         Arc::from("y"),
     );
 
-    let mut diagram = graph.as_uml_diagram("circle sg 2nd query", true);
+    let mut diagram = graph.as_uml_diagram("circle sg 2nd query", &GraphRenderOptions::default());
     let q_uml = env
         .into_iter()
         .flat_map(|r| r.path.as_uml(ForeGroundColor::next_class(), true))
@@ -184,11 +187,10 @@ fn aron_example() {
 
 fn main() {
     tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::WARN)
+        .with_max_level(tracing::Level::TRACE)
         .init();
-    // aron_example();
-
-    // return;
+    aron_example();
+    return;
 
     // let mut graph = graph_builder();
     let mut graph = graph_builder();

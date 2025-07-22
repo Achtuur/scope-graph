@@ -213,8 +213,8 @@ where
                 let mut rp = Path::Start(target);
                 rp = rp.step(label, from.target(), automaton_idx);
                 let mut current = from.as_ref();
-                while let Path::Step { label, from, .. } = current {
-                    rp = rp.step(label.clone(), from.target(), automaton_idx);
+                while let Path::Step { label, from, automaton_idx, .. } = current {
+                    rp = rp.step(label.clone(), from.target(), *automaton_idx);
                     current = from;
                 }
                 rp
@@ -223,6 +223,7 @@ where
         ReversePath(rev_path)
     }
 }
+
 
 impl<Lbl> From<&Path<Lbl>> for ReversePath<Lbl>
 where
@@ -323,5 +324,16 @@ mod tests {
             .step('d', Scope(3), 0)
             .step('c', Scope(2), 1);
         assert!(!path.is_circular(0));
+    }
+
+    #[test]
+    fn test_equality() {
+        let p1 = Path::start(1).step('a', 2, 0).step('b', 3, 0);
+        let p2 = Path::start(1).step('a', 2, 0).step('b', 3, 0);
+        assert_eq!(p1, p2);
+        let p3 = Path::start(3).step('a', 2, 0).step('b', 3, 0);
+        assert_ne!(p1, p3);
+        let p4 = Path::start(1).step('a', 2, 0).step('c', 3, 0);
+        assert_ne!(p1, p4);
     }
 }

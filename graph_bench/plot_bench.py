@@ -129,7 +129,7 @@ X = np.arange(len(x_ticks))
 fig.multiple_bars(y_data, width=0.35, bar_offset=0.01, labels=["No cache", "With cache"])
 
 fig.set_text(
-    title=ds,
+    title="Linear pattern (size = 32)",
     xlabel="Number of queries",
     ylabel="\% of baseline"
 )

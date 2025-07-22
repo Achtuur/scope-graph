@@ -1,8 +1,34 @@
 // c
 int i;
 
-// js
+// rust
 let i;
 
 // java
 Class i {}
+
+
+// c
+struct i {
+    int x;
+}
+
+// rust
+struct i {
+    x: i32,
+}
+
+// java
+class i {
+    int x;
+}
+
+
+// c
+/* ??? */
+
+// rust
+/* ??? */
+
+// java
+class i extends j {}

@@ -61,26 +61,33 @@ class FontSize(Enum):
 
 LINE_STYLE = "--"
 
-def init():
-    """Initialise some plot constants (call this first):
-    - Sets color order to my custom colors
-    - Enables latex font
-
-    Args:
-        plt (_type_): _description_
-    """
-    import matplotlib.pyplot as plt
-    __set_color_order(plt)
-    __set_latex_font(plt)
-
 # I'm calling it superfigure and no one can stop me
 class SuperFigure:
     __fig: matplotlib.figure.Figure
     __ax: matplotlib.axes.Axes
 
-    def __init__(self, _fig: matplotlib.figure.Figure, _ax: matplotlib.axes.Axes):
+    __is_init = False
+
+    def __init__(self, _fig: matplotlib.figure.Figure, _ax: matplotlib.axes.Axes) -> None:
         self.__fig = _fig
         self.__ax = _ax
+
+    def init_plb():
+        """Initialise some plot constants (call this first):
+        - Sets color order to my custom colors
+        - Enables latex font
+
+        Args:
+            plt (_type_): _description_
+        """
+
+        if SuperFigure.__is_init:
+            return
+
+        print("Initialising plot constants...")
+        SuperFigure.__set_color_order()
+        SuperFigure.__set_latex_font()
+        SuperFigure.__is_init = True
 
     # def fig(self):
     #     """Get the figure of this SuperFigure"""
@@ -90,14 +97,17 @@ class SuperFigure:
     #     """Get the axes of this SuperFigure"""
     #     return self.__ax
 
-    def figure(**kwargs):
+    def figure(**kwargs) -> 'SuperFigure':
+        SuperFigure.init_plb()
         fix, axs = plt.figure(**kwargs)
         return SuperFigure(fix, axs)
 
     def subplots(nrows=1, ncols=1, **kwargs):
         """Create subplots and return a SuperFigure object"""
+        SuperFigure.init_plb()
         fig, axs = plt.subplots(nrows=nrows, ncols=ncols, **kwargs)
         return SuperFigure(fig, axs)
+
 
     def set_default_plot_style(self):
         """Set plot style to default style that I prefer:
@@ -172,13 +182,13 @@ class SuperFigure:
         # Save the figure with the specified file extension
         file_path = f"{file_name}.{format_str}"
 
-        self.__fig.savefig(file_path, format=format_str, dpi=1200, bbox_inches='tight')
+        self.__fig.savefig(file_path, format=format_str, dpi=200, bbox_inches='tight')
 
         print(f"Figure saved as '{file_path}'.")
 
     def __set_default_ax_style(ax):
         ax.grid(True, linestyle=LINE_STYLE, alpha=0.5)
-        ax.tick_params(axis='both', which='major', labelsize=10, width=1.2, length=6)
+        ax.tick_params(axis='both', which='major', labelsize=FontSize.ticks(), width=1.2, length=6)
         ax.tick_params(axis='both', which='minor', width=0.8, length=3)
 
     def set_origin_ax_line(self):
@@ -245,64 +255,75 @@ class SuperFigure:
 
     def bar(self, *args, **kwargs):
         self.__ax.bar(*args, **kwargs)
-        
+
+    def boxplot(self, *args, **kwargs):
+        """Create a boxplot on the ax
+
+        Args:
+            *args: Positional arguments for plt.boxplot()
+            **kwargs: Keyword arguments for plt.boxplot()
+        """
+        self.__ax.boxplot(*args, **kwargs)
+
     def show(self):
         """Show the plot"""
         plt.show()
 
-    def multiple_bars(self, y_data, width=0.5, bar_offset=0.1, labels=list[str], **kwargs):
-        X = np.arange(len(y_data[0]))
+    def multiple_bars(self, y_data, labels: list[str], colors: list[Color], width=0.1, bar_offset=0, **kwargs):
+        num_bars = len(y_data)
+        num_labels = len(y_data[0])
+        X = np.arange(num_labels)
         for i, y in enumerate(y_data):
-            print(i, y)
-            offset_x = X + (width * (i - 1)) + (bar_offset * (i-1))
+            i_o = i - num_bars / 2
+            offset_x = X + (width * i_o) + (bar_offset * i_o)
             offset_x += width / 2 + bar_offset / 2
-            self.__ax.bar(offset_x, y, width=width, label=labels[i], **kwargs)
 
-def get_color_order(luminance=25):
-    return [
-        Color.GREEN.rgb(luminance),
-        Color.PURPLE.rgb(luminance),
-        Color.RED.rgb(luminance),
-        Color.BLUE.rgb(luminance),
-        Color.ORANGE.rgb(luminance),
-        Color.YELLOW.rgb(luminance),
-        Color.PINK.rgb(luminance),
-        Color.CYAN.rgb(luminance),
-    ]
+            self.__ax.bar(offset_x, y, width=width, label=labels[i], color=colors[i], **kwargs)
 
-def __str2size(size_str):
-    # Get screen resolution in pixels
-    import matplotlib.pyplot as plt
-    screen_resolution = plt.gcf().dpi
+    def get_color_order(luminance=25):
+        return [
+            Color.GREEN.rgb(luminance),
+            Color.PURPLE.rgb(luminance),
+            Color.RED.rgb(luminance),
+            Color.BLUE.rgb(luminance),
+            Color.ORANGE.rgb(luminance),
+            Color.YELLOW.rgb(luminance),
+            Color.PINK.rgb(luminance),
+            Color.CYAN.rgb(luminance),
+        ]
 
-    if size_str in ['small', 's']:
-        size = (8, 6)
-    elif size_str in ['medium', 'm']:
-        size = (12, 9)
-    elif size_str in ['big', 'b']:
-        size = (16, 12)
-    elif size_str in ['overleaf', 'report', 'r', 'o']:
-        size = (10, 6)  # Adjust this value as needed
-    elif size_str in ['fullscreen', 'full', 'f']:
-        size = (plt.gcf().get_window_extent().width / screen_resolution, plt.gcf().get_window_extent().height / screen_resolution)
-    elif size_str in ['micro', 'u']:
-        size = (3, 2)
-    else:
-        size = (8, 6)
+    def __str2size(size_str):
+        # Get screen resolution in pixels
+        screen_resolution = plt.gcf().dpi
 
-    # Convert size to pixels
-    # size = [val * screen_resolution for val in size]
+        if size_str in ['small', 's']:
+            size = (8, 6)
+        elif size_str in ['medium', 'm']:
+            size = (12, 9)
+        elif size_str in ['big', 'b']:
+            size = (16, 12)
+        elif size_str in ['overleaf', 'report', 'r', 'o']:
+            size = (10, 6)  # Adjust this value as needed
+        elif size_str in ['fullscreen', 'full', 'f']:
+            size = (plt.gcf().get_window_extent().width / screen_resolution, plt.gcf().get_window_extent().height / screen_resolution)
+        elif size_str in ['micro', 'u']:
+            size = (3, 2)
+        else:
+            size = (8, 6)
 
-    return size
+        # Convert size to pixels
+        # size = [val * screen_resolution for val in size]
+
+        return size
 
 
-def __set_color_order(plt):
-    colors = get_color_order()
-    plt.rcParams['axes.prop_cycle'] = plt.cycler(color=colors)
+    def __set_color_order():
+        colors = SuperFigure.get_color_order()
+        plt.rcParams['axes.prop_cycle'] = plt.cycler(color=colors)
 
-def __set_latex_font(plt):
-    plt.rcParams.update({
-        "text.usetex": True,
-        "font.family": "serif",  # You can change this to "sans-serif" if you prefer
-        "font.size": 12,         # Adjust the font size as needed
-    })
+    def __set_latex_font():
+        plt.rcParams.update({
+            "text.usetex": True,
+            "font.family": "serif",  # You can change this to "sans-serif" if you prefer
+            "font.size": 12,         # Adjust the font size as needed
+        })

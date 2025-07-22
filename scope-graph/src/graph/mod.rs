@@ -1,23 +1,16 @@
 use std::collections::HashMap;
 
 use graphing::{
-    Color,
     mermaid::{
-        MermaidChartDirection, MermaidDiagram, MermaidStyleSheet,
-        item::{ItemShape, MermaidItem},
-        theme::{AnimationSpeed, AnimationStyle, EdgeType, ElementStyle, Size},
-    },
-    plantuml::{
-        EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem,
-        theme::{ElementCss, FontStyle, HorizontalAlignment, LineStyle, PlantUmlStyleSheet},
-    },
+        item::{ItemShape, MermaidItem}, theme::{AnimationSpeed, AnimationStyle, EdgeType, ElementStyle, Size}, MermaidChartDirection, MermaidDiagram, MermaidStyleSheet
+    }, plantuml::{
+        theme::{ElementCss, FontFamily, FontStyle, HorizontalAlignment, LineStyle, PlantUmlStyleSheet}, EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem
+    }, Color
 };
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor, data::ScopeGraphData,
-    label::ScopeGraphLabel, order::LabelOrder, projection::ScopeGraphDataProjection,
-    regex::dfs::RegexAutomaton, scope::Scope,
+    data::ScopeGraphData, debugonly_debug, label::ScopeGraphLabel, order::LabelOrder, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor
 };
 
 // mod base;
@@ -26,7 +19,23 @@ mod resolve;
 
 // pub use base::*;
 pub use cached::*;
-pub use resolve::QueryResult;
+pub use resolve::{QueryResult, QueryStats};
+
+
+#[derive(Clone, Copy, Default, Debug)]
+pub enum LabelRenderStyle {
+    None,
+    #[default]
+    Short,
+    Long,
+}
+
+#[derive(Debug, Default)]
+pub struct GraphRenderOptions {
+    pub draw_caches: bool,
+    pub draw_labels: LabelRenderStyle,
+    pub draw_types: bool,
+}
 
 /// Bi-directional edge between two scopes
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
@@ -117,7 +126,7 @@ where
     }
 
     fn add_decl(&mut self, source: Scope, label: Lbl, data: Data) -> Scope {
-        tracing::debug!(
+        debugonly_debug!(
             "Adding decl: {} with label: {} and data: {}",
             source,
             label,
@@ -162,6 +171,9 @@ where
         Lbl: 'a,
         Data: 'a;
 
+    /// Extend self with scopes and edges from other
+    fn extend(&mut self, other: Self);
+
     /// Finds a scope, is here for debugging
     fn find_scope(&self, scope_num: usize) -> Option<Scope> {
         self.scope_iter()
@@ -180,29 +192,31 @@ where
 
     fn scope_holds_data(&self, scope: Scope) -> bool;
 
-    fn as_uml_diagram(&self, title: &str, draw_caches: bool) -> PlantUmlDiagram {
+    fn as_uml_diagram(&self, title: &str, options: &GraphRenderOptions) -> PlantUmlDiagram {
         let mut style_sheet: PlantUmlStyleSheet = [
             ElementCss::new()
                 .background_color(Color::new_rgb(242, 232, 230))
+                .font_family(FontFamily::Monospace)
                 .as_selector("element"),
             ElementCss::new()
                 .line_color(Color::BLACK)
                 .as_selector("arrow"),
             ElementCss::new()
-                .font_size(16)
+                .font_size(24)
                 .font_style(FontStyle::Bold)
-                .round_corner(0)
+                .round_corner(1000)
                 .horizontal_alignment(HorizontalAlignment::Center)
                 .as_class("scope"),
             ElementCss::new()
-                .font_size(18)
+                .font_size(24)
                 .font_style(FontStyle::Bold)
                 .round_corner(10)
                 .shadowing(1)
-                .background_color(Color::new_rgb(242, 232, 175))
+                .background_color(Color::new_rgb(245, 229, 220))
                 .as_class("data-scope"),
             ElementCss::new()
                 .line_thickness(1.25)
+                .font_size(16)
                 .as_class("scope-edge"),
             ElementCss::new()
                 .line_style(LineStyle::Dashed)
@@ -223,22 +237,24 @@ where
 
         let mut diagram = PlantUmlDiagram::new(title);
         diagram.set_style_sheet(style_sheet);
-        diagram.extend(self.generate_graph_uml());
-        if draw_caches {
+        diagram.extend(self.generate_graph_uml(options));
+        if options.draw_caches {
             diagram.extend(self.generate_cache_uml());
         }
         diagram
     }
 
-    fn generate_graph_uml(&self) -> Vec<PlantUmlItem> {
+    fn generate_graph_uml(&self, options: &GraphRenderOptions) -> Vec<PlantUmlItem> {
         let scope_nodes = self.scope_iter().map(|(s, d)| {
             let (node_type, class, contents) = match d.data.variant_has_data() {
-                true => (
-                    NodeType::Card,
-                    "data-scope",
-                    format!("{} ⊢ {}", s, d.data.render_string()),
-                ),
-                false => (NodeType::Node, "scope", s.to_string()),
+                true => {
+                    let d_str = match options.draw_types {
+                        true => d.data.render_with_type(),
+                        false => d.data.render_string(),
+                    };
+                    (NodeType::Card, "data-scope", format!("{} ⊢ {}", s, d_str))
+                },
+                false => (NodeType::Card, "scope", s.to_string()),
             };
             PlantUmlItem::node(s.uml_id(), contents, node_type)
                 .add_class(class)
@@ -262,7 +278,13 @@ where
                     false => EdgeDirection::Up,
                 };
 
-                PlantUmlItem::edge(s.uml_id(), edge.target().uml_id(), edge.lbl().char(), dir)
+                let lbl = match options.draw_labels {
+                    LabelRenderStyle::None => String::new(),
+                    LabelRenderStyle::Short => edge.lbl().char().to_string(),
+                    LabelRenderStyle::Long => edge.lbl().str().to_string(),
+                };
+
+                PlantUmlItem::edge(s.uml_id(), edge.target().uml_id(), lbl, dir)
                     .add_class("scope-edge")
             })
         });

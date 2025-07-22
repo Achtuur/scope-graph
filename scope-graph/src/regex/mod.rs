@@ -82,6 +82,17 @@ where
         Self::Concat(Box::new(r.into()), Box::new(s.into()))
     }
 
+    pub fn concat_iter<R, I>(iter: I) -> Self
+    where R: Into<Self>, I: IntoIterator<Item = R>
+    {
+        let mut iter = iter.into_iter();
+        if let Some(first) = iter.next() {
+            iter.fold(first.into(), |acc, r| Self::concat(acc, r.into()))
+        } else {
+            Self::EmptyString
+        }
+    }
+
     pub fn kleene(r: impl Into<Self>) -> Self {
         Self::KleeneStar(Box::new(r.into()))
     }

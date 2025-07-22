@@ -1,20 +1,14 @@
-use std::{collections::HashSet, sync::atomic::AtomicUsize};
+use std::{collections::HashSet, sync::atomic::AtomicUsize, time::{Duration, Instant}};
 
 use crate::{
-    DRAW_MEM_ADDR,
-    data::ScopeGraphData,
-    graph::ScopeMap,
-    label::{LabelOrEnd, ScopeGraphLabel},
-    order::LabelOrder,
-    path::{Path, ReversePath},
-    regex::{RegexState, dfs::RegexAutomaton},
-    scope::Scope,
+    data::ScopeGraphData, debugonly_debug, debugonly_trace, graph::ScopeMap, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, DRAW_MEM_ADDR
 };
 
 use super::ScopeData;
 
-#[derive(Debug, Default)]
-pub struct QueryProfiler {
+#[derive(Debug)]
+pub(crate) struct QueryProfiler {
+    pub start_time: Instant,
     pub edges_traversed: AtomicUsize,
     pub nodes_visited: AtomicUsize,
     pub cache_reads: AtomicUsize,
@@ -23,6 +17,20 @@ pub struct QueryProfiler {
     /// size estimate in bytes
     /// assuming that hashmap is simply a list of [(K, V)] for simplicity
     pub cache_size_estimate: AtomicUsize,
+}
+
+impl QueryProfiler {
+    pub fn new() -> Self {
+        Self {
+            start_time: Instant::now(),
+            edges_traversed: AtomicUsize::new(0),
+            nodes_visited: AtomicUsize::new(0),
+            cache_reads: AtomicUsize::new(0),
+            cache_writes: AtomicUsize::new(0),
+            cache_hits: AtomicUsize::new(0),
+            cache_size_estimate: AtomicUsize::new(0),
+        }
+    }
 }
 
 impl QueryProfiler {
@@ -54,6 +62,82 @@ impl QueryProfiler {
     pub fn inc_cache_hits(&self) {
         self.cache_hits
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    }
+}
+
+#[derive(Debug, Default, serde::Serialize)]
+pub struct QueryStats {
+    pub time: Duration,
+    pub edges_traversed: usize,
+    pub nodes_visited: usize,
+    pub cache_reads: usize,
+    pub cache_writes: usize,
+    pub cache_hits: usize,
+    /// size estimate in bytes
+    /// assuming that hashmap is simply a list of [(K, V)] for simplicity
+    pub cache_size_estimate: usize,
+}
+
+impl std::ops::Add for QueryStats {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            time: self.time + other.time,
+            edges_traversed: self.edges_traversed + other.edges_traversed,
+            nodes_visited: self.nodes_visited + other.nodes_visited,
+            cache_reads: self.cache_reads + other.cache_reads,
+            cache_writes: self.cache_writes + other.cache_writes,
+            cache_hits: self.cache_hits + other.cache_hits,
+            cache_size_estimate: self.cache_size_estimate + other.cache_size_estimate,
+        }
+    }
+}
+
+impl std::ops::Div<usize> for QueryStats {
+    type Output = Self;
+
+    fn div(self, rhs: usize) -> Self {
+        Self {
+            time: self.time / rhs as u32,
+            edges_traversed: self.edges_traversed / rhs,
+            nodes_visited: self.nodes_visited / rhs,
+            cache_reads: self.cache_reads / rhs,
+            cache_writes: self.cache_writes / rhs,
+            cache_hits: self.cache_hits / rhs,
+            cache_size_estimate: self.cache_size_estimate / rhs,
+        }
+    }
+}
+
+impl std::fmt::Display for QueryStats {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Time: {:?}, Edges traversed: {}, Nodes visited: {}, Cache reads: {}, Cache writes: {}, Cache hits: {}, Cache size estimate: {} bytes",
+            self.time,
+            self.edges_traversed,
+            self.nodes_visited,
+            self.cache_reads,
+            self.cache_writes,
+            self.cache_hits,
+            self.cache_size_estimate
+        )
+    }
+}
+
+impl From<&QueryProfiler> for QueryStats {
+    fn from(profiler: &QueryProfiler) -> Self {
+        Self {
+            time: profiler.start_time.elapsed(),
+            edges_traversed: profiler.edges_traversed.load(std::sync::atomic::Ordering::Relaxed),
+            nodes_visited: profiler.nodes_visited.load(std::sync::atomic::Ordering::Relaxed),
+            cache_reads: profiler.cache_reads.load(std::sync::atomic::Ordering::Relaxed),
+            cache_writes: profiler.cache_writes.load(std::sync::atomic::Ordering::Relaxed),
+            cache_hits: profiler.cache_hits.load(std::sync::atomic::Ordering::Relaxed),
+            cache_size_estimate: profiler.cache_size_estimate
+                .load(std::sync::atomic::Ordering::Relaxed),
+        }
     }
 }
 
@@ -175,14 +259,16 @@ where
             lbl_order,
             data_eq,
             data_wfd,
-            profiler: QueryProfiler::default(),
+            profiler: QueryProfiler::new(),
         }
     }
 
-    pub fn resolve(&mut self, path: Path<Lbl>) -> Vec<QueryResult<Lbl, Data>> {
+    pub fn resolve(&mut self, path: Path<Lbl>) -> (Vec<QueryResult<Lbl, Data>>, QueryStats) {
+        self.profiler.start_time = Instant::now();
         tracing::info!("Resolving path: {}", path);
         let reg = RegexState::new(self.path_re);
-        self.resolve_all(path, reg)
+        let envs = self.resolve_all(path, reg);
+        (envs, (&self.profiler).into())
     }
 
     /// recursive call site for resolving
@@ -203,7 +289,9 @@ where
         path: Path<Lbl>,
         reg: RegexState<'r, Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
-        let scope = self.get_scope(path.target()).expect("Scope not found");
+        let Some(scope) = self.get_scope(path.target()) else {
+            panic!("Scope {} not found in scope graph (len = {})", path.target(), self.scope_map.len());
+        };
         self.profiler.inc_nodes_visited();
 
         let mut labels = scope
@@ -233,7 +321,7 @@ where
         labels: &'a [LabelOrEnd<'r, Lbl>],
         path: Path<Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
-        tracing::debug!("Resolving labels: {:?} for {:?}", labels, path.target());
+        debugonly_debug!("Resolving labels: {:?} for {:?}", labels, path.target());
         labels
             .iter()
             // 'max' labels ie all labels with lowest priority
@@ -303,7 +391,7 @@ where
         mut a1: Vec<QueryResult<Lbl, Data>>,
         mut a2: Vec<QueryResult<Lbl, Data>>,
     ) -> Vec<QueryResult<Lbl, Data>> {
-        tracing::trace!("Shadowing...");
+        debugonly_trace!("Shadowing...");
         a2.retain(|qr2| !a1.iter().any(|qr1| (self.data_eq)(&qr1.data, &qr2.data)));
 
         a1.append(&mut a2);

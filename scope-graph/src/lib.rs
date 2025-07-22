@@ -16,6 +16,8 @@ use serde::{Deserialize, Serialize};
 
 pub use graphing;
 
+pub mod bench_util;
+
 pub mod label;
 pub mod path;
 pub mod scope;
@@ -188,11 +190,9 @@ impl ColorSet for BackGroundEdgeColor {
 pub enum SgLabel {
     Parent,
     Declaration,
-    // A,
-    // B,
-    // C,
-    // /// Debug path that should never be taken
-    // NeverTake,
+    Method,
+    Implement,
+    Extend,
 }
 
 #[cfg(test)]
@@ -201,9 +201,9 @@ impl From<char> for SgLabel {
         match c {
             'P' => Self::Parent,
             'D' => Self::Declaration,
-            // 'A' => Self::A,
-            // 'B' => Self::B,
-            // 'C' => Self::C,
+            'M' => Self::Method,
+            'I' => Self::Implement,
+            'E' => Self::Extend,
             _ => panic!("Invalid SgLabel character: {}", c),
         }
     }
@@ -220,10 +220,9 @@ impl ScopeGraphLabel for SgLabel {
         match self {
             Self::Parent => 'P',
             Self::Declaration => 'D',
-            // Self::NeverTake => 'W',
-            // Self::A => 'A',
-            // Self::B => 'B',
-            // Self::C => 'C',
+            Self::Method => 'M',
+            Self::Implement => 'I',
+            Self::Extend => 'E',
         }
     }
 
@@ -231,10 +230,9 @@ impl ScopeGraphLabel for SgLabel {
         match self {
             Self::Parent => "Parent",
             Self::Declaration => "Declaration",
-            // Self::NeverTake => "NeverTake",
-            // Self::A => "A",
-            // Self::B => "B",
-            // Self::C => "C",
+            Self::Method => "Method",
+            Self::Implement => "Implement",
+            Self::Extend => "Extend",
         }
     }
 }
@@ -262,7 +260,8 @@ impl SgData {
 impl std::fmt::Display for SgData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::NoData => write!(f, "no data"),
+            Self::NoData => write!(f, ""),
+            // Self::Variable(x, t) => write!(f, "{x}: {t}"),
             Self::Variable(x, t) => write!(f, "{x}: {t}"),
         }
     }
@@ -277,9 +276,13 @@ impl ScopeGraphData for SgData {
     }
 
     fn render_string(&self) -> String {
+        format!("{}", self)
+    }
+
+    fn render_with_type(&self) -> String {
         match self {
-            Self::NoData => "".to_string(),
-            Self::Variable(x, t) => format!("{}: {}", x, t),
+            Self::NoData => String::new(),
+            Self::Variable(name, ty) => format!("{name}: {ty}"),
         }
     }
 }
@@ -342,4 +345,20 @@ impl std::fmt::Display for SgProjection {
             Self::VarNameType => write!(f, "var name and type"),
         }
     }
+}
+
+#[macro_export]
+macro_rules! debugonly_trace {
+    ($($arg:tt)*) => {
+        #[cfg(debug_assertions)]
+        tracing::trace!($($arg)*);
+    };
+}
+
+#[macro_export]
+macro_rules! debugonly_debug {
+    ($($arg:tt)*) => {
+        #[cfg(debug_assertions)]
+        tracing::debug!($($arg)*);
+    };
 }

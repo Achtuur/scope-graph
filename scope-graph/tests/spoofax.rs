@@ -74,6 +74,10 @@ impl ScopeGraphData for TestData {
             Self::VarNum(name, num) => format!("{}{}", name, num),
         }
     }
+
+    fn render_with_type(&self) -> String {
+        self.render_string()
+    }
 }
 
 impl TestData {

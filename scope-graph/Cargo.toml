@@ -12,6 +12,8 @@ serde_json = {workspace = true}
 serde = {workspace = true, features = ["derive", "rc"]}
 scopegraphs = "0.3.3"
 smallvec = "1.15.0"
+indicatif = "0.18.0"
+hashbrown = "0.15.4"
 
 [dev-dependencies]
 criterion = "0.6.0"
@@ -22,4 +24,8 @@ harness= false
 
 [[bench]]
 name="sg-simple"
+harness = false
+
+[[bench]]
+name = "sg-patterns"
 harness = false

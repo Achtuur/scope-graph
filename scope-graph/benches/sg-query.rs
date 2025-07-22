@@ -1,7 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use scope_graph::{SgData, generator::GraphPattern};
 
-mod common;
 
 fn get_pattern() -> Vec<GraphPattern> {
     vec![

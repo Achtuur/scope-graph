@@ -1,0 +1,3698 @@
+{
+  "sg_diamond": {
+    "linear-25": {
+      "diamond-64-4": {
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 4947007
+            },
+            "edges_traversed": 3533,
+            "nodes_visited": 3534,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 107346034
+            },
+            "edges_traversed": 70729,
+            "nodes_visited": 70749,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 9999389
+            },
+            "edges_traversed": 7069,
+            "nodes_visited": 7071,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 26909576
+            },
+            "edges_traversed": 17684,
+            "nodes_visited": 17689,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 3042393
+            },
+            "edges_traversed": 399,
+            "nodes_visited": 401,
+            "cache_reads": 401,
+            "cache_writes": 7505,
+            "cache_hits": 64,
+            "cache_size_estimate": 662
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 8518893
+            },
+            "edges_traversed": 489,
+            "nodes_visited": 509,
+            "cache_reads": 509,
+            "cache_writes": 9770,
+            "cache_hits": 82,
+            "cache_size_estimate": 7998
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 6624306
+            },
+            "edges_traversed": 454,
+            "nodes_visited": 459,
+            "cache_reads": 459,
+            "cache_writes": 8875,
+            "cache_hits": 67,
+            "cache_size_estimate": 1789
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 2148408
+            },
+            "edges_traversed": 383,
+            "nodes_visited": 384,
+            "cache_reads": 384,
+            "cache_writes": 7110,
+            "cache_hits": 63,
+            "cache_size_estimate": 320
+          }
+        }
+      },
+      "diamond-4-4": {
+        "base": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 10841744
+            },
+            "edges_traversed": 4664,
+            "nodes_visited": 4684,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 1257559
+            },
+            "edges_traversed": 471,
+            "nodes_visited": 473,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 2712983
+            },
+            "edges_traversed": 1157,
+            "nodes_visited": 1162,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 639219
+            },
+            "edges_traversed": 235,
+            "nodes_visited": 236,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 794945
+            },
+            "edges_traversed": 101,
+            "nodes_visited": 103,
+            "cache_reads": 103,
+            "cache_writes": 1560,
+            "cache_hits": 4,
+            "cache_size_estimate": 180
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 888010
+            },
+            "edges_traversed": 115,
+            "nodes_visited": 135,
+            "cache_reads": 135,
+            "cache_writes": 1905,
+            "cache_hits": 22,
+            "cache_size_estimate": 2082
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 747692
+            },
+            "edges_traversed": 103,
+            "nodes_visited": 108,
+            "cache_reads": 108,
+            "cache_writes": 1620,
+            "cache_hits": 7,
+            "cache_size_estimate": 457
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 579013
+            },
+            "edges_traversed": 85,
+            "nodes_visited": 86,
+            "cache_reads": 86,
+            "cache_writes": 1165,
+            "cache_hits": 3,
+            "cache_size_estimate": 82
+          }
+        }
+      },
+      "diamond-16-1": {
+        "cached": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 1428692
+            },
+            "edges_traversed": 124,
+            "nodes_visited": 126,
+            "cache_reads": 126,
+            "cache_writes": 1835,
+            "cache_hits": 16,
+            "cache_size_estimate": 202
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 712282
+            },
+            "edges_traversed": 102,
+            "nodes_visited": 103,
+            "cache_reads": 103,
+            "cache_writes": 1285,
+            "cache_hits": 15,
+            "cache_size_estimate": 87
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 2654000
+            },
+            "edges_traversed": 164,
+            "nodes_visited": 184,
+            "cache_reads": 184,
+            "cache_writes": 2825,
+            "cache_hits": 34,
+            "cache_size_estimate": 2697
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1845409
+            },
+            "edges_traversed": 143,
+            "nodes_visited": 148,
+            "cache_reads": 148,
+            "cache_writes": 2315,
+            "cache_hits": 19,
+            "cache_size_estimate": 594
+          }
+        },
+        "base": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 46226716
+            },
+            "edges_traversed": 17102,
+            "nodes_visited": 17122,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1594371
+            },
+            "edges_traversed": 852,
+            "nodes_visited": 853,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 10601581
+            },
+            "edges_traversed": 4280,
+            "nodes_visited": 4285,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 3967709
+            },
+            "edges_traversed": 1706,
+            "nodes_visited": 1708,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        }
+      },
+      "diamond-64-1": {
+        "cached": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 15696293
+            },
+            "edges_traversed": 428,
+            "nodes_visited": 448,
+            "cache_reads": 448,
+            "cache_writes": 8230,
+            "cache_hits": 82,
+            "cache_size_estimate": 5617
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 8552464
+            },
+            "edges_traversed": 303,
+            "nodes_visited": 308,
+            "cache_reads": 308,
+            "cache_writes": 5105,
+            "cache_hits": 67,
+            "cache_size_estimate": 931
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 2305550
+            },
+            "edges_traversed": 206,
+            "nodes_visited": 207,
+            "cache_reads": 207,
+            "cache_writes": 2690,
+            "cache_hits": 63,
+            "cache_size_estimate": 143
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 3197521
+            },
+            "edges_traversed": 225,
+            "nodes_visited": 227,
+            "cache_reads": 227,
+            "cache_writes": 3150,
+            "cache_hits": 64,
+            "cache_size_estimate": 297
+          }
+        },
+        "base": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 10957866
+            },
+            "edges_traversed": 6703,
+            "nodes_visited": 6705,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 6258446
+            },
+            "edges_traversed": 3356,
+            "nodes_visited": 3357,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 32443871
+            },
+            "edges_traversed": 16765,
+            "nodes_visited": 16770,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 118419585
+            },
+            "edges_traversed": 67052,
+            "nodes_visited": 67072,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        }
+      },
+      "diamond-16-4": {
+        "base": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 8268374
+            },
+            "edges_traversed": 4463,
+            "nodes_visited": 4468,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1943068
+            },
+            "edges_traversed": 894,
+            "nodes_visited": 895,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 35398548
+            },
+            "edges_traversed": 17811,
+            "nodes_visited": 17831,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 3071779
+            },
+            "edges_traversed": 1783,
+            "nodes_visited": 1785,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 1011385
+            },
+            "edges_traversed": 153,
+            "nodes_visited": 155,
+            "cache_reads": 155,
+            "cache_writes": 2550,
+            "cache_hits": 16,
+            "cache_size_estimate": 263
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1032885
+            },
+            "edges_traversed": 144,
+            "nodes_visited": 145,
+            "cache_reads": 145,
+            "cache_writes": 2335,
+            "cache_hits": 15,
+            "cache_size_estimate": 129
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1915625
+            },
+            "edges_traversed": 193,
+            "nodes_visited": 198,
+            "cache_reads": 198,
+            "cache_writes": 3560,
+            "cache_hits": 19,
+            "cache_size_estimate": 765
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 3464802
+            },
+            "edges_traversed": 248,
+            "nodes_visited": 268,
+            "cache_reads": 268,
+            "cache_writes": 4935,
+            "cache_hits": 34,
+            "cache_size_estimate": 3938
+          }
+        }
+      },
+      "diamond-64-2": {
+        "cached": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 3298731
+            },
+            "edges_traversed": 284,
+            "nodes_visited": 289,
+            "cache_reads": 289,
+            "cache_writes": 4635,
+            "cache_hits": 67,
+            "cache_size_estimate": 1058
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1867783
+            },
+            "edges_traversed": 259,
+            "nodes_visited": 260,
+            "cache_reads": 260,
+            "cache_writes": 4010,
+            "cache_hits": 63,
+            "cache_size_estimate": 196
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 5222916
+            },
+            "edges_traversed": 310,
+            "nodes_visited": 330,
+            "cache_reads": 330,
+            "cache_writes": 5280,
+            "cache_hits": 82,
+            "cache_size_estimate": 4706
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 2138786
+            },
+            "edges_traversed": 264,
+            "nodes_visited": 266,
+            "cache_reads": 266,
+            "cache_writes": 4140,
+            "cache_hits": 64,
+            "cache_size_estimate": 392
+          }
+        },
+        "base": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 8802042
+            },
+            "edges_traversed": 6806,
+            "nodes_visited": 6808,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 22781468
+            },
+            "edges_traversed": 17021,
+            "nodes_visited": 17026,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 95597105
+            },
+            "edges_traversed": 68132,
+            "nodes_visited": 68152,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 5045753
+            },
+            "edges_traversed": 3409,
+            "nodes_visited": 3410,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        }
+      },
+      "diamond-4-1": {
+        "cached": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 1130263
+            },
+            "edges_traversed": 106,
+            "nodes_visited": 108,
+            "cache_reads": 108,
+            "cache_writes": 1680,
+            "cache_hits": 4,
+            "cache_size_estimate": 188
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 3112198
+            },
+            "edges_traversed": 277,
+            "nodes_visited": 297,
+            "cache_reads": 297,
+            "cache_writes": 5955,
+            "cache_hits": 22,
+            "cache_size_estimate": 4440
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 627038
+            },
+            "edges_traversed": 80,
+            "nodes_visited": 81,
+            "cache_reads": 81,
+            "cache_writes": 1030,
+            "cache_hits": 3,
+            "cache_size_estimate": 77
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1705483
+            },
+            "edges_traversed": 186,
+            "nodes_visited": 191,
+            "cache_reads": 191,
+            "cache_writes": 3695,
+            "cache_hits": 7,
+            "cache_size_estimate": 662
+          }
+        },
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 716594
+            },
+            "edges_traversed": 230,
+            "nodes_visited": 231,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 1397055
+            },
+            "edges_traversed": 464,
+            "nodes_visited": 466,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 3440846
+            },
+            "edges_traversed": 1168,
+            "nodes_visited": 1173,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 14701966
+            },
+            "edges_traversed": 4712,
+            "nodes_visited": 4732,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        }
+      },
+      "diamond-4-2": {
+        "base": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 1051958
+            },
+            "edges_traversed": 444,
+            "nodes_visited": 446,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 2800040
+            },
+            "edges_traversed": 1122,
+            "nodes_visited": 1127,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 10256916
+            },
+            "edges_traversed": 4472,
+            "nodes_visited": 4492,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 513732
+            },
+            "edges_traversed": 222,
+            "nodes_visited": 223,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 602939
+            },
+            "edges_traversed": 82,
+            "nodes_visited": 84,
+            "cache_reads": 84,
+            "cache_writes": 1095,
+            "cache_hits": 4,
+            "cache_size_estimate": 149
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 468013
+            },
+            "edges_traversed": 72,
+            "nodes_visited": 73,
+            "cache_reads": 73,
+            "cache_writes": 835,
+            "cache_hits": 3,
+            "cache_size_estimate": 69
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1072935
+            },
+            "edges_traversed": 124,
+            "nodes_visited": 129,
+            "cache_reads": 129,
+            "cache_writes": 2130,
+            "cache_hits": 7,
+            "cache_size_estimate": 484
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 1681177
+            },
+            "edges_traversed": 176,
+            "nodes_visited": 196,
+            "cache_reads": 196,
+            "cache_writes": 3425,
+            "cache_hits": 22,
+            "cache_size_estimate": 2854
+          }
+        }
+      },
+      "diamond-16-2": {
+        "cached": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1016449
+            },
+            "edges_traversed": 121,
+            "nodes_visited": 122,
+            "cache_reads": 122,
+            "cache_writes": 1750,
+            "cache_hits": 15,
+            "cache_size_estimate": 106
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 3152007
+            },
+            "edges_traversed": 201,
+            "nodes_visited": 221,
+            "cache_reads": 221,
+            "cache_writes": 3755,
+            "cache_hits": 34,
+            "cache_size_estimate": 3370
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 2236258
+            },
+            "edges_traversed": 169,
+            "nodes_visited": 174,
+            "cache_reads": 174,
+            "cache_writes": 2950,
+            "cache_hits": 19,
+            "cache_size_estimate": 671
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 1609011
+            },
+            "edges_traversed": 139,
+            "nodes_visited": 141,
+            "cache_reads": 141,
+            "cache_writes": 2220,
+            "cache_hits": 16,
+            "cache_size_estimate": 228
+          }
+        },
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 2217389
+            },
+            "edges_traversed": 871,
+            "nodes_visited": 872,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 4535515
+            },
+            "edges_traversed": 1737,
+            "nodes_visited": 1739,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 40760866
+            },
+            "edges_traversed": 17380,
+            "nodes_visited": 17400,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 11135682
+            },
+            "edges_traversed": 4338,
+            "nodes_visited": 4343,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        }
+      }
+    },
+    "fanchain-25-5": {
+      "diamond-4-2": {
+        "cached": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 1127412
+            },
+            "edges_traversed": 213,
+            "nodes_visited": 233,
+            "cache_reads": 233,
+            "cache_writes": 1803,
+            "cache_hits": 22,
+            "cache_size_estimate": 4091
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 731746
+            },
+            "edges_traversed": 174,
+            "nodes_visited": 175,
+            "cache_reads": 175,
+            "cache_writes": 1031,
+            "cache_hits": 3,
+            "cache_size_estimate": 171
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 931461
+            },
+            "edges_traversed": 203,
+            "nodes_visited": 208,
+            "cache_reads": 208,
+            "cache_writes": 1599,
+            "cache_hits": 7,
+            "cache_size_estimate": 960
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 862498
+            },
+            "edges_traversed": 192,
+            "nodes_visited": 194,
+            "cache_reads": 194,
+            "cache_writes": 1383,
+            "cache_hits": 4,
+            "cache_size_estimate": 359
+          }
+        },
+        "base": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 6469597
+            },
+            "edges_traversed": 3132,
+            "nodes_visited": 3137,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1367574
+            },
+            "edges_traversed": 624,
+            "nodes_visited": 625,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 28139727
+            },
+            "edges_traversed": 12561,
+            "nodes_visited": 12581,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 2886301
+            },
+            "edges_traversed": 1254,
+            "nodes_visited": 1256,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        }
+      },
+      "diamond-4-4": {
+        "cached": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 892437
+            },
+            "edges_traversed": 198,
+            "nodes_visited": 200,
+            "cache_reads": 200,
+            "cache_writes": 1499,
+            "cache_hits": 4,
+            "cache_size_estimate": 380
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1291184
+            },
+            "edges_traversed": 243,
+            "nodes_visited": 248,
+            "cache_reads": 248,
+            "cache_writes": 2395,
+            "cache_hits": 7,
+            "cache_size_estimate": 1036
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 861179
+            },
+            "edges_traversed": 184,
+            "nodes_visited": 185,
+            "cache_reads": 185,
+            "cache_writes": 1227,
+            "cache_hits": 3,
+            "cache_size_estimate": 181
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 2485001
+            },
+            "edges_traversed": 365,
+            "nodes_visited": 385,
+            "cache_reads": 385,
+            "cache_writes": 4835,
+            "cache_hits": 22,
+            "cache_size_estimate": 5908
+          }
+        },
+        "base": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 7335082
+            },
+            "edges_traversed": 3173,
+            "nodes_visited": 3178,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1584386
+            },
+            "edges_traversed": 634,
+            "nodes_visited": 635,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 30517432
+            },
+            "edges_traversed": 12717,
+            "nodes_visited": 12737,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 2958254
+            },
+            "edges_traversed": 1268,
+            "nodes_visited": 1270,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        }
+      },
+      "diamond-4-1": {
+        "cached": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 1328042
+            },
+            "edges_traversed": 230,
+            "nodes_visited": 250,
+            "cache_reads": 250,
+            "cache_writes": 2135,
+            "cache_hits": 22,
+            "cache_size_estimate": 4249
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1156222
+            },
+            "edges_traversed": 213,
+            "nodes_visited": 218,
+            "cache_reads": 218,
+            "cache_writes": 1803,
+            "cache_hits": 7,
+            "cache_size_estimate": 992
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 926411
+            },
+            "edges_traversed": 189,
+            "nodes_visited": 191,
+            "cache_reads": 191,
+            "cache_writes": 1319,
+            "cache_hits": 4,
+            "cache_size_estimate": 357
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 819397
+            },
+            "edges_traversed": 177,
+            "nodes_visited": 178,
+            "cache_reads": 178,
+            "cache_writes": 1091,
+            "cache_hits": 3,
+            "cache_size_estimate": 174
+          }
+        },
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1612273
+            },
+            "edges_traversed": 627,
+            "nodes_visited": 628,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 2870255
+            },
+            "edges_traversed": 1247,
+            "nodes_visited": 1249,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 25810054
+            },
+            "edges_traversed": 12438,
+            "nodes_visited": 12458,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 7345375
+            },
+            "edges_traversed": 3125,
+            "nodes_visited": 3130,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        }
+      },
+      "diamond-64-1": {
+        "cached": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 9453878
+            },
+            "edges_traversed": 461,
+            "nodes_visited": 481,
+            "cache_reads": 481,
+            "cache_writes": 5563,
+            "cache_hits": 82,
+            "cache_size_estimate": 7154
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 2162266
+            },
+            "edges_traversed": 305,
+            "nodes_visited": 306,
+            "cache_reads": 306,
+            "cache_writes": 2447,
+            "cache_hits": 63,
+            "cache_size_estimate": 242
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 4820043
+            },
+            "edges_traversed": 368,
+            "nodes_visited": 373,
+            "cache_reads": 373,
+            "cache_writes": 3695,
+            "cache_hits": 67,
+            "cache_size_estimate": 1339
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 2278649
+            },
+            "edges_traversed": 313,
+            "nodes_visited": 315,
+            "cache_reads": 315,
+            "cache_writes": 2595,
+            "cache_hits": 64,
+            "cache_size_estimate": 483
+          }
+        },
+        "base": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 315432747
+            },
+            "edges_traversed": 195021,
+            "nodes_visited": 195041,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 69609027
+            },
+            "edges_traversed": 48730,
+            "nodes_visited": 48735,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 16707689
+            },
+            "edges_traversed": 9755,
+            "nodes_visited": 9756,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 27260125
+            },
+            "edges_traversed": 19491,
+            "nodes_visited": 19493,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        }
+      },
+      "diamond-16-4": {
+        "base": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 20616829
+            },
+            "edges_traversed": 12487,
+            "nodes_visited": 12492,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 4392030
+            },
+            "edges_traversed": 2497,
+            "nodes_visited": 2498,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 8706042
+            },
+            "edges_traversed": 5000,
+            "nodes_visited": 5002,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 92828572
+            },
+            "edges_traversed": 49966,
+            "nodes_visited": 49986,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 1387153
+            },
+            "edges_traversed": 270,
+            "nodes_visited": 272,
+            "cache_reads": 272,
+            "cache_writes": 2703,
+            "cache_hits": 16,
+            "cache_size_estimate": 489
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 3863349
+            },
+            "edges_traversed": 414,
+            "nodes_visited": 434,
+            "cache_reads": 434,
+            "cache_writes": 5591,
+            "cache_hits": 34,
+            "cache_size_estimate": 7016
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1118106
+            },
+            "edges_traversed": 247,
+            "nodes_visited": 248,
+            "cache_reads": 248,
+            "cache_writes": 2251,
+            "cache_hits": 15,
+            "cache_size_estimate": 232
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 2191084
+            },
+            "edges_traversed": 317,
+            "nodes_visited": 322,
+            "cache_reads": 322,
+            "cache_writes": 3643,
+            "cache_hits": 19,
+            "cache_size_estimate": 1354
+          }
+        }
+      },
+      "diamond-16-1": {
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 5906504
+            },
+            "edges_traversed": 2451,
+            "nodes_visited": 2452,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 14012793
+            },
+            "edges_traversed": 4920,
+            "nodes_visited": 4922,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 115809523
+            },
+            "edges_traversed": 49101,
+            "nodes_visited": 49121,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 30287785
+            },
+            "edges_traversed": 12262,
+            "nodes_visited": 12267,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 2434739
+            },
+            "edges_traversed": 262,
+            "nodes_visited": 282,
+            "cache_reads": 282,
+            "cache_writes": 2535,
+            "cache_hits": 34,
+            "cache_size_estimate": 4618
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 1924342
+            },
+            "edges_traversed": 238,
+            "nodes_visited": 240,
+            "cache_reads": 240,
+            "cache_writes": 2055,
+            "cache_hits": 16,
+            "cache_size_estimate": 422
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1821149
+            },
+            "edges_traversed": 236,
+            "nodes_visited": 241,
+            "cache_reads": 241,
+            "cache_writes": 2015,
+            "cache_hits": 19,
+            "cache_size_estimate": 1038
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1104276
+            },
+            "edges_traversed": 201,
+            "nodes_visited": 202,
+            "cache_reads": 202,
+            "cache_writes": 1315,
+            "cache_hits": 15,
+            "cache_size_estimate": 186
+          }
+        }
+      },
+      "diamond-16-2": {
+        "cached": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1609136
+            },
+            "edges_traversed": 265,
+            "nodes_visited": 270,
+            "cache_reads": 270,
+            "cache_writes": 2599,
+            "cache_hits": 19,
+            "cache_size_estimate": 1102
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 916577
+            },
+            "edges_traversed": 218,
+            "nodes_visited": 220,
+            "cache_reads": 220,
+            "cache_writes": 1667,
+            "cache_hits": 16,
+            "cache_size_estimate": 396
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 3371715
+            },
+            "edges_traversed": 347,
+            "nodes_visited": 367,
+            "cache_reads": 367,
+            "cache_writes": 4251,
+            "cache_hits": 34,
+            "cache_size_estimate": 5848
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 795424
+            },
+            "edges_traversed": 213,
+            "nodes_visited": 214,
+            "cache_reads": 214,
+            "cache_writes": 1567,
+            "cache_hits": 15,
+            "cache_size_estimate": 198
+          }
+        },
+        "base": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 18625520
+            },
+            "edges_traversed": 12307,
+            "nodes_visited": 12312,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 3634977
+            },
+            "edges_traversed": 2463,
+            "nodes_visited": 2464,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 7430147
+            },
+            "edges_traversed": 4916,
+            "nodes_visited": 4918,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 84448050
+            },
+            "edges_traversed": 49270,
+            "nodes_visited": 49290,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        }
+      },
+      "diamond-64-4": {
+        "base": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 325518584
+            },
+            "edges_traversed": 198804,
+            "nodes_visited": 198824,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 15925884
+            },
+            "edges_traversed": 9941,
+            "nodes_visited": 9942,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 87194414
+            },
+            "edges_traversed": 49721,
+            "nodes_visited": 49726,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 28597200
+            },
+            "edges_traversed": 19866,
+            "nodes_visited": 19868,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 7380330
+            },
+            "edges_traversed": 591,
+            "nodes_visited": 596,
+            "cache_reads": 596,
+            "cache_writes": 8159,
+            "cache_hits": 67,
+            "cache_size_estimate": 2411
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 2569755
+            },
+            "edges_traversed": 491,
+            "nodes_visited": 492,
+            "cache_reads": 492,
+            "cache_writes": 6159,
+            "cache_hits": 63,
+            "cache_size_estimate": 428
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 2678439
+            },
+            "edges_traversed": 496,
+            "nodes_visited": 498,
+            "cache_reads": 498,
+            "cache_writes": 6263,
+            "cache_hits": 64,
+            "cache_size_estimate": 854
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 12420974
+            },
+            "edges_traversed": 694,
+            "nodes_visited": 714,
+            "cache_reads": 714,
+            "cache_writes": 10227,
+            "cache_hits": 82,
+            "cache_size_estimate": 11325
+          }
+        }
+      },
+      "diamond-64-2": {
+        "base": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 258812143
+            },
+            "edges_traversed": 196102,
+            "nodes_visited": 196122,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 26971233
+            },
+            "edges_traversed": 19613,
+            "nodes_visited": 19615,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 12660925
+            },
+            "edges_traversed": 9803,
+            "nodes_visited": 9804,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 61649958
+            },
+            "edges_traversed": 49013,
+            "nodes_visited": 49018,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 3503597
+            },
+            "edges_traversed": 395,
+            "nodes_visited": 400,
+            "cache_reads": 400,
+            "cache_writes": 4251,
+            "cache_hits": 67,
+            "cache_size_estimate": 1563
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 5675725
+            },
+            "edges_traversed": 437,
+            "nodes_visited": 457,
+            "cache_reads": 457,
+            "cache_writes": 5083,
+            "cache_hits": 82,
+            "cache_size_estimate": 7066
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 2420011
+            },
+            "edges_traversed": 371,
+            "nodes_visited": 373,
+            "cache_reads": 373,
+            "cache_writes": 3767,
+            "cache_hits": 64,
+            "cache_size_estimate": 604
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1537558
+            },
+            "edges_traversed": 353,
+            "nodes_visited": 354,
+            "cache_reads": 354,
+            "cache_writes": 3407,
+            "cache_hits": 63,
+            "cache_size_estimate": 290
+          }
+        }
+      }
+    }
+  },
+  "sg_tree": {
+    "linear-25": {
+      "tree-80": {
+        "cached": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 319092
+            },
+            "edges_traversed": 81,
+            "nodes_visited": 82,
+            "cache_reads": 82,
+            "cache_writes": 1135,
+            "cache_hits": 0,
+            "cache_size_estimate": 81
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 3146432
+            },
+            "edges_traversed": 578,
+            "nodes_visited": 598,
+            "cache_reads": 598,
+            "cache_writes": 13555,
+            "cache_hits": 19,
+            "cache_size_estimate": 6467
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1318896
+            },
+            "edges_traversed": 213,
+            "nodes_visited": 218,
+            "cache_reads": 218,
+            "cache_writes": 4430,
+            "cache_hits": 4,
+            "cache_size_estimate": 731
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 509881
+            },
+            "edges_traversed": 100,
+            "nodes_visited": 102,
+            "cache_reads": 102,
+            "cache_writes": 1600,
+            "cache_hits": 1,
+            "cache_size_estimate": 173
+          }
+        },
+        "base": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 853068
+            },
+            "edges_traversed": 416,
+            "nodes_visited": 421,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 2851687
+            },
+            "edges_traversed": 1541,
+            "nodes_visited": 1561,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 286080
+            },
+            "edges_traversed": 151,
+            "nodes_visited": 153,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 176071
+            },
+            "edges_traversed": 81,
+            "nodes_visited": 82,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        }
+      },
+      "tree-40": {
+        "cached": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 776796
+            },
+            "edges_traversed": 158,
+            "nodes_visited": 163,
+            "cache_reads": 163,
+            "cache_writes": 3055,
+            "cache_hits": 4,
+            "cache_size_estimate": 579
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 414392
+            },
+            "edges_traversed": 84,
+            "nodes_visited": 86,
+            "cache_reads": 86,
+            "cache_writes": 1215,
+            "cache_hits": 1,
+            "cache_size_estimate": 153
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 247139
+            },
+            "edges_traversed": 67,
+            "nodes_visited": 68,
+            "cache_reads": 68,
+            "cache_writes": 790,
+            "cache_hits": 0,
+            "cache_size_estimate": 67
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 3130576
+            },
+            "edges_traversed": 492,
+            "nodes_visited": 512,
+            "cache_reads": 512,
+            "cache_writes": 11405,
+            "cache_hits": 19,
+            "cache_size_estimate": 5627
+          }
+        },
+        "base": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 220253
+            },
+            "edges_traversed": 135,
+            "nodes_visited": 137,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 110235
+            },
+            "edges_traversed": 67,
+            "nodes_visited": 68,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 2529451
+            },
+            "edges_traversed": 1456,
+            "nodes_visited": 1476,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 583545
+            },
+            "edges_traversed": 361,
+            "nodes_visited": 366,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        }
+      },
+      "tree-160": {
+        "base": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 181038
+            },
+            "edges_traversed": 129,
+            "nodes_visited": 131,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 1941134
+            },
+            "edges_traversed": 1309,
+            "nodes_visited": 1329,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 102261
+            },
+            "edges_traversed": 65,
+            "nodes_visited": 66,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 423580
+            },
+            "edges_traversed": 313,
+            "nodes_visited": 318,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 257662
+            },
+            "edges_traversed": 78,
+            "nodes_visited": 80,
+            "cache_reads": 80,
+            "cache_writes": 1050,
+            "cache_hits": 1,
+            "cache_size_estimate": 142
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 445413
+            },
+            "edges_traversed": 110,
+            "nodes_visited": 115,
+            "cache_reads": 115,
+            "cache_writes": 1855,
+            "cache_hits": 4,
+            "cache_size_estimate": 438
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 1843050
+            },
+            "edges_traversed": 345,
+            "nodes_visited": 365,
+            "cache_reads": 365,
+            "cache_writes": 7730,
+            "cache_hits": 19,
+            "cache_size_estimate": 3948
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 201599
+            },
+            "edges_traversed": 65,
+            "nodes_visited": 66,
+            "cache_reads": 66,
+            "cache_writes": 745,
+            "cache_hits": 0,
+            "cache_size_estimate": 65
+          }
+        }
+      }
+    },
+    "fanchain-25-5": {
+      "tree-160": {
+        "base": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 5865354
+            },
+            "edges_traversed": 3541,
+            "nodes_visited": 3561,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 640147
+            },
+            "edges_traversed": 362,
+            "nodes_visited": 364,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1515778
+            },
+            "edges_traversed": 876,
+            "nodes_visited": 881,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 353399
+            },
+            "edges_traversed": 182,
+            "nodes_visited": 183,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 497501
+            },
+            "edges_traversed": 182,
+            "nodes_visited": 183,
+            "cache_reads": 183,
+            "cache_writes": 1243,
+            "cache_hits": 0,
+            "cache_size_estimate": 182
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 831442
+            },
+            "edges_traversed": 274,
+            "nodes_visited": 279,
+            "cache_reads": 279,
+            "cache_writes": 3075,
+            "cache_hits": 4,
+            "cache_size_estimate": 1116
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 607345
+            },
+            "edges_traversed": 211,
+            "nodes_visited": 213,
+            "cache_reads": 213,
+            "cache_writes": 1815,
+            "cache_hits": 1,
+            "cache_size_estimate": 389
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 2501504
+            },
+            "edges_traversed": 681,
+            "nodes_visited": 701,
+            "cache_reads": 701,
+            "cache_writes": 11223,
+            "cache_hits": 19,
+            "cache_size_estimate": 8649
+          }
+        }
+      },
+      "tree-80": {
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 338517
+            },
+            "edges_traversed": 171,
+            "nodes_visited": 172,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1468778
+            },
+            "edges_traversed": 886,
+            "nodes_visited": 891,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 636662
+            },
+            "edges_traversed": 360,
+            "nodes_visited": 362,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 5743270
+            },
+            "edges_traversed": 3519,
+            "nodes_visited": 3539,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 892349
+            },
+            "edges_traversed": 283,
+            "nodes_visited": 288,
+            "cache_reads": 288,
+            "cache_writes": 3255,
+            "cache_hits": 4,
+            "cache_size_estimate": 1131
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 432037
+            },
+            "edges_traversed": 171,
+            "nodes_visited": 172,
+            "cache_reads": 172,
+            "cache_writes": 1031,
+            "cache_hits": 0,
+            "cache_size_estimate": 171
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 557879
+            },
+            "edges_traversed": 209,
+            "nodes_visited": 211,
+            "cache_reads": 211,
+            "cache_writes": 1779,
+            "cache_hits": 1,
+            "cache_size_estimate": 375
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 2568613
+            },
+            "edges_traversed": 656,
+            "nodes_visited": 676,
+            "cache_reads": 676,
+            "cache_writes": 10719,
+            "cache_hits": 19,
+            "cache_size_estimate": 8256
+          }
+        }
+      },
+      "tree-40": {
+        "cached": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 443496
+            },
+            "edges_traversed": 173,
+            "nodes_visited": 174,
+            "cache_reads": 174,
+            "cache_writes": 1071,
+            "cache_hits": 0,
+            "cache_size_estimate": 173
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 737834
+            },
+            "edges_traversed": 248,
+            "nodes_visited": 253,
+            "cache_reads": 253,
+            "cache_writes": 2571,
+            "cache_hits": 4,
+            "cache_size_estimate": 1046
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 574424
+            },
+            "edges_traversed": 201,
+            "nodes_visited": 203,
+            "cache_reads": 203,
+            "cache_writes": 1615,
+            "cache_hits": 1,
+            "cache_size_estimate": 377
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 2539766
+            },
+            "edges_traversed": 617,
+            "nodes_visited": 637,
+            "cache_reads": 637,
+            "cache_writes": 9935,
+            "cache_hits": 19,
+            "cache_size_estimate": 7998
+          }
+        },
+        "base": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 5563597
+            },
+            "edges_traversed": 3481,
+            "nodes_visited": 3501,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 277050
+            },
+            "edges_traversed": 173,
+            "nodes_visited": 174,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 567633
+            },
+            "edges_traversed": 352,
+            "nodes_visited": 354,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1231521
+            },
+            "edges_traversed": 851,
+            "nodes_visited": 856,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        }
+      }
+    }
+  },
+  "sg_linear": {
+    "fanchain-25-5": {
+      "linear-160": {
+        "base": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 27168473
+            },
+            "edges_traversed": 6456,
+            "nodes_visited": 6476,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1483999
+            },
+            "edges_traversed": 325,
+            "nodes_visited": 326,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 2880653
+            },
+            "edges_traversed": 649,
+            "nodes_visited": 651,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 6875985
+            },
+            "edges_traversed": 1599,
+            "nodes_visited": 1604,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 2342297
+            },
+            "edges_traversed": 373,
+            "nodes_visited": 393,
+            "cache_reads": 393,
+            "cache_writes": 5063,
+            "cache_hits": 19,
+            "cache_size_estimate": 7240
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 2074979
+            },
+            "edges_traversed": 325,
+            "nodes_visited": 326,
+            "cache_reads": 326,
+            "cache_writes": 4107,
+            "cache_hits": 0,
+            "cache_size_estimate": 325
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 2286051
+            },
+            "edges_traversed": 339,
+            "nodes_visited": 341,
+            "cache_reads": 341,
+            "cache_writes": 4391,
+            "cache_hits": 1,
+            "cache_size_estimate": 665
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 2066974
+            },
+            "edges_traversed": 347,
+            "nodes_visited": 352,
+            "cache_reads": 352,
+            "cache_writes": 4543,
+            "cache_hits": 4,
+            "cache_size_estimate": 1677
+          }
+        }
+      },
+      "linear-40": {
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 636873
+            },
+            "edges_traversed": 220,
+            "nodes_visited": 221,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 9864970
+            },
+            "edges_traversed": 4204,
+            "nodes_visited": 4224,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 2618682
+            },
+            "edges_traversed": 1072,
+            "nodes_visited": 1077,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 1051317
+            },
+            "edges_traversed": 420,
+            "nodes_visited": 422,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1316940
+            },
+            "edges_traversed": 312,
+            "nodes_visited": 317,
+            "cache_reads": 317,
+            "cache_writes": 3839,
+            "cache_hits": 4,
+            "cache_size_estimate": 1326
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 912460
+            },
+            "edges_traversed": 230,
+            "nodes_visited": 232,
+            "cache_reads": 232,
+            "cache_writes": 2203,
+            "cache_hits": 1,
+            "cache_size_estimate": 445
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 889584
+            },
+            "edges_traversed": 220,
+            "nodes_visited": 221,
+            "cache_reads": 221,
+            "cache_writes": 2007,
+            "cache_hits": 0,
+            "cache_size_estimate": 220
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 1700704
+            },
+            "edges_traversed": 402,
+            "nodes_visited": 422,
+            "cache_reads": 422,
+            "cache_writes": 5635,
+            "cache_hits": 19,
+            "cache_size_estimate": 6854
+          }
+        }
+      },
+      "linear-80": {
+        "cached": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 1555358
+            },
+            "edges_traversed": 307,
+            "nodes_visited": 327,
+            "cache_reads": 327,
+            "cache_writes": 3743,
+            "cache_hits": 19,
+            "cache_size_estimate": 5847
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1104273
+            },
+            "edges_traversed": 244,
+            "nodes_visited": 245,
+            "cache_reads": 245,
+            "cache_writes": 2483,
+            "cache_hits": 0,
+            "cache_size_estimate": 244
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 1180585
+            },
+            "edges_traversed": 259,
+            "nodes_visited": 261,
+            "cache_reads": 261,
+            "cache_writes": 2787,
+            "cache_hits": 1,
+            "cache_size_estimate": 504
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1373385
+            },
+            "edges_traversed": 290,
+            "nodes_visited": 295,
+            "cache_reads": 295,
+            "cache_writes": 3395,
+            "cache_hits": 4,
+            "cache_size_estimate": 1359
+          }
+        },
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 861011
+            },
+            "edges_traversed": 244,
+            "nodes_visited": 245,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 1603275
+            },
+            "edges_traversed": 489,
+            "nodes_visited": 491,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 15033483
+            },
+            "edges_traversed": 4908,
+            "nodes_visited": 4928,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 3759828
+            },
+            "edges_traversed": 1227,
+            "nodes_visited": 1232,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        }
+      }
+    },
+    "linear-25": {
+      "linear-40": {
+        "base": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 4901388
+            },
+            "edges_traversed": 2274,
+            "nodes_visited": 2294,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 561667
+            },
+            "edges_traversed": 237,
+            "nodes_visited": 239,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1663089
+            },
+            "edges_traversed": 579,
+            "nodes_visited": 584,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 252862
+            },
+            "edges_traversed": 107,
+            "nodes_visited": 108,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 720313
+            },
+            "edges_traversed": 147,
+            "nodes_visited": 149,
+            "cache_reads": 149,
+            "cache_writes": 2780,
+            "cache_hits": 1,
+            "cache_size_estimate": 267
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 500559
+            },
+            "edges_traversed": 107,
+            "nodes_visited": 108,
+            "cache_reads": 108,
+            "cache_writes": 1790,
+            "cache_hits": 0,
+            "cache_size_estimate": 107
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1095063
+            },
+            "edges_traversed": 177,
+            "nodes_visited": 182,
+            "cache_reads": 182,
+            "cache_writes": 3535,
+            "cache_hits": 4,
+            "cache_size_estimate": 781
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 1053460
+            },
+            "edges_traversed": 208,
+            "nodes_visited": 228,
+            "cache_reads": 228,
+            "cache_writes": 4320,
+            "cache_hits": 19,
+            "cache_size_estimate": 3713
+          }
+        }
+      },
+      "linear-160": {
+        "base": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 1751545
+            },
+            "edges_traversed": 448,
+            "nodes_visited": 450,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 4236761
+            },
+            "edges_traversed": 1127,
+            "nodes_visited": 1132,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 16219732
+            },
+            "edges_traversed": 4462,
+            "nodes_visited": 4482,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 883192
+            },
+            "edges_traversed": 218,
+            "nodes_visited": 219,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1605801
+            },
+            "edges_traversed": 248,
+            "nodes_visited": 253,
+            "cache_reads": 253,
+            "cache_writes": 5305,
+            "cache_hits": 4,
+            "cache_size_estimate": 1206
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 1569576
+            },
+            "edges_traversed": 238,
+            "nodes_visited": 240,
+            "cache_reads": 240,
+            "cache_writes": 5070,
+            "cache_hits": 1,
+            "cache_size_estimate": 462
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1444330
+            },
+            "edges_traversed": 218,
+            "nodes_visited": 219,
+            "cache_reads": 219,
+            "cache_writes": 4570,
+            "cache_hits": 0,
+            "cache_size_estimate": 218
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 1765470
+            },
+            "edges_traversed": 254,
+            "nodes_visited": 274,
+            "cache_reads": 274,
+            "cache_writes": 5460,
+            "cache_hits": 19,
+            "cache_size_estimate": 4980
+          }
+        }
+      },
+      "linear-80": {
+        "base": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 893237
+            },
+            "edges_traversed": 304,
+            "nodes_visited": 306,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 439464
+            },
+            "edges_traversed": 146,
+            "nodes_visited": 147,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 8697239
+            },
+            "edges_traversed": 3089,
+            "nodes_visited": 3109,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 2226914
+            },
+            "edges_traversed": 769,
+            "nodes_visited": 774,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 1260768
+            },
+            "edges_traversed": 214,
+            "nodes_visited": 234,
+            "cache_reads": 234,
+            "cache_writes": 4470,
+            "cache_hits": 19,
+            "cache_size_estimate": 4035
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 804422
+            },
+            "edges_traversed": 146,
+            "nodes_visited": 147,
+            "cache_reads": 147,
+            "cache_writes": 2755,
+            "cache_hits": 0,
+            "cache_size_estimate": 146
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 940471
+            },
+            "edges_traversed": 174,
+            "nodes_visited": 176,
+            "cache_reads": 176,
+            "cache_writes": 3465,
+            "cache_hits": 1,
+            "cache_size_estimate": 326
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1046246
+            },
+            "edges_traversed": 193,
+            "nodes_visited": 198,
+            "cache_reads": 198,
+            "cache_writes": 3945,
+            "cache_hits": 4,
+            "cache_size_estimate": 894
+          }
+        }
+      }
+    }
+  },
+  "sg_circle": {
+    "fanchain-25-5": {
+      "circle-64": {
+        "base": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1598871
+            },
+            "edges_traversed": 1131,
+            "nodes_visited": 1136,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 6461485
+            },
+            "edges_traversed": 4538,
+            "nodes_visited": 4558,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 689465
+            },
+            "edges_traversed": 456,
+            "nodes_visited": 458,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 295150
+            },
+            "edges_traversed": 220,
+            "nodes_visited": 221,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 521958
+            },
+            "edges_traversed": 242,
+            "nodes_visited": 244,
+            "cache_reads": 244,
+            "cache_writes": 1183,
+            "cache_hits": 1,
+            "cache_size_estimate": 346
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 643407
+            },
+            "edges_traversed": 275,
+            "nodes_visited": 280,
+            "cache_reads": 280,
+            "cache_writes": 1851,
+            "cache_hits": 4,
+            "cache_size_estimate": 927
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 995196
+            },
+            "edges_traversed": 354,
+            "nodes_visited": 374,
+            "cache_reads": 374,
+            "cache_writes": 3427,
+            "cache_hits": 19,
+            "cache_size_estimate": 4834
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 375716
+            },
+            "edges_traversed": 220,
+            "nodes_visited": 221,
+            "cache_reads": 221,
+            "cache_writes": 747,
+            "cache_hits": 0,
+            "cache_size_estimate": 157
+          }
+        }
+      },
+      "circle-4": {
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 270027
+            },
+            "edges_traversed": 172,
+            "nodes_visited": 173,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 4506442
+            },
+            "edges_traversed": 3404,
+            "nodes_visited": 3424,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1122414
+            },
+            "edges_traversed": 845,
+            "nodes_visited": 850,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 476142
+            },
+            "edges_traversed": 340,
+            "nodes_visited": 342,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 455497
+            },
+            "edges_traversed": 186,
+            "nodes_visited": 188,
+            "cache_reads": 188,
+            "cache_writes": 1255,
+            "cache_hits": 1,
+            "cache_size_estimate": 347
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 421244
+            },
+            "edges_traversed": 172,
+            "nodes_visited": 173,
+            "cache_reads": 173,
+            "cache_writes": 987,
+            "cache_hits": 0,
+            "cache_size_estimate": 169
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 1158380
+            },
+            "edges_traversed": 354,
+            "nodes_visited": 374,
+            "cache_reads": 374,
+            "cache_writes": 4623,
+            "cache_hits": 19,
+            "cache_size_estimate": 5817
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 645309
+            },
+            "edges_traversed": 229,
+            "nodes_visited": 234,
+            "cache_reads": 234,
+            "cache_writes": 2131,
+            "cache_hits": 4,
+            "cache_size_estimate": 992
+          }
+        }
+      },
+      "circle-16": {
+        "cached": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 1219280
+            },
+            "edges_traversed": 367,
+            "nodes_visited": 387,
+            "cache_reads": 387,
+            "cache_writes": 4639,
+            "cache_hits": 19,
+            "cache_size_estimate": 5946
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 831694
+            },
+            "edges_traversed": 277,
+            "nodes_visited": 282,
+            "cache_reads": 282,
+            "cache_writes": 2847,
+            "cache_hits": 4,
+            "cache_size_estimate": 1089
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 522850
+            },
+            "edges_traversed": 211,
+            "nodes_visited": 213,
+            "cache_reads": 213,
+            "cache_writes": 1523,
+            "cache_hits": 1,
+            "cache_size_estimate": 367
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 426609
+            },
+            "edges_traversed": 186,
+            "nodes_visited": 187,
+            "cache_reads": 187,
+            "cache_writes": 1023,
+            "cache_hits": 0,
+            "cache_size_estimate": 171
+          }
+        },
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 286011
+            },
+            "edges_traversed": 186,
+            "nodes_visited": 187,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1426462
+            },
+            "edges_traversed": 941,
+            "nodes_visited": 946,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 5186933
+            },
+            "edges_traversed": 3706,
+            "nodes_visited": 3726,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 578964
+            },
+            "edges_traversed": 377,
+            "nodes_visited": 379,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        }
+      }
+    },
+    "linear-25": {
+      "circle-16": {
+        "base": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 692645
+            },
+            "edges_traversed": 438,
+            "nodes_visited": 443,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 287485
+            },
+            "edges_traversed": 176,
+            "nodes_visited": 178,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 2662077
+            },
+            "edges_traversed": 1762,
+            "nodes_visited": 1782,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 170129
+            },
+            "edges_traversed": 94,
+            "nodes_visited": 95,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 1325470
+            },
+            "edges_traversed": 290,
+            "nodes_visited": 310,
+            "cache_reads": 310,
+            "cache_writes": 5980,
+            "cache_hits": 19,
+            "cache_size_estimate": 4239
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 316804
+            },
+            "edges_traversed": 94,
+            "nodes_visited": 95,
+            "cache_reads": 95,
+            "cache_writes": 1080,
+            "cache_hits": 0,
+            "cache_size_estimate": 79
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 405648
+            },
+            "edges_traversed": 110,
+            "nodes_visited": 112,
+            "cache_reads": 112,
+            "cache_writes": 1490,
+            "cache_hits": 1,
+            "cache_size_estimate": 170
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 740883
+            },
+            "edges_traversed": 174,
+            "nodes_visited": 179,
+            "cache_reads": 179,
+            "cache_writes": 3080,
+            "cache_hits": 4,
+            "cache_size_estimate": 578
+          }
+        }
+      },
+      "circle-4": {
+        "base": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 1605329
+            },
+            "edges_traversed": 1305,
+            "nodes_visited": 1325,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 99411
+            },
+            "edges_traversed": 68,
+            "nodes_visited": 69,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 188264
+            },
+            "edges_traversed": 135,
+            "nodes_visited": 137,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 498055
+            },
+            "edges_traversed": 330,
+            "nodes_visited": 335,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        },
+        "cached": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 484468
+            },
+            "edges_traversed": 113,
+            "nodes_visited": 118,
+            "cache_reads": 118,
+            "cache_writes": 1870,
+            "cache_hits": 4,
+            "cache_size_estimate": 444
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 211460
+            },
+            "edges_traversed": 68,
+            "nodes_visited": 69,
+            "cache_reads": 69,
+            "cache_writes": 730,
+            "cache_hits": 0,
+            "cache_size_estimate": 65
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 270449
+            },
+            "edges_traversed": 81,
+            "nodes_visited": 83,
+            "cache_reads": 83,
+            "cache_writes": 1050,
+            "cache_hits": 1,
+            "cache_size_estimate": 138
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 900555
+            },
+            "edges_traversed": 199,
+            "nodes_visited": 219,
+            "cache_reads": 219,
+            "cache_writes": 4020,
+            "cache_hits": 19,
+            "cache_size_estimate": 2977
+          }
+        }
+      },
+      "circle-64": {
+        "cached": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 356540
+            },
+            "edges_traversed": 133,
+            "nodes_visited": 134,
+            "cache_reads": 134,
+            "cache_writes": 850,
+            "cache_hits": 0,
+            "cache_size_estimate": 70
+          },
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 1115181
+            },
+            "edges_traversed": 280,
+            "nodes_visited": 300,
+            "cache_reads": 300,
+            "cache_writes": 4525,
+            "cache_hits": 19,
+            "cache_size_estimate": 3568
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 771308
+            },
+            "edges_traversed": 213,
+            "nodes_visited": 218,
+            "cache_reads": 218,
+            "cache_writes": 2855,
+            "cache_hits": 4,
+            "cache_size_estimate": 541
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 445491
+            },
+            "edges_traversed": 149,
+            "nodes_visited": 151,
+            "cache_reads": 151,
+            "cache_writes": 1270,
+            "cache_hits": 1,
+            "cache_size_estimate": 158
+          }
+        },
+        "base": {
+          "20": {
+            "time": {
+              "secs": 0,
+              "nanos": 5010260
+            },
+            "edges_traversed": 2720,
+            "nodes_visited": 2740,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "2": {
+            "time": {
+              "secs": 0,
+              "nanos": 472182
+            },
+            "edges_traversed": 263,
+            "nodes_visited": 265,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 243683
+            },
+            "edges_traversed": 133,
+            "nodes_visited": 134,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1402818
+            },
+            "edges_traversed": 669,
+            "nodes_visited": 674,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0
+          }
+        }
+      }
+    }
+  }
+}

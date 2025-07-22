@@ -41,9 +41,11 @@ pub enum FontStyle {
 
 #[derive(Clone, Copy, Debug, Default, derive_more::Display)]
 pub enum FontFamily {
+    #[default]
+    #[display("Monospaced")]
+    Monospace,
     #[display("Ubuntu Mono")]
     UbuntuMono,
-    #[default]
     #[display("SansSerif")]
     SansSerif,
 }

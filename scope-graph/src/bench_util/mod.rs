@@ -1,7 +1,9 @@
-use std::sync::{Arc, atomic::AtomicUsize};
+pub mod bench;
+
+use std::sync::{atomic::AtomicUsize, Arc, Mutex};
 
 use rand::{Rng, SeedableRng, rngs::SmallRng};
-use scope_graph::{
+use crate::{
     LibGraph, SgData, SgLabel, SgProjection,
     generator::{GraphGenerator, GraphPattern},
     graph::{CachedScopeGraph, QueryResult, ScopeGraph},
@@ -18,6 +20,8 @@ const TAIL_RANGE: std::ops::RangeInclusive<usize> = 1..=20;
 
 pub static SEED: AtomicUsize = AtomicUsize::new(0);
 
+pub type Graph = CachedScopeGraph<SgLabel, SgData>;
+
 pub fn construct_graph(pattern: GraphPattern) -> (CachedScopeGraph<SgLabel, SgData>, usize, usize) {
     let mut rand =
         SmallRng::seed_from_u64(SEED.fetch_add(1, std::sync::atomic::Ordering::Relaxed) as u64);
@@ -25,6 +29,7 @@ pub fn construct_graph(pattern: GraphPattern) -> (CachedScopeGraph<SgLabel, SgDa
     let tail_size = rand.random_range(TAIL_RANGE);
     let pattern = [
         GraphPattern::Decl(SgData::var("x", "int")),
+        // GraphPattern::Linear(head_size),
         GraphPattern::LinearDecl(head_size),
         pattern,
         GraphPattern::Linear(tail_size),
@@ -33,16 +38,19 @@ pub fn construct_graph(pattern: GraphPattern) -> (CachedScopeGraph<SgLabel, SgDa
     (graph, head_size, tail_size)
 }
 
-pub fn construct_libgraph(storage: &Storage, pattern: Vec<GraphPattern>) -> LibGraph<'_> {
-    let lib_graph: LibGraph = unsafe { LibGraph::new(storage, UncheckedCompleteness::new()) };
-    GraphGenerator::new(lib_graph)
-        .with_patterns(pattern)
-        .build_sg()
-}
+// pub fn construct_libgraph(storage: &Storage, pattern: Vec<GraphPattern>) -> LibGraph<'_> {
+//     let lib_graph: LibGraph = unsafe { LibGraph::new(storage, UncheckedCompleteness::new()) };
+//     GraphGenerator::new(lib_graph)
+//         .with_patterns(pattern)
+//         .build_sg()
+// }
+
+static SG_CREATION_LOCK: Mutex<()> = Mutex::new(());
 
 pub fn construct_cached_graph(
     pattern: impl IntoIterator<Item = GraphPattern>,
 ) -> CachedScopeGraph<SgLabel, SgData> {
+    let _lock = SG_CREATION_LOCK.lock().unwrap();
     let graph = CachedScopeGraph::<SgLabel, SgData>::new();
     let g = GraphGenerator::new(graph).with_patterns(pattern).build();
     Scope::reset_counter();

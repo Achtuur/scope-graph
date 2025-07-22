@@ -7,4 +7,5 @@ pub trait ScopeGraphData:
     fn variant_has_data(&self) -> bool;
     /// String to use when rendering the data
     fn render_string(&self) -> String;
+    fn render_with_type(&self) -> String;
 }

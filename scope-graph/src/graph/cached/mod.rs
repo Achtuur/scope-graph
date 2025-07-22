@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 
 use graphing::{
     mermaid::{
@@ -7,19 +6,12 @@ use graphing::{
     },
     plantuml::PlantUmlItem,
 };
+use hashbrown::HashMap;
 use resolve::CachedResolver;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    BackgroundColor, ColorSet, ForeGroundColor,
-    data::ScopeGraphData,
-    graph::{Edge, ScopeData, ScopeMap, resolve::Resolver},
-    label::ScopeGraphLabel,
-    order::LabelOrder,
-    path::Path,
-    projection::ScopeGraphDataProjection,
-    regex::dfs::RegexAutomaton,
-    scope::Scope,
+    data::ScopeGraphData, debugonly_trace, graph::{resolve::{QueryStats, Resolver}, Edge, ScopeData, ScopeMap}, label::ScopeGraphLabel, order::LabelOrder, path::Path, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackgroundColor, ColorSet, ForeGroundColor
 };
 
 use super::{ScopeGraph, resolve::QueryResult};
@@ -40,8 +32,7 @@ type QueryCacheKey = (usize, Scope);
 /// Cache for the results of a certain query
 type QueryCache<Lbl, Data> = HashMap<QueryCacheKey, ProjEnvs<Lbl, Data>>;
 
-/// Key for `ScopeGraphCache`
-/// todo: add DP to key
+/// Key for `ScopeGraphCache` (label order, label regex, projection FUNCTION hash).
 type ParameterKey<Lbl> = (LabelOrder<Lbl>, RegexAutomaton<Lbl>, ProjHash);
 /// Cache for the entire scope graph.
 ///
@@ -59,6 +50,81 @@ where
     resolve_cache: ScopeGraphCache<Lbl, Data>,
 }
 
+impl<Lbl, Data> CachedScopeGraph<Lbl, Data>
+where
+    Lbl: ScopeGraphLabel,
+    Data: ScopeGraphData,
+{
+
+    /// Returns number of scopes
+    pub fn size(&self) -> usize {
+        self.scopes.len()
+    }
+
+    pub fn query_stats<DEq, DWfd>(
+        &mut self,
+        scope: Scope,
+        path_regex: &RegexAutomaton<Lbl>,
+        order: &LabelOrder<Lbl>,
+        data_equiv: DEq,
+        data_wellformedness: DWfd,
+    ) -> (Vec<QueryResult<Lbl, Data>>, QueryStats)
+    where
+        DEq: for<'da, 'db> Fn(&'da Data, &'db Data) -> bool,
+        DWfd: for<'da> Fn(&'da Data) -> bool,
+    {
+        let mut resolver = Resolver::new(
+            &self.scopes,
+            path_regex,
+            order,
+            &data_equiv,
+            &data_wellformedness,
+        );
+        resolver.resolve(Path::start(scope))
+    }
+
+    pub fn query_proj_stats<Proj>(
+        &mut self,
+        scope: Scope,
+        path_regex: &RegexAutomaton<Lbl>,
+        order: &LabelOrder<Lbl>,
+        data_proj: Proj,
+        proj_wfd: Proj::Output,
+    ) -> (Vec<QueryResult<Lbl, Data>>, QueryStats)
+    where
+        Proj: ScopeGraphDataProjection<Data>,
+    {
+        let proj_hash = resolve::hash(&data_proj);
+        let cache_entry = self
+            .resolve_cache
+            .entry((order.clone(), path_regex.clone(), proj_hash))
+            .or_default();
+        let mut resolver = CachedResolver::new(
+            &self.scopes,
+            cache_entry,
+            path_regex,
+            order,
+            data_proj,
+            proj_wfd,
+        );
+        let (envs, mut stats) = resolver.resolve(Path::start(scope));
+        tracing::info!("{:?}", resolver.profiler);
+        tracing::info!(
+            "Resolved query: {}, {}, {}, found:",
+            scope,
+            path_regex,
+            order,
+        );
+
+        stats.cache_size_estimate = cache_entry.len();
+
+        for qr in &envs {
+            tracing::info!("\t{}", qr);
+        }
+        (envs, stats)
+    }
+}
+
 impl<Lbl, Data> ScopeGraph<Lbl, Data> for CachedScopeGraph<Lbl, Data>
 where
     Lbl: ScopeGraphLabel,
@@ -69,7 +135,7 @@ where
     }
 
     fn add_scope(&mut self, scope: Scope, data: Data) -> Scope {
-        tracing::trace!("Adding scope: {} with data: {}", scope, data);
+        debugonly_trace!("Adding scope: {} with data: {}", scope, data);
         self.scopes.insert(scope, ScopeData::new(data));
         scope
     }
@@ -109,6 +175,10 @@ where
         self.scopes.iter()
     }
 
+    fn extend(&mut self, other: Self) {
+        self.scopes.extend(other.scopes);
+    }
+
     fn scope_holds_data(&self, scope: Scope) -> bool {
         self.scopes
             .get(&scope)
@@ -135,7 +205,7 @@ where
             &data_equiv,
             &data_wellformedness,
         );
-        resolver.resolve(Path::start(scope))
+        resolver.resolve(Path::start(scope)).0
     }
 
     fn query_proj<Proj>(
@@ -162,7 +232,7 @@ where
             data_proj,
             proj_wfd,
         );
-        let envs = resolver.resolve(Path::start(scope));
+        let envs = resolver.resolve(Path::start(scope)).0;
         tracing::info!("{:?}", resolver.profiler);
         tracing::info!(
             "Resolved query: {}, {}, {}, found:",
@@ -181,10 +251,10 @@ where
             .iter()
             .flat_map(|(query_params, query_cache)| {
                 let params_str = format!(
-                    "({}, {}, {})",
+                    "({}, {})",
                     query_params.0,
                     query_params.1,
-                    query_params.2 % 256
+                    // query_params.2 % 256
                 );
                 query_cache
                     .iter()
