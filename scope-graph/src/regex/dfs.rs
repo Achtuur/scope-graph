@@ -1,5 +1,6 @@
 use std::hash::Hash;
 
+use deepsize::DeepSizeOf;
 use graphing::{
     mermaid::{
         MermaidDiagram,
@@ -14,6 +15,7 @@ use crate::label::ScopeGraphLabel;
 use super::Regex;
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
+#[derive(DeepSizeOf)]
 pub struct AutomatonNode<Lbl>
 where
     Lbl: ScopeGraphLabel,
@@ -42,6 +44,7 @@ where
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
+#[derive(DeepSizeOf)]
 pub struct RegexAutomaton<Lbl>
 where
     Lbl: ScopeGraphLabel,

@@ -44,7 +44,7 @@ impl PatternMatches {
         println!("diamond: {:?}", timer.elapsed());
         let timer = std::time::Instant::now();
         let circle_matches = CircleMatcher::search(graph);
-        println!("diamond: {:?}", timer.elapsed());
+        println!("circle: {:?}", timer.elapsed());
 
         Self {
             chain_matches,
@@ -73,11 +73,11 @@ impl std::fmt::Display for PatternMatches {
         let diamond_stats = size_stats!(self.diamond_matches);
         let circle_stats = size_stats!(self.circle_matches);
 
-        writeln!(f, "Chain: {:?}", chain_stats)?;
-        writeln!(f, "Fanout: {:?}", fanout_stats)?;
-        writeln!(f, "Tree: {:?}", tree_stats)?;
-        writeln!(f, "Diamond: {:?}", diamond_stats)?;
-        writeln!(f, "Circle: {:?}", circle_stats)?;
+        writeln!(f, "Chain: {chain_stats}")?;
+        writeln!(f, "Fanout: {fanout_stats}")?;
+        writeln!(f, "Tree: {}", tree_stats)?;
+        writeln!(f, "Diamond: {}", diamond_stats)?;
+        writeln!(f, "Circle: {}", circle_stats)?;
 
         Ok(())
     }

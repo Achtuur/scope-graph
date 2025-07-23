@@ -21,9 +21,9 @@ use std::{
 };
 
 const BASE_PATH: &str = "./raw";
-const QUERIES_FILE: &str = "commons-csv.queries.json";
-const RESULTS_FILE: &str = "commons-csv.results.json";
-const SCOPEGRAPH_FILE: &str = "commons-csv.scopegraph.json";
+const QUERIES_FILE: &str = "commons-csv-queries.json";
+const RESULTS_FILE: &str = "commons-csv-results.json";
+const SCOPEGRAPH_FILE: &str = "commons-io-scopegraph.json";
 
 fn main() -> ParseResult<()> {
     // queries_data()?;
@@ -78,7 +78,7 @@ fn queries_data() -> ParseResult<()> {
 
 fn parsed_scopegraph_data() -> ParseResult<()> {
     let mut parsed_graph =
-        ParsedScopeGraph::from_file(format!("{}/{}", BASE_PATH, SCOPEGRAPH_FILE))?;
+        ParsedScopeGraph::from_file(format!("{BASE_PATH}/{SCOPEGRAPH_FILE}"))?;
 
     println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
     parsed_graph.filter_scopes(|s| {

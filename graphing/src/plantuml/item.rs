@@ -21,7 +21,7 @@ pub enum EdgeDirection {
 }
 
 impl EdgeDirection {
-    fn uml_str(&self) -> &'static str {
+    fn edge_str(&self) -> &'static str {
         match self {
             EdgeDirection::Left => "l",
             EdgeDirection::Right => "r",
@@ -29,6 +29,16 @@ impl EdgeDirection {
             EdgeDirection::Bottom => "d",
             EdgeDirection::Unspecified => "",
             EdgeDirection::Norank => "[norank]",
+        }
+    }
+
+    fn note_str(&self) -> &'static str {
+        match self {
+            EdgeDirection::Left => "left",
+            EdgeDirection::Right => "right",
+            EdgeDirection::Up => "top",
+            EdgeDirection::Bottom => "bottom",
+            _ => "left", // default to left
         }
     }
 }
@@ -99,6 +109,7 @@ pub enum PlantUmlItemKind {
     Note {
         to: String,
         contents: String,
+        dir: EdgeDirection,
     },
 }
 
@@ -152,6 +163,25 @@ impl PlantUmlItem {
         }
     }
 
+    /// Returns the ID of the node this item represents or is connected to.
+    ///
+    /// Edges use their 'from' node
+    pub fn node_id(&self) -> &str {
+        match &self.kind {
+            PlantUmlItemKind::Node { id, .. } => id,
+            PlantUmlItemKind::Edge { from, .. } => from,
+            PlantUmlItemKind::Note { to, .. } => to,
+        }
+    }
+
+    pub fn set_direction(&mut self, new_dir: EdgeDirection) {
+        match &mut self.kind {
+            PlantUmlItemKind::Node { .. } => (),
+            PlantUmlItemKind::Edge { dir, .. } => *dir = new_dir,
+            PlantUmlItemKind::Note { dir, .. } => *dir = new_dir,
+        }
+    }
+
     fn sanitise_id(id: impl ToString) -> String {
         id.to_string().chars().fold(String::new(), |mut s, c| {
             match c {
@@ -185,10 +215,11 @@ impl PlantUmlItem {
         })
     }
 
-    pub fn note(to: impl ToString, contents: impl ToString) -> Self {
+    pub fn note(to: impl ToString, contents: impl ToString, dir: EdgeDirection) -> Self {
         Self::new(PlantUmlItemKind::Note {
             to: Self::sanitise_id(to),
             contents: contents.to_string(),
+            dir,
         })
     }
 
@@ -254,18 +285,21 @@ impl PlantUmlItem {
                 label,
                 dir,
             } => {
-                write!(writer, "{} -{}-> {}", from, dir.uml_str(), to)?;
+                write!(writer, "{} -{}-> {}", from, dir.edge_str(), to)?;
                 self.write_class(writer)?;
                 if !label.is_empty() {
-                    write!(writer, " : {}", label)?;
+                    write!(writer, " : {label}")?;
                 }
             }
             // note left of {to} {classes}\n\t{contents}\nend note
-            PlantUmlItemKind::Note { to, contents } => {
-                write!(writer, "note left of {} ", to)?;
+            PlantUmlItemKind::Note { to, contents, dir } => {
+                match to.is_empty() {
+                    true => write!(writer, "note {}", dir.note_str())?,
+                    false => write!(writer, "note {} of {}", dir.note_str(), to)?,
+                }
                 self.write_class(writer)?;
                 let formatted = contents.replace("\n", "\n\t");
-                write!(writer, "\n\t{}", formatted)?;
+                write!(writer, "\n\t\"{formatted}\"")?;
                 write!(writer, "\nend note")?;
             }
         }
@@ -274,7 +308,7 @@ impl PlantUmlItem {
 
     fn write_class(&self, writer: &mut impl Write) -> RenderResult<()> {
         for class in &self.classes {
-            write!(writer, "<<{}>>", class)?;
+            write!(writer, "<<{class}>>")?;
         }
         Ok(())
     }

@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{collections::HashSet, rc::Rc};
 
 use crate::{
     pattern::{ChainScope, ChainScopeIter, MatchedPattern, PatternMatcher}, MatchableLabel, Scope, ScopeGraph
@@ -6,15 +6,20 @@ use crate::{
 
 // const CHAIN_LABELS: &[MatchableLabel] = &[MatchableLabel::Parent, MatchableLabel::ExtendImpl];
 const CHAIN_LABELS: &[MatchableLabel] = &[];
+const MIN_SIZE: usize = 2;
 
 #[derive(Clone, Debug)]
 pub struct CircleMatch {
+    first: Scope,
+    size: usize,
     nodes: ChainScope,
 }
 
 impl CircleMatch {
     pub fn from_scope(scope: Scope) -> Self {
         CircleMatch {
+            first: scope,
+            size: 1,
             nodes: ChainScope {
                 s: scope,
                 parent: None,
@@ -32,11 +37,17 @@ impl CircleMatch {
 
     pub fn step(self, scope: Scope) -> Self {
         Self {
+            first: self.first,
+            size: self.size + 1,
             nodes: ChainScope {
                 s: scope,
                 parent: Some(Rc::new(self.nodes)),
             },
         }
+    }
+
+    pub fn is_circular(&self) -> bool {
+        self.first == self.tail()
     }
 
     pub fn to_vec(&self) -> Vec<Scope> {
@@ -48,13 +59,7 @@ impl CircleMatch {
 
 impl MatchedPattern for CircleMatch {
     fn size(&self) -> usize {
-        let mut count = 0;
-        let mut current = &self.nodes;
-        while let Some(parent) = &current.parent {
-            count += 1;
-            current = parent;
-        }
-        count + 1 // include the tail node
+        self.size
     }
 
     fn scopes(&self) -> impl Iterator<Item = &Scope> {
@@ -85,25 +90,15 @@ impl PatternMatcher for CircleMatcher {
         while let Some(m) = cur_matches.pop() {
             let outgoing_edges = graph
                 .get_outgoing_edges_with_labels(m.tail(), CHAIN_LABELS);
-                // .peekable();
 
-            // match outgoing_edges.peek() {
-            //     // leaf node
-            //     None => {
-            //         if m.size() > MIN_SIZE {
-            //             // only add matches with more than one node
-            //             finished.push(m);
-            //         }
-            //     }
-            //     _ => {
-            //     }
-            // }
             for edge in outgoing_edges {
-                if !m.contains(&edge.to) {
-                    cur_matches.push(m.clone().step(edge.to));
-                } else {
-                    finished.push(m.clone().step(edge.to));
+                let step = m.clone().step(edge.to);
+                if step.size() >= MIN_SIZE && step.is_circular() {
+                    finished.push(step);
+                } else if !m.contains(&edge.to) {
+                    cur_matches.push(step);
                 }
+
             }
         }
         finished

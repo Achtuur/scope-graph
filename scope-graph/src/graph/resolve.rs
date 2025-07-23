@@ -1,5 +1,7 @@
 use std::{collections::HashSet, sync::atomic::AtomicUsize, time::{Duration, Instant}};
 
+use deepsize::DeepSizeOf;
+
 use crate::{
     data::ScopeGraphData, debugonly_debug, debugonly_trace, graph::ScopeMap, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, DRAW_MEM_ADDR
 };
@@ -73,9 +75,8 @@ pub struct QueryStats {
     pub cache_reads: usize,
     pub cache_writes: usize,
     pub cache_hits: usize,
-    /// size estimate in bytes
-    /// assuming that hashmap is simply a list of [(K, V)] for simplicity
-    pub cache_size_estimate: usize,
+    /// cache size / scope map size
+    pub cache_size_estimate: f32,
 }
 
 impl std::ops::Add for QueryStats {
@@ -105,7 +106,7 @@ impl std::ops::Div<usize> for QueryStats {
             cache_reads: self.cache_reads / rhs,
             cache_writes: self.cache_writes / rhs,
             cache_hits: self.cache_hits / rhs,
-            cache_size_estimate: self.cache_size_estimate / rhs,
+            cache_size_estimate: self.cache_size_estimate / rhs as f32,
         }
     }
 }
@@ -136,7 +137,7 @@ impl From<&QueryProfiler> for QueryStats {
             cache_writes: profiler.cache_writes.load(std::sync::atomic::Ordering::Relaxed),
             cache_hits: profiler.cache_hits.load(std::sync::atomic::Ordering::Relaxed),
             cache_size_estimate: profiler.cache_size_estimate
-                .load(std::sync::atomic::Ordering::Relaxed),
+                .load(std::sync::atomic::Ordering::Relaxed) as f32,
         }
     }
 }
@@ -192,6 +193,7 @@ impl<K: std::fmt::Display, T: std::fmt::Display> std::fmt::Display for DisplayMa
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(DeepSizeOf)]
 pub struct QueryResult<Lbl, Data>
 where
     Lbl: ScopeGraphLabel + Clone,

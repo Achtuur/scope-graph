@@ -1,6 +1,7 @@
 // tests from:
 // https://github.com/metaborg/nabl/blob/master/statix.test/scopegraphs/nameresolution.spt
 
+use deepsize::DeepSizeOf;
 use graphing::Renderer;
 use scope_graph::{
     DRAW_CACHES,
@@ -15,6 +16,7 @@ use scope_graph::{
 use serde::Serialize;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, PartialOrd, Ord)]
+#[derive(DeepSizeOf)]
 enum TestLabel {
     D,
     P,
@@ -49,6 +51,7 @@ impl ScopeGraphLabel for TestLabel {
 }
 
 #[derive(Default, Clone, Debug, PartialEq, Eq, Hash, Serialize, PartialOrd, Ord)]
+#[derive(DeepSizeOf)]
 enum TestData {
     #[default]
     NoData,
@@ -71,7 +74,7 @@ impl ScopeGraphData for TestData {
         match self {
             Self::NoData => String::new(),
             Self::Var(name) => name.clone(),
-            Self::VarNum(name, num) => format!("{}{}", name, num),
+            Self::VarNum(name, num) => format!("{name}{num}"),
         }
     }
 

@@ -1,9 +1,11 @@
 use std::hash::Hash;
 
+use deepsize::DeepSizeOf;
+
 use crate::regex::RegexState;
 
 pub trait ScopeGraphLabel:
-    PartialEq + Clone + std::fmt::Debug + std::fmt::Display + Eq + Ord + Hash
+    PartialEq + Clone + std::fmt::Debug + std::fmt::Display + Eq + Ord + Hash + DeepSizeOf
 {
     fn char(&self) -> char;
     fn str(&self) -> &'static str;

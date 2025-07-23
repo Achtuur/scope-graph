@@ -381,8 +381,8 @@ impl ParsedScopeGraph {
     }
 
     fn write_cache<P: AsRef<Path>>(&self, path: P) -> ParseResult<()> {
-        println!("Caching graph to: {:?}", path.as_ref());
         let path = Self::cache_path(path);
+        println!("Caching graph to: {path:?}");
         // if path.exists() {
         //     println!("Cache file already exists at: {:?}", path);
         //     return Ok(());
@@ -403,6 +403,6 @@ impl ParsedScopeGraph {
             .file_name()
             .and_then(|f| f.to_str())
             .unwrap_or_default();
-        PathBuf::from(format!("/tmp/{}", file_name))
+        PathBuf::from(format!("/tmp/{file_name}"))
     }
 }

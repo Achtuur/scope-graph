@@ -1,6 +1,7 @@
 pub mod dfs;
 mod partial;
 
+use deepsize::DeepSizeOf;
 use dfs::RegexAutomaton;
 pub use partial::RegexState;
 use serde::{Deserialize, Serialize};
@@ -11,6 +12,7 @@ use crate::label::ScopeGraphLabel;
 ///
 /// todo: allow easy way to match any label, without having to do an OR of all labels by
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(DeepSizeOf)]
 pub enum Regex<Lbl>
 where
     Lbl: ScopeGraphLabel,

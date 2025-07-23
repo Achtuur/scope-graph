@@ -30,6 +30,10 @@ fn test() {
         (4, MatchableLabel::ExtendImpl, 2),
         (4, MatchableLabel::ExtendImpl, 3),
         (4, MatchableLabel::ExtendImpl, 5),
+        (5, MatchableLabel::ExtendImpl, 6),
+        (6, MatchableLabel::ExtendImpl, 4),
+        (7, MatchableLabel::ExtendImpl, 4),
+        (8, MatchableLabel::ExtendImpl, 4),
         // (5, MatchableLabel::ExtendImpl, 4),
     ]);
 
@@ -49,13 +53,15 @@ fn test() {
         .into_iter()
         .collect::<Vec<_>>();
     println!("{:?}", timer.elapsed());
-    println!("c_matches: {0:?}", c_matches);
+    for m in c_matches {
+        println!("m: {0:?}", m)
+    }
 }
 
 fn real_graph2() {
     println!("Parsing graph from file...");
     let mut graph =
-        ParsedScopeGraph::from_file("data-parse/raw/commons-csv.scopegraph.json").unwrap();
+        ParsedScopeGraph::from_file("data-parse/raw/commons-io.scopegraph.json").unwrap();
 
     // graph.filter_scopes(|s| s.resource.contains("commons"));
 

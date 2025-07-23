@@ -166,16 +166,14 @@ where
                 debugonly_trace!("Resolving envs {} < {}", max_lbl, DisplayVec(&lower_labels));
                 self.get_shadowed_env(max_lbl, &lower_labels, path.clone())
             })
-            .flatten()
-            .collect()
-            // .fold(ProjEnvs::default(), |mut acc, envs| {
-            //     // merge all envs into one
-            //     for (proj, mut new_envs) in envs {
-            //         let e = acc.entry(proj).or_default();
-            //         e.append(&mut new_envs);
-            //     }
-            //     acc
-            // })
+            .fold(ProjEnvs::default(), |mut all_envs, envs| {
+                // merge all envs into one
+                for (proj, mut new_envs) in envs {
+                    let e = all_envs.entry(proj).or_insert(Vec::with_capacity(new_envs.len()));
+                    e.append(&mut new_envs);
+                }
+                all_envs
+            })
     }
 
     fn get_shadowed_env<'a>(
@@ -280,7 +278,7 @@ where
             let key = (reg.index(), path.target());
             // this is the entry for the path
             // its a map of proj -> [envs]
-            let entry = self.cache.entry(key).or_default();
+            let path_envs = self.cache.entry(key).or_default();
             // this replaces any existing cache
             // but we will only ever have one entry for the given key (I assume)
             self.profiler.inc_cache_writes();
@@ -292,7 +290,7 @@ where
             //     }
             // }
 
-            entry.insert(*proj, envs.clone());
+            path_envs.insert(*proj, envs.clone());
         }
     }
 

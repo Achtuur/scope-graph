@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use deepsize::DeepSizeOf;
 use graphing::{
     mermaid::{
         item::{ItemShape, MermaidItem}, theme::{AnimationSpeed, AnimationStyle, EdgeType, ElementStyle, Size}, MermaidChartDirection, MermaidDiagram, MermaidStyleSheet
@@ -39,6 +40,7 @@ pub struct GraphRenderOptions {
 
 /// Bi-directional edge between two scopes
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[derive(DeepSizeOf)]
 pub struct Edge<Lbl>
 where
     Lbl: ScopeGraphLabel,
@@ -61,6 +63,7 @@ impl<Lbl: ScopeGraphLabel> Edge<Lbl> {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(DeepSizeOf)]
 pub struct ScopeData<Lbl, Data>
 where
     Lbl: ScopeGraphLabel + Clone,

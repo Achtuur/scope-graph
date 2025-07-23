@@ -1,5 +1,6 @@
 use std::{collections::HashSet, rc::Rc};
 
+use deepsize::DeepSizeOf;
 use graphing::{
     mermaid::{item::MermaidItem, theme::EdgeType},
     plantuml::{EdgeDirection, PlantUmlItem},
@@ -11,6 +12,7 @@ use crate::{label::ScopeGraphLabel, scope::Scope};
 ///
 /// This holds a path using a pointer to the head path segment.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(DeepSizeOf)]
 pub enum Path<Lbl>
 where
     Lbl: ScopeGraphLabel + Clone,
@@ -190,6 +192,7 @@ where
 ///
 /// Internally, this is the exact same structure, however the "start scope" now refers to the tail instead
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(DeepSizeOf)]
 pub struct ReversePath<Lbl>(Path<Lbl>)
 where
     Lbl: ScopeGraphLabel + Clone;
@@ -335,5 +338,27 @@ mod tests {
         assert_ne!(p1, p3);
         let p4 = Path::start(1).step('a', 2, 0).step('c', 3, 0);
         assert_ne!(p1, p4);
+    }
+
+    #[test]
+    fn test_deepsize() {
+        let p1 = Path::start(1).step('a', 2, 0).step('b', 3, 0);
+        let p2 = p1.clone().step('a', 3, 0);
+        let p3 = p2.clone().step('a', 3, 0);
+
+        let p1z = p1.deep_size_of() as f32;
+        let p2z = p2.deep_size_of() as f32;
+        let p3z = p3.deep_size_of() as f32;
+        println!("p2z/p1z: {0:?}", p2z/p1z);
+        println!("p2z/p1z: {0:?}", p3z/p2z);
+
+        // let empty_v = Vec::<usize>::new();
+        // println!("empty_v.deep_size_of():; {0:?}", empty_v.deep_size_of());
+
+        // // this should be same as vec + p2, since they point to the same memory
+        let v = vec![p1.clone(), p2.clone(), p3.clone()];
+        let v2 = vec![p1, p2, p3];
+        println!("v.deep_size_of(): {0:?}", (v, v2).deep_size_of());
+
     }
 }

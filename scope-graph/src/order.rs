@@ -4,6 +4,8 @@ use std::{
     hash::Hash,
 };
 
+use deepsize::DeepSizeOf;
+
 use crate::label::{LabelOrEnd, ScopeGraphLabel};
 
 pub struct LabelOrderBuilder<Lbl>
@@ -138,6 +140,7 @@ where
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Default)]
+#[derive(DeepSizeOf)]
 pub struct LabelOrder<Lbl>
 where
     Lbl: ScopeGraphLabel,

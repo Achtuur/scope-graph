@@ -3,9 +3,9 @@ use std::{
     sync::Arc,
 };
 
-use graphing::Renderer;
+use graphing::{plantuml::{theme::{ElementCss, FontFamily, FontStyle, HorizontalAlignment, LineStyle, PlantUmlStyleSheet}, EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem, PlantUmlItemKind}, Color, Renderer};
 use scope_graph::{
-    generator::{GraphGenerator, GraphPattern}, graph::{CachedScopeGraph, GraphRenderOptions, ScopeGraph}, order::LabelOrderBuilder, regex::{dfs::RegexAutomaton, Regex}, ColorSet, ForeGroundColor, SgData, SgLabel, SgProjection, DRAW_CACHES, SAVE_GRAPH
+    generator::{GraphGenerator, GraphPattern}, graph::{CachedScopeGraph, GraphRenderOptions, ScopeGraph}, order::LabelOrderBuilder, regex::{dfs::RegexAutomaton, Regex}, BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor, SgData, SgLabel, SgProjection, DRAW_CACHES, SAVE_GRAPH
 };
 
 pub type UsedScopeGraph = CachedScopeGraph<SgLabel, SgData>;
@@ -135,8 +135,8 @@ fn aron_example() {
     graph.add_edge(s1, s2, SgLabel::Parent);
     graph.add_edge(s2, s3, SgLabel::Parent);
     graph.add_edge(s3, s0, SgLabel::Parent);
-    graph.add_decl(s0, SgLabel::Declaration, SgData::var("x", "int"));
-    graph.add_decl(s2, SgLabel::Declaration, SgData::var("y", "int"));
+    let sd0 = graph.add_decl(s0, SgLabel::Declaration, SgData::var("x", "int"));
+    let sd2 = graph.add_decl(s2, SgLabel::Declaration, SgData::var("x", "int"));
 
     graph
         .as_uml_diagram("circle sg", &GraphRenderOptions::default())
@@ -145,44 +145,124 @@ fn aron_example() {
 
     let reg = Regex::concat(Regex::kleene(SgLabel::Parent), SgLabel::Declaration).compile();
     let label_order = LabelOrderBuilder::new()
-        .push(SgLabel::Declaration, SgLabel::Parent)
+        // .push(SgLabel::Declaration, SgLabel::Parent)
         .build();
+    let wfd: Arc<str> = Arc::from("x");
     let env = graph.query_proj(
         s1,
         &reg,
         &label_order,
         SgProjection::VarName,
-        Arc::from("x"),
+        wfd.clone(),
     );
 
-    let mut diagram = graph.as_uml_diagram("circle sg 1st query", &GraphRenderOptions {
-        draw_caches: true,
-        ..Default::default()
-    });
+    let mut style_sheet: PlantUmlStyleSheet = [
+            ElementCss::new()
+                .background_color(Color::new_rgb(242, 232, 230))
+                .font_family(FontFamily::Monospace)
+                .as_selector("element"),
+            ElementCss::new()
+                .line_color(Color::BLACK)
+                .as_selector("arrow"),
+            ElementCss::new()
+                .font_size(24)
+                .font_style(FontStyle::Bold)
+                .round_corner(1000)
+                .horizontal_alignment(HorizontalAlignment::Center)
+                .as_class("scope"),
+            ElementCss::new()
+                .font_size(24)
+                .font_style(FontStyle::Bold)
+                .round_corner(10)
+                .shadowing(1)
+                .background_color(Color::new_rgb(245, 229, 220))
+                .as_class("data-scope"),
+            ElementCss::new()
+                .line_thickness(1.25)
+                .font_size(16)
+                .as_class("scope-edge"),
+            ElementCss::new()
+                .line_style(LineStyle::Dashed)
+                .as_class("query-edge"),
+            ElementCss::new()
+                .line_style(LineStyle::Dotted)
+                .line_color(Color::LIGHT_GRAY)
+                .as_class("cache-edge"),
+            ElementCss::new().font_size(11).as_class("cache-entry"),
+        ]
+        .into();
+        let fg = ForeGroundColor::uml_stylesheet();
+        let bg = BackgroundColor::uml_stylesheet();
+        let bg_line = BackGroundEdgeColor::uml_stylesheet();
+        style_sheet.merge(fg);
+        style_sheet.merge(bg);
+        style_sheet.merge(bg_line);
+
+    let mut diagram = PlantUmlDiagram::new("1st query");
+    diagram.set_style_sheet(style_sheet);
+    diagram.push(PlantUmlItem::node(s0.uml_id(), "0", NodeType::Node));
+    diagram.push(PlantUmlItem::node(s1.uml_id(), "1", NodeType::Node));
+    diagram.push(PlantUmlItem::node(s2.uml_id(), "2", NodeType::Node));
+    diagram.push(PlantUmlItem::node(s3.uml_id(), "3", NodeType::Node));
+    diagram.push(PlantUmlItem::node(sd0.uml_id(), "4 x: int", NodeType::Card));
+    diagram.push(PlantUmlItem::node(sd2.uml_id(), "5 x: int", NodeType::Card));
+
+    diagram.push(PlantUmlItem::edge(s0.uml_id(), s1.uml_id(), "P", EdgeDirection::Right));
+    diagram.push(PlantUmlItem::edge(s1.uml_id(), s2.uml_id(), "P", EdgeDirection::Bottom));
+    diagram.push(PlantUmlItem::edge(s2.uml_id(), s3.uml_id(), "P", EdgeDirection::Left));
+    diagram.push(PlantUmlItem::edge(s3.uml_id(), s0.uml_id(), "P", EdgeDirection::Up));
+
+    diagram.push(PlantUmlItem::edge(s0.uml_id(), sd0.uml_id(), "D", EdgeDirection::Left));
+    diagram.push(PlantUmlItem::edge(s2.uml_id(), sd2.uml_id(), "D", EdgeDirection::Right));
+
+    let mut cache = graph.generate_cache_uml();
+    for item in &mut cache {
+        match item.node_id() {
+            id if id == s0.uml_id() || id == s1.uml_id() => item.set_direction(EdgeDirection::Up),
+            id if id == s2.uml_id() || id == s3.uml_id() => item.set_direction(EdgeDirection::Bottom),
+            _ => ()
+        }
+    }
+
+    let mut d1 = diagram.clone();
+    d1.extend(cache);
+
     let q_uml = env
         .into_iter()
         .flat_map(|r| r.path.as_uml(ForeGroundColor::next_class(), true))
         .collect::<Vec<_>>();
-    diagram.extend(q_uml);
+    d1.extend(q_uml);
 
-    diagram.render_to_file("output/aron1.puml").unwrap();
+    d1.push(PlantUmlItem::note(s1.uml_id(), format!("Query 1 start in scope {s1}, looking for {wfd}"), EdgeDirection::Right));
+    d1.render_to_file("output/aron1.puml").unwrap();
 
+    let wfd: Arc<str> = Arc::from("x");
     let env = graph.query_proj(
         s3,
         &reg,
         &label_order,
         SgProjection::VarName,
-        Arc::from("y"),
+        wfd.clone(),
     );
 
-    let mut diagram = graph.as_uml_diagram("circle sg 2nd query", &GraphRenderOptions::default());
+    let mut d2 = diagram.clone();
+    let mut cache = graph.generate_cache_uml();
+    for item in &mut cache {
+        match item.node_id() {
+            id if id == s0.uml_id() || id == s1.uml_id() => item.set_direction(EdgeDirection::Up),
+            id if id == s2.uml_id() || id == s3.uml_id() => item.set_direction(EdgeDirection::Bottom),
+            _ => ()
+        }
+    }
+    d2.extend(cache);
     let q_uml = env
         .into_iter()
         .flat_map(|r| r.path.as_uml(ForeGroundColor::next_class(), true))
         .collect::<Vec<_>>();
-    diagram.extend(q_uml);
+    d2.extend(q_uml);
 
-    diagram.render_to_file("output/aron2.puml").unwrap();
+    d2.push(PlantUmlItem::note(s3.uml_id(), format!("Query 2 start in scope {s3}, looking for {wfd}"), EdgeDirection::Left));
+    d2.render_to_file("output/aron2.puml").unwrap();
 }
 
 fn main() {
@@ -216,4 +296,31 @@ fn save_graph(graph: &UsedScopeGraph, fname: &str) {
         .unwrap();
     tracing::info!("Writing to file {}", fname);
     serde_json::to_writer(file, graph).unwrap();
+}
+
+
+#[cfg(test)]
+mod tests {
+
+    use std::collections::HashMap;
+
+    use deepsize::DeepSizeOf;
+
+    use super::*;
+
+    #[test]
+    fn test_deepsize() {
+        let mut map = HashMap::new();
+        println!("{}", map.deep_size_of());
+        map.insert("key".to_string(), "value".to_string());
+        println!("{}", map.deep_size_of());
+
+        let mut v = Vec::new();
+        println!("v.deep_size_of(): {0:?}", v.deep_size_of());
+        for i in 0..8_u8 {
+            v.push(i);
+        }
+        println!("v.deep_size_of(): {0:?}", v.deep_size_of());
+
+    }
 }

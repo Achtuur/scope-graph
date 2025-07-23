@@ -4,11 +4,11 @@ use graphing::{
         item::{ItemShape, MermaidItem},
         theme::EdgeType,
     },
-    plantuml::PlantUmlItem,
+    plantuml::{EdgeDirection, PlantUmlItem},
 };
-use hashbrown::HashMap;
 use resolve::CachedResolver;
 use serde::{Deserialize, Serialize};
+use deepsize::DeepSizeOf;
 
 use crate::{
     data::ScopeGraphData, debugonly_trace, graph::{resolve::{QueryStats, Resolver}, Edge, ScopeData, ScopeMap}, label::ScopeGraphLabel, order::LabelOrder, path::Path, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackgroundColor, ColorSet, ForeGroundColor
@@ -20,7 +20,7 @@ mod resolve;
 
 type ProjHash = u64;
 
-type ProjEnvs<Lbl, Data> = HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
+type ProjEnvs<Lbl, Data> = hashbrown::HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
 
 /// Key for the cache.
 ///
@@ -30,14 +30,19 @@ type ProjEnvs<Lbl, Data> = HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
 type QueryCacheKey = (usize, Scope);
 
 /// Cache for the results of a certain query
-type QueryCache<Lbl, Data> = HashMap<QueryCacheKey, ProjEnvs<Lbl, Data>>;
+type QueryCache<Lbl, Data> = hashbrown::HashMap<QueryCacheKey, ProjEnvs<Lbl, Data>>;
 
 /// Key for `ScopeGraphCache` (label order, label regex, projection FUNCTION hash).
 type ParameterKey<Lbl> = (LabelOrder<Lbl>, RegexAutomaton<Lbl>, ProjHash);
 /// Cache for the entire scope graph.
 ///
 /// This contains a cache per set of query parameters
-type ScopeGraphCache<Lbl, Data> = HashMap<ParameterKey<Lbl>, QueryCache<Lbl, Data>>;
+type ScopeGraphCache<Lbl, Data> = hashbrown::HashMap<ParameterKey<Lbl>, QueryCache<Lbl, Data>>;
+
+
+type StdProjEnvs<Lbl, Data> = std::collections::HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
+type StdQueryCache<Lbl, Data> = std::collections::HashMap<QueryCacheKey, StdProjEnvs<Lbl, Data>>;
+type StdCache<Lbl, Data> = std::collections::HashMap<ParameterKey<Lbl>, StdQueryCache<Lbl, Data>>;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CachedScopeGraph<Lbl, Data>
@@ -116,7 +121,19 @@ where
             order,
         );
 
-        stats.cache_size_estimate = cache_entry.len();
+        let std_cache: StdCache<Lbl, Data> = self.resolve_cache
+        .iter()
+        .fold(std::collections::HashMap::new(), |mut acc, (key, cache)| {
+            let entry = acc.entry(key.clone()).or_default();
+            cache.into_iter().for_each(|(k, v)| {
+                let entry2= entry.entry(*k).or_default();
+                entry2.extend(v.iter().map(|(k, v)| (*k, v.clone())));
+            });
+            acc
+        });
+
+
+        stats.cache_size_estimate = std_cache.deep_size_of() as f32 / self.scopes.deep_size_of() as f32;
 
         for qr in &envs {
             tracing::info!("\t{}", qr);
@@ -260,7 +277,7 @@ where
                     .iter()
                     .filter(|(key, _)| !self.scope_holds_data(key.1))
                     // map with scope as key to not have duplicate notes
-                    .fold(HashMap::new(), |mut acc, (keys, envs)| {
+                    .fold(hashbrown::HashMap::new(), |mut acc, (keys, envs)| {
                         let key = keys.1; // scope
                         let entry: &mut QueryCache<Lbl, Data> = acc.entry(key).or_default();
                         entry.insert(*keys, envs.clone());
@@ -287,7 +304,7 @@ where
 
                         let cache_str =
                             format!("<i>{}</i>\n<b>{:?}</b>\n{}", params_str.clone(), key, vals);
-                        let item = PlantUmlItem::note(key.uml_id(), cache_str)
+                        let item = PlantUmlItem::note(key.uml_id(), cache_str, EdgeDirection::Left)
                             .add_class("cache-entry")
                             .add_class(BackgroundColor::get_class_name(key.0));
                         Some(item)
@@ -305,7 +322,7 @@ where
                     .iter()
                     .filter(|(key, _)| !self.scope_holds_data(key.1))
                     // map with scope as key to not have duplicate notes
-                    .fold(HashMap::new(), |mut acc, (keys, envs)| {
+                    .fold(hashbrown::HashMap::new(), |mut acc, (keys, envs)| {
                         let key = keys.1; // scope
                         let entry: &mut QueryCache<Lbl, Data> = acc.entry(key).or_default();
                         entry.insert(*keys, envs.clone());

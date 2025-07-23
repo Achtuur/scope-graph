@@ -22,6 +22,8 @@ pub trait Renderer {
             .truncate(true)
             .open(&path)?;
         let mut buf = BufWriter::with_capacity(4096, file);
+
+        tracing::debug!("Rendering graph to file: {}", path.display());
         self.render_to_writer(&mut buf)
     }
 }

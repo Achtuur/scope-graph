@@ -1,6 +1,7 @@
 use std::sync::{Arc, atomic::AtomicUsize};
 
 use data::ScopeGraphData;
+use deepsize::DeepSizeOf;
 use graphing::{
     Color,
     mermaid::{MermaidStyleSheet, theme::ElementStyle},
@@ -187,6 +188,7 @@ impl ColorSet for BackGroundEdgeColor {
     Deserialize,
     scopegraphs::Label,
 )]
+#[derive(DeepSizeOf)]
 pub enum SgLabel {
     Parent,
     Declaration,
@@ -238,6 +240,7 @@ impl ScopeGraphLabel for SgLabel {
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(DeepSizeOf)]
 pub enum SgData {
     #[default]
     NoData,
@@ -315,6 +318,7 @@ impl RenderScopeLabel for SgLabel {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(DeepSizeOf)]
 pub enum SgProjection {
     None,
     VarName,
