@@ -8,6 +8,7 @@ where
     Lbl: ScopeGraphLabel,
 {
     automata: &'a RegexAutomaton<Lbl>,
+    prev_idx: usize,
     idx: usize,
 }
 
@@ -17,17 +18,21 @@ where
 {
     #[inline]
     pub fn new(automata: &'a RegexAutomaton<Lbl>) -> Self {
-        Self { automata, idx: 0 }
+        Self { automata, idx: 0, prev_idx: 0 }
     }
 
     #[inline]
     pub fn with_index(automata: &'a RegexAutomaton<Lbl>, idx: usize) -> Self {
-        Self { automata, idx }
+        Self { automata, idx, prev_idx: 0 }
     }
 
     #[inline]
     pub fn index(&self) -> usize {
         self.idx
+    }
+
+    pub fn prev_index(&self) -> usize {
+        self.prev_idx
     }
 
     /// Steps through the automata, returning the next node index.
@@ -36,6 +41,7 @@ where
     pub fn step(&mut self, label: &Lbl) -> Option<usize> {
         let node = self.automata.get_node(self.idx)?;
         let next_idx = node.get_edge(label)?;
+        self.prev_idx = self.idx;
         self.idx = *next_idx;
         Some(self.idx)
     }

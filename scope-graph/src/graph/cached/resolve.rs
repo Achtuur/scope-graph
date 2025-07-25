@@ -103,18 +103,18 @@ where
 
     fn get_env(&mut self, path: Path<Lbl>, reg: RegexState<'r, Lbl>) -> ProjEnvs<Lbl, Data> {
         // all edges where brzozowski derivative != 0
-        let scope = self.get_scope(path.target()).expect("Scope not found");
         self.profiler.inc_nodes_visited();
 
         debugonly_debug!("Checking cache for path {}", path);
-        // let timer = std::time::Instant::now();
         let cached_env = self.get_cached_env(&path, &reg);
-        // println!("cache read: {:?}", timer.elapsed());
         if !cached_env.is_empty() {
             debugonly_debug!("Cache hit for {}", path);
+            self.profiler.inc_cache_hits();
             return cached_env;
         }
+        self.cache.clear_envs(&reg, &path);
 
+        let scope = self.get_scope(path.target()).expect("Scope not found");
         let mut labels = scope
             .outgoing()
             .iter()
@@ -135,10 +135,13 @@ where
         }
 
         let envs = self.get_env_for_labels(&labels, path.clone());
-        // let timer = std::time::Instant::now();
-        self.cache_env(&path, reg, &envs);
-        // println!("cache write: {:?}", timer.elapsed());
+        if !reg.is_accepting() {
+            // don't cache in scope where data lives
+            self.cache_env(&path, &reg, envs.clone());
+        }
+        // self.get_cached_env(&path, &reg, true)
         envs
+        // envs
     }
 
     fn get_env_for_labels<'a>(
@@ -166,8 +169,10 @@ where
                 debugonly_trace!("Resolving envs {} < {}", max_lbl, DisplayVec(&lower_labels));
                 self.get_shadowed_env(max_lbl, &lower_labels, path.clone())
             })
+            // .flatten()
+            // .collect()
             .fold(ProjEnvs::default(), |mut all_envs, envs| {
-                // merge all envs into one
+                // merge all envs from different labels into one
                 for (proj, mut new_envs) in envs {
                     let e = all_envs.entry(proj).or_insert(Vec::with_capacity(new_envs.len()));
                     e.append(&mut new_envs);
@@ -192,24 +197,37 @@ where
         label: &'a LabelOrEnd<'r, Lbl>,
         path: Path<Lbl>,
     ) -> ProjEnvs<Lbl, Data> {
-        let scope = self.get_scope(path.target()).unwrap().clone();
         match label {
             // reached end of a path
-            LabelOrEnd::End => ProjEnvs::from([(
-                hash(&self.data_proj(&scope.data)),
-                vec![QueryResult {
+            LabelOrEnd::End => {
+                let data = &self.get_scope(path.target()).unwrap().data;
+                let hash = hash(&self.data_proj(data));
+                let env = vec![QueryResult {
                     path: ReversePath::start(path.target()),
-                    data: scope.data.clone(),
-                }],
-            )]),
+                    data: data.clone(),
+                }];
+                ProjEnvs::from([(hash, env)])
+            },
             // not yet at end
             LabelOrEnd::Label((label, partial_reg)) => {
-                scope
-                    .outgoing()
-                    .iter()
-                    .filter(|e| e.lbl() == label)
-                    .map(|e| path.step(e.lbl().clone(), e.target(), partial_reg.index())) // create new paths
-                    .filter(|p| !p.is_circular(partial_reg.index())) // create new paths
+                let paths = self
+                .get_scope(path.target())
+                .unwrap()
+                .outgoing()
+                .iter()
+                .filter_map(|e| {
+                    if e.lbl() != label {
+                        return None;
+                    }
+                    let p = path.step(e.lbl().clone(), e.target(), partial_reg.prev_index());
+                    if p.is_circular() {
+                        return None;
+                    }
+                    Some(p)
+                })
+                .collect::<Vec<_>>(); // prevent cloning scope data every time, instead only do a (cheap) clone of the path
+                paths
+                    .into_iter()
                     .flat_map(|p| {
                         self.profiler.inc_edges_traversed();
                         self.resolve_all(p, partial_reg.clone())
@@ -227,6 +245,8 @@ where
                                 partial_reg.index()
                             );
                         }
+
+                        envs.retain(|qr| !qr.path.is_circular());
 
                         // we have to fold here, since there can be multiple entries for each projection (`p`)
                         let e = acc.entry(p).or_default();
@@ -261,37 +281,31 @@ where
     fn cache_env(
         &mut self,
         path: &Path<Lbl>,
-        reg: RegexState<'_, Lbl>,
-        env_map: &ProjEnvs<Lbl, Data>,
+        reg: &RegexState<'_, Lbl>,
+        env_map: ProjEnvs<Lbl, Data>,
     ) {
         if !ENABLE_CACHING {
             return;
         }
 
         debugonly_debug!("Caching envs...");
-        for (proj, envs) in env_map {
-            // debugonly_trace!(
-            //     "Cache env for path {}: {} envs",
-            //     path.target(),
-            //     DisplayVec(envs)
-            // );
-            let key = (reg.index(), path.target());
-            // this is the entry for the path
-            // its a map of proj -> [envs]
-            let path_envs = self.cache.entry(key).or_default();
-            // this replaces any existing cache
-            // but we will only ever have one entry for the given key (I assume)
-            self.profiler.inc_cache_writes();
-            // let cached_envs = entry.entry(*proj).or_default();
-            // for e in envs {
-            //     if !cached_envs.contains(e) {
-            //         debugonly_trace!("Adding env to cache: {e}");
-            //         cached_envs.push(e.clone());
-            //     }
-            // }
-
-            path_envs.insert(*proj, envs.clone());
-        }
+        self.profiler.inc_cache_writes();
+        self.cache.insert(reg, path, env_map);
+        // for (proj, envs) in env_map {
+        //     // debugonly_trace!(
+        //     //     "Cache env for path {}: {} envs",
+        //     //     path.target(),
+        //     //     DisplayVec(envs)
+        //     // );
+        //     let key = (reg.index(), path.target());
+        //     // this is the entry for the path
+        //     // its a map of proj -> [envs]
+        //     let path_envs = self.cache.get_mut(key);
+        //     // this replaces any existing cache
+        //     // but we will only ever have one entry for the given key (I assume)
+        //     self.profiler.inc_cache_writes();
+        //     path_envs.insert(*proj, envs.clone());
+        // }
     }
 
     fn get_cached_env(&self, path: &Path<Lbl>, reg: &RegexState<'r, Lbl>) -> ProjEnvs<Lbl, Data> {
@@ -299,20 +313,6 @@ where
             return ProjEnvs::default();
         }
         self.profiler.inc_cache_reads();
-
-        let key = (reg.index(), path.target());
-        // let proj_wfd_hash = hash(&self.proj_wfd);
-        match self.cache.get(&key) {
-            // this makes it about 2x slower??
-            // Some(entry) if entry.contains_key(&self.proj_wfd_hash) => {
-            //     self.profiler.inc_cache_hits();
-            //     entry.clone()
-            // }
-            Some(entry) => {
-                self.profiler.inc_cache_hits();
-                entry.clone()
-            }
-            _ => ProjEnvs::default(),
-        }
+        self.cache.get_envs(reg, path)
     }
 }

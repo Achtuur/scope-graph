@@ -1,5 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use scope_graph::{SgData, generator::GraphPattern};
+use graphing::Renderer;
+use scope_graph::{bench_util::{construct_cached_graph, query_graph, query_graph_cached}, generator::GraphPattern, graph::{GraphRenderOptions, ScopeGraph}, order::LabelOrderBuilder, regex::{dfs::RegexAutomaton, Regex}, SgData, SgLabel};
 
 
 fn get_pattern() -> Vec<GraphPattern> {
@@ -27,47 +28,39 @@ fn get_pattern() -> Vec<GraphPattern> {
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    // let mut bu_graph = construct_cached_graph(get_pattern());
-    // let storage = Storage::new();
-    // let lib_graph = construct_libgraph(&storage, get_pattern());
+    let mut bu_graph = construct_cached_graph(get_pattern());
 
-    // bu_graph
-    //     .as_uml_diagram("title", false)
-    //     .render_to_file("output/bench/graph.puml")
-    //     .unwrap();
-    // bu_graph
-    //     .as_mmd_diagram("title", false)
-    //     .render_to_file("output/bench/graph.md")
-    //     .unwrap();
-    // lib_graph
-    //     .render_to("output/bench/libgraph.mmd", RenderSettings::default())
-    //     .unwrap();
 
-    // let order = LabelOrderBuilder::new()
-    //     .push(SgLabel::Declaration, SgLabel::Parent)
-    //     .build();
+    bu_graph
+        .as_uml_diagram("title", &GraphRenderOptions::default())
+        .render_to_file("output/bench/graph.puml")
+        .unwrap();
 
-    // // P*D;
-    // let label_reg = Regex::concat(Regex::kleene(SgLabel::Parent), SgLabel::Declaration);
-    // let matcher = RegexAutomaton::from_regex(label_reg.clone());
+    let order = LabelOrderBuilder::new()
+        .push(SgLabel::Declaration, SgLabel::Parent)
+        .build();
 
-    // let mut group = c.benchmark_group("query");
-    // // group.warm_up_time(Duration::from_secs(1));
-    // // group.measurement_time(Duration::from_secs(1));
+    // P*D;
+    let label_reg = Regex::concat(Regex::kleene(SgLabel::Parent), SgLabel::Declaration);
+    let matcher = RegexAutomaton::from_regex(label_reg.clone());
 
-    // for num_bench in [1, 2, 5] {
-    //     let s1 = format!("bench {}", num_bench);
-    //     let s2 = format!("cache bench {}", num_bench);
-    //     group.bench_function(&s1, |b| {
-    //         b.iter(|| query_graph(&mut bu_graph, num_bench, &order, &matcher))
-    //     });
-    //     group.bench_function(&s2, |b| {
-    //         b.iter(|| query_graph_cached(&mut bu_graph, num_bench, &order, &matcher))
-    //     });
-    //     // group.bench_function(&s3, |b| {
-    //     //     b.iter(|| query_libgraph(&mut lib_graph, num_bench))
-    //     // });
-    // }
+    let mut group = c.benchmark_group("query");
+    // group.warm_up_time(Duration::from_secs(1));
+    // group.measurement_time(Duration::from_secs(1));
+
+    for num_bench in [2] {
+        let s1 = format!("bench {}", num_bench);
+        let s2 = format!("cache bench {}", num_bench);
+        group.bench_function(&s1, |b| {
+            b.iter(|| query_graph(&mut bu_graph, 160..250, num_bench, &order, &matcher))
+        });
+        group.bench_function(&s2, |b| {
+            b.iter(|| query_graph_cached(&mut bu_graph, 160..250, num_bench, &order, &matcher))
+        });
+        // group.bench_function(&s3, |b| {
+        //     b.iter(|| query_libgraph(&mut lib_graph, num_bench))
+        // });
+    }
 }
 
 criterion_group!(benches, criterion_benchmark);

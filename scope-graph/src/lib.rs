@@ -40,6 +40,9 @@ pub const DRAW_MEM_ADDR: bool = false;
 /// Prompt to save the graph
 pub const SAVE_GRAPH: bool = false;
 
+pub const DO_CIRCLE_CHECK: bool = true;
+
+
 pub struct ForeGroundColor;
 pub struct BackgroundColor;
 pub struct BackGroundEdgeColor;

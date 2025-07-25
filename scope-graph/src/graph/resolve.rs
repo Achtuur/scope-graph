@@ -1,6 +1,8 @@
 use std::{collections::HashSet, sync::atomic::AtomicUsize, time::{Duration, Instant}};
 
 use deepsize::DeepSizeOf;
+use either::Either;
+use smallvec::SmallVec;
 
 use crate::{
     data::ScopeGraphData, debugonly_debug, debugonly_trace, graph::ScopeMap, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, DRAW_MEM_ADDR
@@ -163,16 +165,6 @@ impl<T: std::fmt::Display> std::fmt::Display for DisplayVec<'_, T> {
 }
 
 pub struct DisplayMap<'a, K: std::fmt::Display, V>(pub &'a std::collections::HashMap<K, V>);
-
-// impl <K: std::fmt::Display, V: std::fmt::Display> std::fmt::Display for DisplayMap<'_, K, V> {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         if self.0.is_empty() {
-//             write!(f, "{{}}")
-//         } else {
-//             write!(f, "{{{}}}", self.0.iter().map(|(k, v)| format!("{}: {}", k, v)).collect::<Vec<_>>().join(", "))
-//         }
-//     }
-// }
 
 impl<K: std::fmt::Display, T: std::fmt::Display> std::fmt::Display for DisplayMap<'_, K, Vec<T>> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -353,6 +345,55 @@ where
         self.shadow(lower_paths, max_path)
     }
 
+    // fn get_env_for_label<'a>(
+    //     &mut self,
+    //     label: &'a LabelOrEnd<'r, Lbl>,
+    //     path: Path<Lbl>,
+    // ) -> Either<impl Iterator<Item = QueryResult<Lbl, Data>>, impl Iterator<Item = QueryResult<Lbl, Data>>> {
+    //     let scope = self.get_scope(path.target()).unwrap().clone();
+    //     match label {
+    //         // reached end of a path
+    //         LabelOrEnd::End => {
+    //             let iter = match self.data_wfd(&scope.data) {
+    //                 true => Some(std::iter::once(QueryResult {
+    //                     path: ReversePath::from(path),
+    //                     data: scope.data.clone(),
+    //                 })),
+    //                 false => None,
+    //             };
+    //             either::Left(iter.into_iter().flatten())
+    //         },
+    //         // not yet at end
+    //         LabelOrEnd::Label((label, partial_reg)) => {
+    //             let paths = self
+    //             .get_scope(path.target())
+    //             .unwrap()
+    //             .outgoing()
+    //             .iter()
+    //             .filter_map(|e| {
+    //                 if e.lbl() != label {
+    //                     return None;
+    //                 }
+    //                 let p = path.step(e.lbl().clone(), e.target(), partial_reg.index());
+    //                 if p.is_circular() {
+    //                     return None;
+    //                 }
+    //                 Some(p)
+    //             })
+    //             .collect::<SmallVec<[_; 8]>>(); // prevent cloning scope data every time, instead only do a (cheap) clone of the path
+
+
+    //             let iter = paths
+    //             .into_iter()
+    //                 .flat_map(|p| {
+    //                     self.profiler.inc_edges_traversed();
+    //                     self.resolve_all(p, partial_reg.clone())
+    //                 }) ;// resolve new paths
+    //             either::Right(iter)
+    //         }
+    //     }
+    // }
+
     fn get_env_for_label<'a>(
         &mut self,
         label: &'a LabelOrEnd<'r, Lbl>,
@@ -378,15 +419,31 @@ where
                         path.clone()
                             .step(e.lbl().clone(), e.target(), partial_reg.index())
                     })
-                    .filter(|p| !p.is_circular(partial_reg.index()))
+                    .filter(|p| !p.is_circular())
                     .flat_map(|p| {
                         self.profiler.inc_edges_traversed();
                         self.resolve_all(p, partial_reg.clone())
                     }) // resolve new paths
+                    .filter(|qr| !qr.path.is_circular())
                     .collect::<Vec<_>>()
             }
         }
     }
+
+    // fn shadow(
+    //     &self,
+    //     a1: impl IntoIterator<Item = QueryResult<Lbl, Data>>,
+    //     a2: impl IntoIterator<Item = QueryResult<Lbl, Data>>,
+    // ) -> impl Iterator<Item = QueryResult<Lbl, Data>> {
+    //     debugonly_trace!("Shadowing...");
+    //     // a2.retain(|qr2| !a1.iter().any(|qr1| (self.data_eq)(&qr1.data, &qr2.data)));
+    //     // a1.append(&mut a2);
+    //     // a1
+
+    //     a2.into_iter().filter(|qr2| {
+    //         !a1.into_iter().any(|qr1| (self.data_eq)(&qr1.data, &qr2.data))
+    //     })
+    // }
 
     fn shadow(
         &self,

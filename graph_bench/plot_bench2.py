@@ -2,7 +2,6 @@ import json
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 import plotlib as plb
 
 
@@ -191,8 +190,8 @@ def get_data(bench_data: list[BenchResult2], var: VariationData) -> list[list[fl
     return y
 
 
-fan_pat = "fanchain-25-10"
-lin_pat = "linear-100"
+fan_pat = "fanchain-10-10"
+lin_pat = "linear-25"
 
 VARIATIONS = {
     "sg_tree-fan": VariationData(
@@ -213,14 +212,14 @@ VARIATIONS = {
         "sg_linear",
         fan_pat,
         "Linear pattern with fan head",
-        ["linear-40", "linear-80", "linear-160"],
+        ["linear-4", "linear-8", "linear-16"],
         fname="sg_linear-fan",
     ),
     "sg_linear-lin": VariationData(
         "sg_linear",
         lin_pat,
         "Linear pattern with linear head",
-        ["linear-40", "linear-80", "linear-160"],
+        ["linear-4", "linear-8", "linear-16"],
         fname="sg_linear-lin",
     ),
     "sg_diamond-w-fan": VariationData(
@@ -298,10 +297,10 @@ def plot_var(var: VariationData, save: bool = False):
         fig.save_figure(f"plots/{var.fname}", file_extension="png")
         fig.save_figure(f"plots/{var.fname}", file_extension="eps")
 
-    # plt.show()
+    plt.show()
 
 
-# plot_var(VARIATIONS["sg_circle-fan"], save=True)
+plot_var(VARIATIONS["sg_linear-lin"], save=False)
 
-for v in VARIATIONS.values():
-    plot_var(v, save=True)
+# for v in VARIATIONS.values():
+#     plot_var(v, save=True)

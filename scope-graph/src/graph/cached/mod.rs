@@ -17,32 +17,36 @@ use crate::{
 use super::{ScopeGraph, resolve::QueryResult};
 
 mod resolve;
+mod cache;
 
-type ProjHash = u64;
+pub(crate) use cache::*;
 
-type ProjEnvs<Lbl, Data> = hashbrown::HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
+// type ProjHash = u64;
 
-/// Key for the cache.
-///
-/// This is a tuple of index in regex automaton, the result from projecting the data and the target scope.
-///
-/// You can alternatively think of this as a (usize, DataProj) cache per scope.
-type QueryCacheKey = (usize, Scope);
+// /// Map of projected data -> environment
+// type ProjEnvs<Lbl, Data> = hashbrown::HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
 
-/// Cache for the results of a certain query
-type QueryCache<Lbl, Data> = hashbrown::HashMap<QueryCacheKey, ProjEnvs<Lbl, Data>>;
+// /// Key for the cache.
+// ///
+// /// This is a tuple of index in regex automaton, the result from projecting the data and the target scope.
+// ///
+// /// You can alternatively think of this as a (usize, DataProj) cache per scope.
+// type QueryCacheKey = (usize, Scope);
 
-/// Key for `ScopeGraphCache` (label order, label regex, projection FUNCTION hash).
-type ParameterKey<Lbl> = (LabelOrder<Lbl>, RegexAutomaton<Lbl>, ProjHash);
-/// Cache for the entire scope graph.
-///
-/// This contains a cache per set of query parameters
-type ScopeGraphCache<Lbl, Data> = hashbrown::HashMap<ParameterKey<Lbl>, QueryCache<Lbl, Data>>;
+// /// Cache for the results of a certain query
+// type QueryCache<Lbl, Data> = hashbrown::HashMap<QueryCacheKey, ProjEnvs<Lbl, Data>>;
+
+// /// Key for `ScopeGraphCache` (label order, label regex, projection FUNCTION hash).
+// type ParameterKey<Lbl> = (LabelOrder<Lbl>, RegexAutomaton<Lbl>, ProjHash);
+// /// Cache for the entire scope graph.
+// ///
+// /// This contains a cache per set of query parameters
+// type ScopeGraphCache<Lbl, Data> = hashbrown::HashMap<ParameterKey<Lbl>, QueryCache<Lbl, Data>>;
 
 
-type StdProjEnvs<Lbl, Data> = std::collections::HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
-type StdQueryCache<Lbl, Data> = std::collections::HashMap<QueryCacheKey, StdProjEnvs<Lbl, Data>>;
-type StdCache<Lbl, Data> = std::collections::HashMap<ParameterKey<Lbl>, StdQueryCache<Lbl, Data>>;
+// type StdProjEnvs<Lbl, Data> = std::collections::HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
+// type StdQueryCache<Lbl, Data> = std::collections::HashMap<QueryCacheKey, StdProjEnvs<Lbl, Data>>;
+// type StdCache<Lbl, Data> = std::collections::HashMap<ParameterKey<Lbl>, StdQueryCache<Lbl, Data>>;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CachedScopeGraph<Lbl, Data>
@@ -52,7 +56,7 @@ where
 {
     pub scopes: ScopeMap<Lbl, Data>,
     #[serde(skip)]
-    resolve_cache: ScopeGraphCache<Lbl, Data>,
+    resolve_cache: ResolveCache<Lbl, Data>,
 }
 
 impl<Lbl, Data> CachedScopeGraph<Lbl, Data>
@@ -102,8 +106,7 @@ where
         let proj_hash = resolve::hash(&data_proj);
         let cache_entry = self
             .resolve_cache
-            .entry((order.clone(), path_regex.clone(), proj_hash))
-            .or_default();
+            .get_mut((order.clone(), path_regex.clone(), proj_hash));
         let mut resolver = CachedResolver::new(
             &self.scopes,
             cache_entry,
@@ -121,19 +124,18 @@ where
             order,
         );
 
-        let std_cache: StdCache<Lbl, Data> = self.resolve_cache
-        .iter()
-        .fold(std::collections::HashMap::new(), |mut acc, (key, cache)| {
-            let entry = acc.entry(key.clone()).or_default();
-            cache.into_iter().for_each(|(k, v)| {
-                let entry2= entry.entry(*k).or_default();
-                entry2.extend(v.iter().map(|(k, v)| (*k, v.clone())));
-            });
-            acc
-        });
+        // let std_cache: StdCache<Lbl, Data> = self.resolve_cache
+        // .iter()
+        // .fold(std::collections::HashMap::new(), |mut acc, (key, cache)| {
+        //     let entry = acc.entry(key.clone()).or_default();
+        //     cache.into_iter().for_each(|(k, v)| {
+        //         let entry2= entry.entry(*k).or_default();
+        //         entry2.extend(v.iter().map(|(k, v)| (*k, v.clone())));
+        //     });
+        //     acc
+        // });
 
-
-        stats.cache_size_estimate = std_cache.deep_size_of() as f32 / self.scopes.deep_size_of() as f32;
+        // stats.cache_size_estimate = std_cache.deep_size_of() as f32 / self.scopes.deep_size_of() as f32;
 
         for qr in &envs {
             tracing::info!("\t{}", qr);
@@ -239,8 +241,7 @@ where
         let proj_hash = resolve::hash(&data_proj);
         let cache_entry = self
             .resolve_cache
-            .entry((order.clone(), path_regex.clone(), proj_hash))
-            .or_default();
+            .get_mut((order.clone(), path_regex.clone(), proj_hash));
         let mut resolver = CachedResolver::new(
             &self.scopes,
             cache_entry,
@@ -264,102 +265,107 @@ where
     }
 
     fn generate_cache_uml(&self) -> Vec<PlantUmlItem> {
-        self.resolve_cache
-            .iter()
-            .flat_map(|(query_params, query_cache)| {
-                let params_str = format!(
-                    "({}, {})",
-                    query_params.0,
-                    query_params.1,
-                    // query_params.2 % 256
-                );
-                query_cache
-                    .iter()
-                    .filter(|(key, _)| !self.scope_holds_data(key.1))
-                    // map with scope as key to not have duplicate notes
-                    .fold(hashbrown::HashMap::new(), |mut acc, (keys, envs)| {
-                        let key = keys.1; // scope
-                        let entry: &mut QueryCache<Lbl, Data> = acc.entry(key).or_default();
-                        entry.insert(*keys, envs.clone());
-                        acc
-                    })
-                    .into_iter()
-                    .filter_map(move |(key, envs)| {
-                        if envs.is_empty() {
-                            return None;
-                        }
+        self.resolve_cache.generate_uml(self).collect()
+        // self.resolve_cache
+        // .cache
+        //     .iter()
+        //     .flat_map(|(query_params, query_cache)| {
+        //         let params_str = format!(
+        //             "({}, {})",
+        //             query_params.0,
+        //             query_params.1,
+        //             // query_params.2 % 256
+        //         );
+        //         query_cache
+        //         .cache
+        //             .iter()
+        //             .filter(|(key, _)| !self.scope_holds_data(key.1))
+        //             // map with scope as key to not have duplicate notes
+        //             .fold(hashbrown::HashMap::new(), |mut acc, (keys, envs)| {
+        //                 let key = keys.1; // scope
+        //                 let entry: &mut QueryCache<Lbl, Data> = acc.entry(key).or_default();
+        //                 entry.cache.insert(*keys, envs.clone());
+        //                 acc
+        //             })
+        //             .into_iter()
+        //             .filter_map(move |(key, envs)| {
+        //                 if envs.cache.is_empty() {
+        //                     return None;
+        //                 }
 
-                        let vals = envs
-                            .iter()
-                            .map(|(keys, env)| {
-                                let cache_str = env
-                                    .values()
-                                    .flat_map(|result| result.iter().map(|x| x.to_string()))
-                                    .collect::<Vec<String>>()
-                                    .join("\n");
-                                format!("<b>(p{}, s{})</b>\n{}", keys.0, keys.1, cache_str)
-                            })
-                            .collect::<Vec<String>>()
-                            .join("\n");
+        //                 let vals = envs
+        //                     .cache.iter()
+        //                     .map(|(keys, env)| {
+        //                         let cache_str = env
+        //                             .cache
+        //                             .values()
+        //                             .flat_map(|result| result.iter().map(|x| x.to_string()))
+        //                             .collect::<Vec<String>>()
+        //                             .join("\n");
+        //                         format!("<b>(p{}, s{})</b>\n{}", keys.0, keys.1, cache_str)
+        //                     })
+        //                     .collect::<Vec<String>>()
+        //                     .join("\n");
 
-                        let cache_str =
-                            format!("<i>{}</i>\n<b>{:?}</b>\n{}", params_str.clone(), key, vals);
-                        let item = PlantUmlItem::note(key.uml_id(), cache_str, EdgeDirection::Left)
-                            .add_class("cache-entry")
-                            .add_class(BackgroundColor::get_class_name(key.0));
-                        Some(item)
-                    })
-            })
-            .collect()
+        //                 let cache_str =
+        //                     format!("<i>{}</i>\n<b>{:?}</b>\n{}", params_str.clone(), key, vals);
+        //                 let item = PlantUmlItem::note(key.uml_id(), cache_str, EdgeDirection::Left)
+        //                     .add_class("cache-entry")
+        //                     .add_class(BackgroundColor::get_class_name(key.0));
+        //                 Some(item)
+        //             })
+        //     })
+        //     .collect()
     }
 
     fn generate_cache_mmd(&self) -> Vec<MermaidItem> {
-        self.resolve_cache
-            .iter()
-            .flat_map(|(query_params, query_cache)| {
-                let params_str = format!("({}, {})", query_params.0, query_params.1);
-                query_cache
-                    .iter()
-                    .filter(|(key, _)| !self.scope_holds_data(key.1))
-                    // map with scope as key to not have duplicate notes
-                    .fold(hashbrown::HashMap::new(), |mut acc, (keys, envs)| {
-                        let key = keys.1; // scope
-                        let entry: &mut QueryCache<Lbl, Data> = acc.entry(key).or_default();
-                        entry.insert(*keys, envs.clone());
-                        acc
-                    })
-                    .into_iter()
-                    .flat_map(move |(key, envs)| {
-                        if envs.is_empty() {
-                            return Vec::new();
-                        }
+        todo!()
+        // self.resolve_cache
+        //     .cache.iter()
+        //     .flat_map(|(query_params, query_cache)| {
+        //         let params_str = format!("({}, {})", query_params.0, query_params.1);
+        //         query_cache
+        //             .cache.iter()
+        //             .filter(|(key, _)| !self.scope_holds_data(key.1))
+        //             // map with scope as key to not have duplicate notes
+        //             .fold(hashbrown::HashMap::new(), |mut acc, (keys, envs)| {
+        //                 let key = keys.1; // scope
+        //                 let entry: &mut QueryCache<Lbl, Data> = acc.entry(key).or_default();
+        //                 entry.cache.insert(*keys, envs.clone());
+        //                 acc
+        //             })
+        //             .into_iter()
+        //             .flat_map(move |(key, envs)| {
+        //                 if envs.cache.is_empty() {
+        //                     return Vec::new();
+        //                 }
 
-                        let vals = envs
-                            .iter()
-                            .map(|(keys, env)| {
-                                let cache_str = env
-                                    .values()
-                                    .flat_map(|result| result.iter().map(|x| x.to_string()))
-                                    // .map(|result| result.to_string())
-                                    .collect::<Vec<String>>()
-                                    .join("\n");
-                                // cache_str
-                                // // uncomment this to show cache key
-                                format!("<b>(reg{})</b><br>{}", keys.0, cache_str)
-                            })
-                            .collect::<Vec<String>>()
-                            .join("<br>");
+        //                 let vals = envs
+        //                     .cache.iter()
+        //                     .map(|(keys, env)| {
+        //                         let cache_str = env
+        //                             .values()
+        //                             .flat_map(|result| result.iter().map(|x| x.to_string()))
+        //                             // .map(|result| result.to_string())
+        //                             .collect::<Vec<String>>()
+        //                             .join("\n");
+        //                         // cache_str
+        //                         // // uncomment this to show cache key
+        //                         format!("<b>(reg{})</b><br>{}", keys.0, cache_str)
+        //                     })
+        //                     .collect::<Vec<String>>()
+        //                     .join("<br>");
 
-                        let id = format!("cache-{}", key.uml_id());
-                        let cache_str = format!("{}<b>{:?}</b><br>{}", params_str, key, vals);
-                        let note = MermaidItem::node(&id, cache_str, ItemShape::Card)
-                            .add_class("cache-entry")
-                            .add_class(BackgroundColor::get_class_name(key.0));
-                        let edge = MermaidItem::edge(key.uml_id(), id, "", EdgeType::Dotted);
-                        vec![note, edge]
-                    })
-            })
-            .collect()
+        //                 let id = format!("cache-{}", key.uml_id());
+        //                 let cache_str = format!("{}<b>{:?}</b><br>{}", params_str, key, vals);
+        //                 let note = MermaidItem::node(&id, cache_str, ItemShape::Card)
+        //                     .add_class("cache-entry")
+        //                     .add_class(BackgroundColor::get_class_name(key.0));
+        //                 let edge = MermaidItem::edge(key.uml_id(), id, "", EdgeType::Dotted);
+        //                 vec![note, edge]
+        //             })
+        //     })
+        //     .collect()
     }
 }
 
@@ -381,7 +387,7 @@ where
     pub fn new() -> Self {
         Self {
             scopes: ScopeMap::new(),
-            resolve_cache: ScopeGraphCache::new(),
+            resolve_cache: ResolveCache::new(),
         }
     }
 
@@ -391,36 +397,38 @@ where
 
     /// draw the path to the data in the cache for a specific scope
     pub fn cache_path_uml(&self, scope_num: usize) -> Vec<PlantUmlItem> {
-        self.resolve_cache
-            .iter()
-            .flat_map(|(_, query_cache)| {
-                query_cache
-                    .iter()
-                    .filter(|(k, _)| k.1 == Scope(scope_num))
-                    .flat_map(|(_, envs)| {
-                        envs.values()
-                            .flat_map(|envs| envs.iter().map(|q| &q.path))
-                            .flat_map(|path| path.as_uml(ForeGroundColor::next_class(), true))
-                    })
-            })
-            .map(|x| x.add_class("cache-edge"))
-            .collect::<Vec<_>>()
+        todo!()
+        // self.resolve_cache
+        //     .cache.iter()
+        //     .flat_map(|(_, query_cache)| {
+        //         query_cache
+        //             .cache.iter()
+        //             .filter(|(k, _)| k.1 == Scope(scope_num))
+        //             .flat_map(|(_, envs)| {
+        //                 envs.values()
+        //                     .flat_map(|envs| envs.iter().map(|q| &q.path))
+        //                     .flat_map(|path| path.as_uml(ForeGroundColor::next_class(), true))
+        //             })
+        //     })
+        //     .map(|x| x.add_class("cache-edge"))
+        //     .collect::<Vec<_>>()
     }
 
     pub fn cache_path_mmd(&self, scope_num: usize) -> Vec<MermaidItem> {
-        self.resolve_cache
-            .iter()
-            .flat_map(|(_, query_cache)| {
-                query_cache
-                    .iter()
-                    .filter(|(k, _)| k.1 == Scope(scope_num))
-                    .flat_map(|(_, envs)| {
-                        envs.values()
-                            .flat_map(|envs| envs.iter().map(|q| &q.path))
-                            .flat_map(|path| path.as_mmd(ForeGroundColor::next_class(), true))
-                    })
-            })
-            .map(|x| x.add_class("cache-edge"))
-            .collect::<Vec<_>>()
+        todo!()
+        // self.resolve_cache
+        //     .cache.iter()
+        //     .flat_map(|(_, query_cache)| {
+        //         query_cache
+        //             .cache.iter()
+        //             .filter(|(k, _)| k.1 == Scope(scope_num))
+        //             .flat_map(|(_, envs)| {
+        //                 envs.values()
+        //                     .flat_map(|envs| envs.iter().map(|q| &q.path))
+        //                     .flat_map(|path| path.as_mmd(ForeGroundColor::next_class(), true))
+        //             })
+        //     })
+        //     .map(|x| x.add_class("cache-edge"))
+        //     .collect::<Vec<_>>()
     }
 }

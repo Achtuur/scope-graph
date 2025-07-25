@@ -12,7 +12,7 @@ const NUM_RUNS: usize = 10;
 const NUM_WARMUP: usize = 5;
 
 const NUM_DATA: std::ops::RangeInclusive<usize> = 0..=20;
-const TAIL_LENGTH: std::ops::RangeInclusive<usize> = 20..=50;
+const TAIL_LENGTH: std::ops::RangeInclusive<usize> = 10..=20;
 const TAIL_TREE_CHILDS: std::ops::RangeInclusive<usize> = 5..=10;
 
 

@@ -299,7 +299,7 @@ impl PlantUmlItem {
                 }
                 self.write_class(writer)?;
                 let formatted = contents.replace("\n", "\n\t");
-                write!(writer, "\n\t\"{formatted}\"")?;
+                write!(writer, "\n\t{formatted}")?;
                 write!(writer, "\nend note")?;
             }
         }

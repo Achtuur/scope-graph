@@ -15,7 +15,7 @@ pub fn main() {
 
     let linear = PatternGenerator::with_args(
         |n| GraphPattern::Linear(*n),
-        [40, 80, 160]
+        [4, 8, 16]
     );
 
     let circle = PatternGenerator::with_args(
@@ -29,15 +29,15 @@ pub fn main() {
     );
 
     let heads = [
-        HeadGenerator::linear(100),
-        HeadGenerator::fan_chain(25, 10),
+        HeadGenerator::linear(25),
+        HeadGenerator::fan_chain(10, 10),
     ];
 
     let results = [
-        PatternBencher::new("sg_circle", circle).bench(&heads),
-        PatternBencher::new("sg_tree", tree).bench(&heads),
+        // PatternBencher::new("sg_circle", circle).bench(&heads),
+        // PatternBencher::new("sg_tree", tree).bench(&heads),
         PatternBencher::new("sg_linear", linear).bench(&heads),
-        PatternBencher::new("sg_diamond", diamond).bench(&heads),
+        // PatternBencher::new("sg_diamond", diamond).bench(&heads),
     ]
     .into_iter()
     .fold(BenchmarkMap::default(), |mut acc, bench| {
