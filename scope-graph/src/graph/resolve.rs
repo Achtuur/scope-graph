@@ -1,11 +1,10 @@
 use std::{collections::HashSet, sync::atomic::AtomicUsize, time::{Duration, Instant}};
 
 use deepsize::DeepSizeOf;
-use either::Either;
 use smallvec::SmallVec;
 
 use crate::{
-    data::ScopeGraphData, debugonly_debug, debugonly_trace, graph::ScopeMap, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, DRAW_MEM_ADDR
+    data::ScopeGraphData, debug_tracing, graph::ScopeMap, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, DRAW_MEM_ADDR
 };
 
 use super::ScopeData;
@@ -144,45 +143,6 @@ impl From<&QueryProfiler> for QueryStats {
     }
 }
 
-pub struct DisplayVec<'a, T: std::fmt::Display>(pub &'a [T]);
-
-impl<T: std::fmt::Display> std::fmt::Display for DisplayVec<'_, T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.0.is_empty() {
-            write!(f, "[]")
-        } else {
-            write!(
-                f,
-                "[{}]",
-                self.0
-                    .iter()
-                    .map(|e| e.to_string())
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            )
-        }
-    }
-}
-
-pub struct DisplayMap<'a, K: std::fmt::Display, V>(pub &'a std::collections::HashMap<K, V>);
-
-impl<K: std::fmt::Display, T: std::fmt::Display> std::fmt::Display for DisplayMap<'_, K, Vec<T>> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.0.is_empty() {
-            write!(f, "{{}}")
-        } else {
-            write!(
-                f,
-                "{{{}}}",
-                self.0
-                    .iter()
-                    .map(|(k, v)| format!("{}: {}", k, DisplayVec(v)))
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            )
-        }
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[derive(DeepSizeOf)]
@@ -315,7 +275,7 @@ where
         labels: &'a [LabelOrEnd<'r, Lbl>],
         path: Path<Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
-        debugonly_debug!("Resolving labels: {:?} for {:?}", labels, path.target());
+        debug_tracing!(debug, "Resolving labels: {:?} for {:?}", labels, path.target());
         labels
             .iter()
             // 'max' labels ie all labels with lowest priority
@@ -411,21 +371,47 @@ where
             },
             // not yet at end
             LabelOrEnd::Label((label, partial_reg)) => {
-                scope
-                    .outgoing()
-                    .iter()
-                    .filter(|e| e.lbl() == label)
-                    .map(|e| {
-                        path.clone()
-                            .step(e.lbl().clone(), e.target(), partial_reg.index())
-                    })
-                    .filter(|p| !p.is_circular())
+
+                let paths = self
+                .get_scope(path.target())
+                .unwrap()
+                .outgoing()
+                .iter()
+                .filter_map(|e| {
+                    if e.lbl() != label {
+                        return None;
+                    }
+                    let p = path.step(e.lbl().clone(), e.target(), partial_reg.prev_index());
+                    if p.is_circular() {
+                        return None;
+                    }
+                    Some(p)
+                })
+                .collect::<Vec<_>>(); // prevent cloning scope data every time, instead only do a (cheap) clone of the path
+                paths
+                    .into_iter()
                     .flat_map(|p| {
                         self.profiler.inc_edges_traversed();
                         self.resolve_all(p, partial_reg.clone())
                     }) // resolve new paths
                     .filter(|qr| !qr.path.is_circular())
                     .collect::<Vec<_>>()
+
+                // scope
+                //     .outgoing()
+                //     .iter()
+                //     .filter(|e| e.lbl() == label)
+                //     .map(|e| {
+                //         path.clone()
+                //             .step(e.lbl().clone(), e.target(), partial_reg.index())
+                //     })
+                //     .filter(|p| !p.is_circular())
+                //     .flat_map(|p| {
+                //         self.profiler.inc_edges_traversed();
+                //         self.resolve_all(p, partial_reg.clone())
+                //     }) // resolve new paths
+                //     .filter(|qr| !qr.path.is_circular())
+                    // .collect::<Vec<_>>()
             }
         }
     }
@@ -450,7 +436,7 @@ where
         mut a1: Vec<QueryResult<Lbl, Data>>,
         mut a2: Vec<QueryResult<Lbl, Data>>,
     ) -> Vec<QueryResult<Lbl, Data>> {
-        debugonly_trace!("Shadowing...");
+        debug_tracing!(trace, "Shadowing...");
         a2.retain(|qr2| !a1.iter().any(|qr1| (self.data_eq)(&qr1.data, &qr2.data)));
 
         a1.append(&mut a2);

@@ -11,7 +11,7 @@ use graphing::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    data::ScopeGraphData, debugonly_debug, label::ScopeGraphLabel, order::LabelOrder, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor
+    data::ScopeGraphData, debug_tracing, label::ScopeGraphLabel, order::LabelOrder, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor
 };
 
 // mod base;
@@ -129,7 +129,7 @@ where
     }
 
     fn add_decl(&mut self, source: Scope, label: Lbl, data: Data) -> Scope {
-        debugonly_debug!(
+        debug_tracing!(debug,
             "Adding decl: {} with label: {} and data: {}",
             source,
             label,

@@ -30,6 +30,7 @@ pub mod order;
 pub mod projection;
 pub mod regex;
 mod slides;
+pub mod util;
 
 /// Enable caching when doing forward resolution
 pub const ENABLE_CACHING: bool = true;
@@ -40,7 +41,7 @@ pub const DRAW_MEM_ADDR: bool = false;
 /// Prompt to save the graph
 pub const SAVE_GRAPH: bool = false;
 
-pub const DO_CIRCLE_CHECK: bool = true;
+pub const DO_CIRCLE_CHECK: bool = false;
 
 
 pub struct ForeGroundColor;
@@ -355,17 +356,19 @@ impl std::fmt::Display for SgProjection {
 }
 
 #[macro_export]
-macro_rules! debugonly_trace {
-    ($($arg:tt)*) => {
+macro_rules! debug_tracing {
+    (trace, $($arg:tt)*) => {
         #[cfg(debug_assertions)]
         tracing::trace!($($arg)*);
     };
-}
 
-#[macro_export]
-macro_rules! debugonly_debug {
-    ($($arg:tt)*) => {
+    (debug, $($arg:tt)*) => {
         #[cfg(debug_assertions)]
         tracing::debug!($($arg)*);
+    };
+
+    (info, $($arg:tt)*) => {
+        #[cfg(debug_assertions)]
+        tracing::info!($($arg)*);
     };
 }

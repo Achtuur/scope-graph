@@ -86,14 +86,13 @@ where
             return std::cmp::Ordering::Equal;
         }
 
-        let res = match (
+        match (
             self.traverse_graph(label1, label2),
             self.traverse_graph(label2, label1),
         ) {
             (Some(l1), Some(l2)) => {
-                eprintln!(
-                    "Circular label order: {0:?} < {1:?} while {0:?} > {1:?}",
-                    l1, l2
+                tracing::error!(
+                    "Circular label order: {l1:?} < {l2:?} while {l1:?} > {l2:?}"
                 );
                 panic!("Circular ordering")
             }
@@ -109,8 +108,7 @@ where
                 // println!("{:?} = {:?}", label1, label2);
                 std::cmp::Ordering::Equal
             }
-        };
-        res
+        }
     }
 
     /// Less, so HIGHER priority

@@ -23,7 +23,7 @@ fn get_pattern() -> Vec<GraphPattern> {
         GraphPattern::Decl(SgData::var("y", "int")),
         GraphPattern::Linear(25),
         GraphPattern::ReverseTree(2),
-        GraphPattern::Linear(250),
+        GraphPattern::Linear(1000),
     ]
 }
 
@@ -48,14 +48,17 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     // group.warm_up_time(Duration::from_secs(1));
     // group.measurement_time(Duration::from_secs(1));
 
+    const START_RANGE: std::ops::Range<usize> = 890..900;
+
     for num_bench in [2] {
         let s1 = format!("bench {}", num_bench);
         let s2 = format!("cache bench {}", num_bench);
         group.bench_function(&s1, |b| {
-            b.iter(|| query_graph(&mut bu_graph, 160..250, num_bench, &order, &matcher))
+            b.iter(|| query_graph(&mut bu_graph, START_RANGE, num_bench, &order, &matcher))
+
         });
         group.bench_function(&s2, |b| {
-            b.iter(|| query_graph_cached(&mut bu_graph, 160..250, num_bench, &order, &matcher))
+            b.iter(|| query_graph_cached(&mut bu_graph, START_RANGE, num_bench, &order, &matcher))
         });
         // group.bench_function(&s3, |b| {
         //     b.iter(|| query_libgraph(&mut lib_graph, num_bench))

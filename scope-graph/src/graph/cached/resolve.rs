@@ -6,12 +6,13 @@ use hashbrown::hash_set::HashSet;
 use smallvec::SmallVec;
 
 use crate::{
-    data::ScopeGraphData, debugonly_debug, debugonly_trace, graph::{
-        resolve::{DisplayMap, DisplayVec, QueryProfiler, QueryStats}, ScopeMap
-    }, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, projection::ScopeGraphDataProjection, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, ENABLE_CACHING
+    data::ScopeGraphData, debug_tracing, graph::{
+        resolve::{QueryProfiler, QueryStats}, ScopeMap
+    }, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, projection::ScopeGraphDataProjection, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, util::DisplayVec, ENABLE_CACHING
 };
 
 use super::{ProjEnvs, QueryCache, QueryResult, ScopeData};
+
 
 #[inline(always)]
 pub(super) fn hash<T: Hash>(t: &T) -> u64 {
@@ -78,7 +79,7 @@ where
     }
 
     pub fn resolve(&mut self, path: Path<Lbl>) -> (Vec<QueryResult<Lbl, Data>>, QueryStats) {
-        tracing::info!(
+        debug_tracing!(info,
             "Resolving query: {}, {}, {}",
             path,
             self.path_re,
@@ -86,8 +87,8 @@ where
         );
         self.profiler.start_time = Instant::now();
         let reg = RegexState::new(self.path_re);
-        let mut all_envs = self.resolve_all(path.clone(), reg);
-        let envs = all_envs.remove(&self.proj_wfd_hash).unwrap_or_default().to_vec();
+        let all_envs = self.resolve_all(path.clone(), reg);
+        let envs = all_envs.clone_envs_by_hash(&self.proj_wfd_hash);
         (envs, (&self.profiler).into())
     }
 
@@ -97,7 +98,7 @@ where
         path: Path<Lbl>,
         reg: RegexState<'a, Lbl>,
     ) -> ProjEnvs<Lbl, Data> {
-        debugonly_trace!("Resolving path: {}", path);
+        debug_tracing!(trace, "Resolving path: {}", path);
         self.get_env(path, reg)
     }
 
@@ -105,10 +106,10 @@ where
         // all edges where brzozowski derivative != 0
         self.profiler.inc_nodes_visited();
 
-        debugonly_debug!("Checking cache for path {}", path);
+        debug_tracing!(debug, "Checking cache for path {}", path);
         let cached_env = self.get_cached_env(&path, &reg);
-        if !cached_env.is_empty() {
-            debugonly_debug!("Cache hit for {}", path);
+        if let Some(cached_env) = cached_env {
+            debug_tracing!(debug, "Cache hit for {}", path);
             self.profiler.inc_cache_hits();
             return cached_env;
         }
@@ -120,15 +121,19 @@ where
             .iter()
             .map(|e| e.lbl())
             // get unique labels by using hashset
-            .fold(HashSet::new(), |mut set, lbl| {
+            .fold(Vec::new(), |mut set, lbl| {
                 let mut this_reg = reg.clone();
                 if this_reg.step(lbl).is_some() {
-                    set.insert(LabelOrEnd::Label((lbl.clone(), this_reg)));
+                    let lbl = LabelOrEnd::Label((lbl.clone(), this_reg));
+                    if !set.contains(&lbl) {
+                        // set.insert(LabelOrEnd::Label((lbl.clone(), this_reg)));
+                        set.push(lbl);
+                    }
                 }
                 set
-            })
-            .into_iter()
-            .collect::<Vec<_>>();
+            });
+            // .into_iter()
+            // .collect::<Vec<_>>();
 
         if reg.is_accepting() {
             labels.push(LabelOrEnd::End);
@@ -139,7 +144,7 @@ where
             // don't cache in scope where data lives
             self.cache_env(&path, &reg, envs.clone());
         }
-        // self.get_cached_env(&path, &reg, true)
+        // self.get_cached_env(&path, &reg).unwrap_or_default()
         envs
         // envs
     }
@@ -152,13 +157,13 @@ where
         if labels.is_empty() {
             return ProjEnvs::default();
         }
-        debugonly_trace!("Resolving labels: {} for {}", DisplayVec(labels), path);
+        debug_tracing!(trace, "Resolving labels: {} for {}", DisplayVec(labels), path);
         labels
             .iter()
             .filter(|l1| !labels.iter().any(|l2| self.lbl_order.is_less(l1, l2)))
             // 'max' labels ie all labels with lowest priority
             // max refers to the numerical worth, ie a < b, b would be max
-            .map(|max_lbl| {
+            .flat_map(|max_lbl| {
                 // all labels that are lower priority than `lbl`
                 let lower_labels = labels
                     .iter()
@@ -166,19 +171,10 @@ where
                     .cloned()
                     .collect::<SmallVec<[_; 8]>>();
 
-                debugonly_trace!("Resolving envs {} < {}", max_lbl, DisplayVec(&lower_labels));
+                debug_tracing!(trace, "Resolving envs {} < {}", max_lbl, DisplayVec(&lower_labels));
                 self.get_shadowed_env(max_lbl, &lower_labels, path.clone())
             })
-            // .flatten()
-            // .collect()
-            .fold(ProjEnvs::default(), |mut all_envs, envs| {
-                // merge all envs from different labels into one
-                for (proj, mut new_envs) in envs {
-                    let e = all_envs.entry(proj).or_insert(Vec::with_capacity(new_envs.len()));
-                    e.append(&mut new_envs);
-                }
-                all_envs
-            })
+            .collect()
     }
 
     fn get_shadowed_env<'a>(
@@ -202,11 +198,10 @@ where
             LabelOrEnd::End => {
                 let data = &self.get_scope(path.target()).unwrap().data;
                 let hash = hash(&self.data_proj(data));
-                let env = vec![QueryResult {
+                ProjEnvs::new_with_env(hash, QueryResult {
                     path: ReversePath::start(path.target()),
                     data: data.clone(),
-                }];
-                ProjEnvs::from([(hash, env)])
+                })
             },
             // not yet at end
             LabelOrEnd::Label((label, partial_reg)) => {
@@ -232,27 +227,12 @@ where
                         self.profiler.inc_edges_traversed();
                         self.resolve_all(p, partial_reg.clone())
                     }) // resolve new paths
-                    .fold(ProjEnvs::default(), |mut acc, (p, mut envs)| {
-                        // path is a path from the starting scope to the current one.
-                        // in the cache, we want to store the path from the _data_ to the current scope.
-                        // hence, every step we add the traversed label to the query result.
-                        for qr in &mut envs {
-                            qr.path = qr
-                            .path
-                            .step(
-                                label.clone(),
-                                path.target(),
-                                partial_reg.index()
-                            );
-                        }
-
-                        envs.retain(|qr| !qr.path.is_circular());
-
-                        // we have to fold here, since there can be multiple entries for each projection (`p`)
-                        let e = acc.entry(p).or_default();
-                        e.append(&mut envs);
-                        acc
+                    // .filter(|(_, qr)| !qr.path.is_circular())
+                    .map(|(p, mut qr)| {
+                        qr.path = qr.path.step(label.clone(), path.target(), partial_reg.index());
+                        (p, qr)
                     })
+                    .collect()
             }
         }
     }
@@ -264,13 +244,15 @@ where
         envs2: ProjEnvs<Lbl, Data>,
     ) -> ProjEnvs<Lbl, Data> {
         // debugonly_trace!("Shadowing {} < {}", DisplayMap(&envs1), DisplayMap(&envs2));
-        for (proj, e2) in envs2 {
-            // env1 shadows env2 always, so if env1 has a P, we know a2 is shadowed
-            if !envs1.contains_key(&proj) {
-                // we checked whether envs1 contains proj
-                unsafe { envs1.insert_unique_unchecked(proj, e2); }
-            }
-        }
+        // for (proj, e2) in envs2 {
+        //     // env1 shadows env2 always, so if env1 has a P, we know a2 is shadowed
+        //     if !envs1.contains_key(&proj) {
+        //         // we checked whether envs1 contains proj
+        //         // unsafe { envs1.insert_unique_unchecked(proj, e2); }
+        //         envs1.insert(proj, e2);
+        //     }
+        // }
+        envs1.shadow(envs2);
         envs1
     }
 
@@ -288,29 +270,14 @@ where
             return;
         }
 
-        debugonly_debug!("Caching envs...");
+        debug_tracing!(debug, "Caching envs {env_map} for path {path}");
         self.profiler.inc_cache_writes();
         self.cache.insert(reg, path, env_map);
-        // for (proj, envs) in env_map {
-        //     // debugonly_trace!(
-        //     //     "Cache env for path {}: {} envs",
-        //     //     path.target(),
-        //     //     DisplayVec(envs)
-        //     // );
-        //     let key = (reg.index(), path.target());
-        //     // this is the entry for the path
-        //     // its a map of proj -> [envs]
-        //     let path_envs = self.cache.get_mut(key);
-        //     // this replaces any existing cache
-        //     // but we will only ever have one entry for the given key (I assume)
-        //     self.profiler.inc_cache_writes();
-        //     path_envs.insert(*proj, envs.clone());
-        // }
     }
 
-    fn get_cached_env(&self, path: &Path<Lbl>, reg: &RegexState<'r, Lbl>) -> ProjEnvs<Lbl, Data> {
+    fn get_cached_env(&self, path: &Path<Lbl>, reg: &RegexState<'r, Lbl>) -> Option<ProjEnvs<Lbl, Data>> {
         if !ENABLE_CACHING {
-            return ProjEnvs::default();
+            return None;
         }
         self.profiler.inc_cache_reads();
         self.cache.get_envs(reg, path)

@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use deepsize::DeepSizeOf;
 
 use crate::{
-    data::ScopeGraphData, debugonly_trace, graph::{resolve::{QueryStats, Resolver}, Edge, ScopeData, ScopeMap}, label::ScopeGraphLabel, order::LabelOrder, path::Path, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackgroundColor, ColorSet, ForeGroundColor
+    data::ScopeGraphData, debug_tracing, graph::{resolve::{QueryStats, Resolver}, Edge, ScopeData, ScopeMap}, label::ScopeGraphLabel, order::LabelOrder, path::Path, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackgroundColor, ColorSet, ForeGroundColor
 };
 
 use super::{ScopeGraph, resolve::QueryResult};
@@ -154,7 +154,7 @@ where
     }
 
     fn add_scope(&mut self, scope: Scope, data: Data) -> Scope {
-        debugonly_trace!("Adding scope: {} with data: {}", scope, data);
+        debug_tracing!(trace, "Adding scope: {} with data: {}", scope, data);
         self.scopes.insert(scope, ScopeData::new(data));
         scope
     }

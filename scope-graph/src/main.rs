@@ -1,6 +1,5 @@
 use std::{
-    io::{Write, stdin},
-    sync::Arc,
+    hint::black_box, io::{stdin, Write}, sync::Arc
 };
 
 use graphing::{plantuml::{theme::{ElementCss, FontFamily, FontStyle, HorizontalAlignment, LineStyle, PlantUmlStyleSheet}, EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem, PlantUmlItemKind}, Color, Renderer};
@@ -76,7 +75,7 @@ fn query_test(graph: &mut UsedScopeGraph) {
     matcher.to_mmd().render_to_file("output/regex.md").unwrap();
 
     let x_match: Arc<str> = Arc::from("x");
-    let query_scope_set = [(x_match.clone(), vec![800]), (x_match.clone(), vec![8])];
+    let query_scope_set = [(x_match.clone(), vec![850]), (x_match.clone(), vec![900])];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
         let title = format!(
@@ -125,7 +124,7 @@ fn query_test(graph: &mut UsedScopeGraph) {
         // let fname = format!("output/output{}.md", idx);
         // mmd_diagram.render_to_file(&fname).unwrap();
         let fname = format!("output/output{}.puml", idx);
-        uml_diagram.render_to_file(&fname).unwrap();
+        // uml_diagram.render_to_file(&fname).unwrap();
     }
 }
 
@@ -215,6 +214,8 @@ fn aron_example() {
         SgProjection::VarName,
         wfd.clone(),
     );
+    
+    println!("env: {0:?}", env);
 
     let mut style_sheet: PlantUmlStyleSheet = [
             ElementCss::new()
@@ -327,16 +328,14 @@ fn aron_example() {
 
 fn main() {
     tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::WARN)
+        .with_max_level(tracing::Level::TRACE)
         .init();
     aron_example();
     Scope::reset_counter();
-    // return;
 
     diamond_example();
     Scope::reset_counter();
 
-    // let mut graph = graph_builder();
     let mut graph = graph_builder();
     query_test(&mut graph);
 

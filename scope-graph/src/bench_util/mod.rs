@@ -120,6 +120,7 @@ where
 {
     let mut thread_rng = rand::rng();
     let mut envs = Vec::new();
+    graph.reset_cache();
     for _ in 0..num_queries {
         let start_scope = Scope(thread_rng.random_range(start_scope_range.clone()));
 
@@ -130,6 +131,5 @@ where
 
         envs = graph.query_proj(start_scope, reg, order, SgProjection::VarName, m_wfd);
     }
-    graph.reset_cache(); // make next benchmark run from scratch
     envs
 }

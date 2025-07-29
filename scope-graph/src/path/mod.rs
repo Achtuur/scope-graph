@@ -1,6 +1,6 @@
 mod segment;
 
-use std::{collections::HashSet, rc::Rc};
+use std::{cell::{OnceCell, RefCell}, collections::HashSet, rc::Rc, sync::{LazyLock, Mutex, OnceLock}};
 
 use deepsize::DeepSizeOf;
 use graphing::{
@@ -8,7 +8,7 @@ use graphing::{
     plantuml::{EdgeDirection, PlantUmlItem},
 };
 
-use crate::{label::ScopeGraphLabel, path::segment::PathSegment, scope::Scope, DO_CIRCLE_CHECK};
+use crate::{label::ScopeGraphLabel, path::segment::PathSegment, scope::Scope, util::ContainsContainer, DO_CIRCLE_CHECK};
 
 /// Path enum "starts" at the target scope, ie its in reverse order
 ///
@@ -97,21 +97,18 @@ where
             return false;
         }
 
-        let mut visited = hashbrown::HashSet::new();
-        let mut s_scopes = self.iter().map(|s| s.target());
-        let mut o_scopes = other.iter().map(|o| o.target());
-        loop {
-            let (s, o) = (s_scopes.next(), o_scopes.next());
-            if s.is_none() && o.is_none() {
-                break;
-            }
-            if !visited.insert(s) {
-                return true;
-            }
-            if !visited.insert(o) {
+        let mut visited = ContainsContainer::<_, 16>::new();
+
+        for s in self.iter() {
+            visited.insert(s.target_ref());
+        }
+
+        for o in other.iter() {
+            if visited.contains(o.target_ref()) {
                 return true;
             }
         }
+
         false
     }
 
@@ -149,21 +146,26 @@ where
     }
 
     pub fn is_circular(&self) -> bool {
+        // todo: pass hashset as argument maybe?
+        static SET: OnceLock<Mutex<hashbrown::HashSet<(Scope, usize)>>> = OnceLock::new();
         let mut current = self;
-        let mut visited = hashbrown::HashSet::new();
+        let mut set = SET.get_or_init(|| Mutex::new(hashbrown::HashSet::new())).lock().unwrap();
+        set.clear();
         let mut prev_index = 0;
         loop {
             match current {
-                Self::Start(s) => return !visited.insert((s, 0)),
+                Self::Start(s) => return set.contains(&(*s, 0)),
                 Self::Step {
                     target,
                     from,
                     automaton_idx,
                     ..
                 } => {
-                    if !visited.insert((target, prev_index)) {
+                    if set.contains(&(*target, prev_index)) {
                         return true;
                     }
+                    // unsafe { set.insert_unique_unchecked((*target, prev_index)); }
+                    set.insert((*target, prev_index));
                     current = from;
                     prev_index = *automaton_idx;
                 }
@@ -228,8 +230,9 @@ where
 
     /// Identical to using `std::fmt::Display`
     pub fn display(&self) -> String {
+        return String::new();
         match self {
-            Self::Start(s) => format!("{}", s),
+            Self::Start(s) => format!("{s}"),
             Self::Step {
                 from,
                 label,
@@ -244,7 +247,7 @@ where
 
     pub fn display_with_mem_addr(&self) -> String {
         match self {
-            Self::Start(s) => format!("{}", s),
+            Self::Start(s) => format!("{s}"),
             Self::Step {
                 from,
                 label,
