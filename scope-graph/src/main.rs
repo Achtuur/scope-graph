@@ -30,23 +30,24 @@ fn graph_builder() -> UsedScopeGraph {
     let patterns = [
         GraphPattern::Linear(1),
         GraphPattern::Decl(SgData::var("x", "int")),
-        GraphPattern::Decl(SgData::var("x1", "int")),
-        GraphPattern::Decl(SgData::var("x2", "int")),
-        GraphPattern::Decl(SgData::var("x3", "int")),
-        GraphPattern::Decl(SgData::var("x4", "int")),
-        GraphPattern::Decl(SgData::var("x5", "int")),
-        GraphPattern::Decl(SgData::var("x6", "int")),
-        GraphPattern::Decl(SgData::var("x7", "int")),
-        GraphPattern::Decl(SgData::var("x8", "int")),
-        GraphPattern::Decl(SgData::var("x9", "int")),
-        GraphPattern::Decl(SgData::var("x10", "int")),
-        GraphPattern::Decl(SgData::var("x11", "int")),
-        GraphPattern::Decl(SgData::var("x12", "int")),
+        // GraphPattern::Decl(SgData::var("x1", "int")),
+        // GraphPattern::Decl(SgData::var("x2", "int")),
+        // GraphPattern::Decl(SgData::var("x3", "int")),
+        // GraphPattern::Decl(SgData::var("x4", "int")),
+        // GraphPattern::Decl(SgData::var("x5", "int")),
+        // GraphPattern::Decl(SgData::var("x6", "int")),
+        // GraphPattern::Decl(SgData::var("x7", "int")),
+        // GraphPattern::Decl(SgData::var("x8", "int")),
+        // GraphPattern::Decl(SgData::var("x9", "int")),
+        // GraphPattern::Decl(SgData::var("x10", "int")),
+        // GraphPattern::Decl(SgData::var("x11", "int")),
+        // GraphPattern::Decl(SgData::var("x12", "int")),
         GraphPattern::Linear(3),
         GraphPattern::Decl(SgData::var("y", "int")),
+        // GraphPattern::Diamond(16, 1),
         GraphPattern::Tree(2),
-        GraphPattern::Join,
-        GraphPattern::Linear(1000),
+        // GraphPattern::Join,
+        GraphPattern::Linear(5),
     ];
     let graph = GraphGenerator::new(graph).with_patterns(patterns).build();
     graph
@@ -75,7 +76,7 @@ fn query_test(graph: &mut UsedScopeGraph) {
     matcher.to_mmd().render_to_file("output/regex.md").unwrap();
 
     let x_match: Arc<str> = Arc::from("x");
-    let query_scope_set = [(x_match.clone(), vec![850]), (x_match.clone(), vec![900])];
+    let query_scope_set = [(x_match.clone(), vec![16]), (x_match.clone(), vec![11])];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
         let title = format!(
@@ -120,11 +121,8 @@ fn query_test(graph: &mut UsedScopeGraph) {
         let mut uml_diagram = graph.as_uml_diagram(&title, &options);
         // uml_diagram.extend(cache_uml);
         uml_diagram.extend(res_uml);
-
-        // let fname = format!("output/output{}.md", idx);
-        // mmd_diagram.render_to_file(&fname).unwrap();
         let fname = format!("output/output{}.puml", idx);
-        // uml_diagram.render_to_file(&fname).unwrap();
+        uml_diagram.render_to_file(&fname).unwrap();
     }
 }
 
@@ -151,10 +149,12 @@ fn diamond_example() {
     let s1 = graph.add_scope_default();
     let s2 = graph.add_scope_default();
     let s3 = graph.add_scope_default();
+    let s4 = graph.add_scope_default();
     graph.add_edge(s1, s0, SgLabel::Parent);
     graph.add_edge(s2, s0, SgLabel::Parent);
     graph.add_edge(s3, s1, SgLabel::Parent);
     graph.add_edge(s3, s2, SgLabel::Parent);
+    graph.add_edge(s4, s3, SgLabel::Parent);
     let sd0 = graph.add_decl(s0, SgLabel::Declaration, SgData::var("x", "int"));
 
     
@@ -182,6 +182,21 @@ fn diamond_example() {
         draw_caches: true,
         ..Default::default()
     }).render_to_file("output/diamond1.puml").unwrap();
+
+    let timer = std::time::Instant::now();
+    let env = graph.query_proj(
+        s4,
+        &reg,
+        &label_order,
+        SgProjection::VarName,
+        wfd.clone(),
+    );
+    println!("diamond q2 {:?}", timer.elapsed());
+
+    graph.as_uml_diagram("diamond example", &GraphRenderOptions {
+        draw_caches: true,
+        ..Default::default()
+    }).render_to_file("output/diamond2.puml").unwrap();
 }
 
 fn aron_example() {
@@ -338,16 +353,6 @@ fn main() {
 
     let mut graph = graph_builder();
     query_test(&mut graph);
-
-    if SAVE_GRAPH {
-        println!("Type s or save to save the graph...");
-        let mut input = String::new();
-        stdin().read_line(&mut input).unwrap();
-        if input.trim() == "s" || input.trim() == "save" {
-            save_graph(&graph, "output/graph.json");
-            println!("saved!");
-        }
-    }
 }
 
 fn save_graph(graph: &UsedScopeGraph, fname: &str) {

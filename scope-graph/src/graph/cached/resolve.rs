@@ -1,5 +1,5 @@
 use std::{
-    hash::{DefaultHasher, Hash, Hasher}, time::Instant,
+    hash::{DefaultHasher, Hash, Hasher}, rc::Rc, time::Instant
 };
 
 use hashbrown::hash_set::HashSet;
@@ -8,7 +8,7 @@ use smallvec::SmallVec;
 use crate::{
     data::ScopeGraphData, debug_tracing, graph::{
         resolve::{QueryProfiler, QueryStats}, ScopeMap
-    }, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, projection::ScopeGraphDataProjection, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, util::DisplayVec, ENABLE_CACHING
+    }, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, projection::ScopeGraphDataProjection, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, util::DisplayVec, DO_CIRCLE_CHECK
 };
 
 use super::{ProjEnvs, QueryCache, QueryResult, ScopeData};
@@ -45,6 +45,7 @@ where
     proj_wfd: Proj::Output,
     proj_wfd_hash: u64,
     pub profiler: QueryProfiler,
+    caching_enabled: bool,
 }
 
 impl<'r, Lbl, Data, Proj> CachedResolver<'r, Lbl, Data, Proj>
@@ -60,6 +61,7 @@ where
         lbl_order: &'r LabelOrder<Lbl>,
         data_proj: Proj,
         proj_wfd: Proj::Output,
+        caching_enabled: bool,
     ) -> CachedResolver<'r, Lbl, Data, Proj> {
         Self {
             scope_graph,
@@ -70,6 +72,7 @@ where
             proj_wfd_hash: hash(&proj_wfd),
             proj_wfd,
             profiler: QueryProfiler::new(),
+            caching_enabled,
         }
     }
 
@@ -94,7 +97,7 @@ where
 
     /// recursive call site for resolving
     fn resolve_all<'a: 'r>(
-        &mut self,
+        &self,
         path: Path<Lbl>,
         reg: RegexState<'a, Lbl>,
     ) -> ProjEnvs<Lbl, Data> {
@@ -102,7 +105,7 @@ where
         self.get_env(path, reg)
     }
 
-    fn get_env(&mut self, path: Path<Lbl>, reg: RegexState<'r, Lbl>) -> ProjEnvs<Lbl, Data> {
+    fn get_env(&self, path: Path<Lbl>, reg: RegexState<'r, Lbl>) -> ProjEnvs<Lbl, Data> {
         // all edges where brzozowski derivative != 0
         self.profiler.inc_nodes_visited();
 
@@ -112,8 +115,10 @@ where
             debug_tracing!(debug, "Cache hit for {}", path);
             self.profiler.inc_cache_hits();
             return cached_env;
+        } else {
+            // invalid cache entry: clear it
+            self.cache.clear_envs(&reg, &path);
         }
-        self.cache.clear_envs(&reg, &path);
 
         let scope = self.get_scope(path.target()).expect("Scope not found");
         let mut labels = scope
@@ -126,20 +131,17 @@ where
                 if this_reg.step(lbl).is_some() {
                     let lbl = LabelOrEnd::Label((lbl.clone(), this_reg));
                     if !set.contains(&lbl) {
-                        // set.insert(LabelOrEnd::Label((lbl.clone(), this_reg)));
                         set.push(lbl);
                     }
                 }
                 set
             });
-            // .into_iter()
-            // .collect::<Vec<_>>();
 
         if reg.is_accepting() {
             labels.push(LabelOrEnd::End);
         }
 
-        let envs = self.get_env_for_labels(&labels, path.clone());
+        let envs = self.get_env_for_labels(&labels, &path);
         if !reg.is_accepting() {
             // don't cache in scope where data lives
             self.cache_env(&path, &reg, envs.clone());
@@ -150,9 +152,9 @@ where
     }
 
     fn get_env_for_labels<'a>(
-        &mut self,
+        &self,
         labels: &'a [LabelOrEnd<'r, Lbl>],
-        path: Path<Lbl>,
+        path: &Path<Lbl>,
     ) -> ProjEnvs<Lbl, Data> {
         if labels.is_empty() {
             return ProjEnvs::default();
@@ -169,89 +171,80 @@ where
                     .iter()
                     .filter(|l| self.lbl_order.is_less(l, max_lbl))
                     .cloned()
-                    .collect::<SmallVec<[_; 8]>>();
+                    .collect::<Vec<_>>();
 
                 debug_tracing!(trace, "Resolving envs {} < {}", max_lbl, DisplayVec(&lower_labels));
-                self.get_shadowed_env(max_lbl, &lower_labels, path.clone())
+                self.get_shadowed_env(max_lbl, &lower_labels, path)
             })
             .collect()
     }
 
     fn get_shadowed_env<'a>(
-        &mut self,
+        &self,
         max_lbl: &'a LabelOrEnd<'r, Lbl>,
         lower_lbls: &'a [LabelOrEnd<'r, Lbl>],
-        path: Path<Lbl>,
+        path: &'a Path<Lbl>,
     ) -> ProjEnvs<Lbl, Data> {
-        let lower_paths = self.get_env_for_labels(lower_lbls, path.clone());
+        let lower_paths = self.get_env_for_labels(lower_lbls, path);
         let max_path = self.get_env_for_label(max_lbl, path);
         self.shadow(lower_paths, max_path)
     }
 
     fn get_env_for_label<'a>(
-        &mut self,
+        &self,
         label: &'a LabelOrEnd<'r, Lbl>,
-        path: Path<Lbl>,
+        path: &'a Path<Lbl>,
     ) -> ProjEnvs<Lbl, Data> {
         match label {
             // reached end of a path
             LabelOrEnd::End => {
                 let data = &self.get_scope(path.target()).unwrap().data;
                 let hash = hash(&self.data_proj(data));
-                ProjEnvs::new_with_env(hash, QueryResult {
-                    path: ReversePath::start(path.target()),
-                    data: data.clone(),
-                })
+                ProjEnvs::new_with_env(hash, QueryResult::start(path.target(), data.clone()))
             },
             // not yet at end
             LabelOrEnd::Label((label, partial_reg)) => {
-                let paths = self
+                self
                 .get_scope(path.target())
                 .unwrap()
                 .outgoing()
                 .iter()
-                .filter_map(|e| {
-                    if e.lbl() != label {
-                        return None;
-                    }
-                    let p = path.step(e.lbl().clone(), e.target(), partial_reg.prev_index());
-                    if p.is_circular() {
-                        return None;
-                    }
-                    Some(p)
+                .filter(|e| e.lbl() == label)
+                .map(|e| {
+                    path.clone()
+                        .step(e.lbl().clone(), e.target(), partial_reg.index())
                 })
-                .collect::<Vec<_>>(); // prevent cloning scope data every time, instead only do a (cheap) clone of the path
-                paths
-                    .into_iter()
-                    .flat_map(|p| {
-                        self.profiler.inc_edges_traversed();
-                        self.resolve_all(p, partial_reg.clone())
-                    }) // resolve new paths
-                    // .filter(|(_, qr)| !qr.path.is_circular())
-                    .map(|(p, mut qr)| {
-                        qr.path = qr.path.step(label.clone(), path.target(), partial_reg.index());
-                        (p, qr)
-                    })
-                    .collect()
+                .filter(|p| !p.is_circular())
+                .flat_map(|p| {
+                    self.profiler.inc_edges_traversed();
+                    self.resolve_all(p, partial_reg.clone())
+                }) // resolve new paths
+                .filter(|(_, qr)| {
+                    // this is only required when reading from a cache
+                    if !DO_CIRCLE_CHECK || !self.caching_enabled {
+                        return true;
+                    }
+                    let timer = std::time::Instant::now();
+                    let b = !qr.path.is_circular();
+                    self.profiler.inc_circ_check_timer(timer.elapsed());
+                    b
+                })
+                .map(|(p, qr)| {
+                    (p, qr.step(label.clone(), path.target(), partial_reg.index()))
+                })
+                .fold(ProjEnvs::new(), |mut acc, (p, qr)| {
+                    acc.push(p, qr);
+                    acc
+                })
             }
         }
     }
 
-    #[allow(clippy::map_entry)] // makes code more reabable imo
     fn shadow(
         &self,
         mut envs1: ProjEnvs<Lbl, Data>,
         envs2: ProjEnvs<Lbl, Data>,
     ) -> ProjEnvs<Lbl, Data> {
-        // debugonly_trace!("Shadowing {} < {}", DisplayMap(&envs1), DisplayMap(&envs2));
-        // for (proj, e2) in envs2 {
-        //     // env1 shadows env2 always, so if env1 has a P, we know a2 is shadowed
-        //     if !envs1.contains_key(&proj) {
-        //         // we checked whether envs1 contains proj
-        //         // unsafe { envs1.insert_unique_unchecked(proj, e2); }
-        //         envs1.insert(proj, e2);
-        //     }
-        // }
         envs1.shadow(envs2);
         envs1
     }
@@ -261,25 +254,29 @@ where
     }
 
     fn cache_env(
-        &mut self,
+        &self,
         path: &Path<Lbl>,
         reg: &RegexState<'_, Lbl>,
         env_map: ProjEnvs<Lbl, Data>,
     ) {
-        if !ENABLE_CACHING {
+        if !self.caching_enabled {
             return;
         }
-
-        debug_tracing!(debug, "Caching envs {env_map} for path {path}");
+        // debug_tracing!(debug, "Caching envs {env_map} for path {path}");
         self.profiler.inc_cache_writes();
+        let timer = Instant::now();
         self.cache.insert(reg, path, env_map);
+        self.profiler.inc_cache_store_timer(timer.elapsed());
     }
 
     fn get_cached_env(&self, path: &Path<Lbl>, reg: &RegexState<'r, Lbl>) -> Option<ProjEnvs<Lbl, Data>> {
-        if !ENABLE_CACHING {
+        if !self.caching_enabled {
             return None;
         }
         self.profiler.inc_cache_reads();
-        self.cache.get_envs(reg, path)
+        let timer = std::time::Instant::now();
+        let e = self.cache.get_envs(reg, path, &self.profiler);
+        self.profiler.inc_cache_read_timer(timer.elapsed());
+        e
     }
 }

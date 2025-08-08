@@ -38,6 +38,9 @@ pub enum GraphPattern {
     Circle(usize),
 }
 
+unsafe impl Send for GraphPattern {}
+unsafe impl Sync for GraphPattern {}
+
 impl std::fmt::Display for GraphPattern {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

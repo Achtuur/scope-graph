@@ -29,7 +29,7 @@ impl<'a, Lbl: ScopeGraphLabel> PathSegment<'a, Lbl> {
     fn new(path: &'a Path<Lbl>) -> Self {
         match path {
             Path::Start(s) => Self::Start(s),
-            Path::Step {automaton_idx, label, target, from, len} => {
+            Path::Step {automaton_idx, label, target, from, len, ..} => {
                 Self::Step {
                     automaton_idx,
                     label,

@@ -99,6 +99,7 @@ where
         order: &LabelOrder<Lbl>,
         data_proj: Proj,
         proj_wfd: Proj::Output,
+        caching_enabled: bool,
     ) -> (Vec<QueryResult<Lbl, Data>>, QueryStats)
     where
         Proj: ScopeGraphDataProjection<Data>,
@@ -114,15 +115,9 @@ where
             order,
             data_proj,
             proj_wfd,
+            caching_enabled,
         );
         let (envs, mut stats) = resolver.resolve(Path::start(scope));
-        tracing::info!("{:?}", resolver.profiler);
-        tracing::info!(
-            "Resolved query: {}, {}, {}, found:",
-            scope,
-            path_regex,
-            order,
-        );
 
         // let std_cache: StdCache<Lbl, Data> = self.resolve_cache
         // .iter()
@@ -137,9 +132,9 @@ where
 
         // stats.cache_size_estimate = std_cache.deep_size_of() as f32 / self.scopes.deep_size_of() as f32;
 
-        for qr in &envs {
-            tracing::info!("\t{}", qr);
-        }
+        // for qr in &envs {
+        //     tracing::info!("\t{}", qr);
+        // }
         (envs, stats)
     }
 }
@@ -249,6 +244,7 @@ where
             order,
             data_proj,
             proj_wfd,
+            true,
         );
         let envs = resolver.resolve(Path::start(scope)).0;
         tracing::info!("{:?}", resolver.profiler);

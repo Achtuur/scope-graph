@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, iter::Flatten, ops::{Range, RangeInclusive}, sync::{Arc, Mutex}};
+use std::{cell::RefCell, collections::HashMap, iter::Flatten, ops::{Range, RangeInclusive}, sync::{Arc, Mutex}, thread::JoinHandle};
 
 use graphing::Renderer;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
@@ -6,14 +6,15 @@ use rand::{rngs::{SmallRng, ThreadRng}, Rng, SeedableRng};
 use crate::{bench_util::{construct_cached_graph, Graph, HEAD_RANGE}, generator::GraphPattern, graph::{CachedScopeGraph, GraphRenderOptions, QueryResult, QueryStats, ScopeGraph}, order::{LabelOrder, LabelOrderBuilder}, regex::{dfs::RegexAutomaton, Regex}, scope::Scope, SgData, SgLabel, SgProjection};
 use serde::Serialize;
 
-const QUERY_SIZES: &[usize] = &[1, 2, 5];
+const QUERY_SIZES: &[usize] = &[1, 5, 10];
 const NUM_SUBJECTS: usize = 100;
-const NUM_RUNS: usize = 10;
-const NUM_WARMUP: usize = 5;
+const NUM_RUNS: usize = 5;
+const NUM_WARMUP: usize = 3;
 
-const NUM_DATA: std::ops::RangeInclusive<usize> = 0..=20;
-const TAIL_LENGTH: std::ops::RangeInclusive<usize> = 10..=20;
-const TAIL_TREE_CHILDS: std::ops::RangeInclusive<usize> = 5..=10;
+// unique number of data names before shadowing applies
+const NUM_DATA: usize = 20;
+const TAIL_LENGTH: std::ops::RangeInclusive<usize> = 10..=15;
+const TAIL_TREE_CHILDS: std::ops::RangeInclusive<usize> = 6..=12;
 
 
 #[derive(Serialize, Debug, Clone)]
@@ -41,6 +42,8 @@ pub struct HeadGenerator {
     kind: HeadKind,
 }
 
+unsafe impl Send for HeadGenerator {}
+
 impl HeadGenerator {
     pub fn linear(length: usize) -> Self {
         Self { kind: HeadKind::Linear(length) }
@@ -60,16 +63,16 @@ impl HeadGenerator {
     pub fn pattern(&self) -> Vec<GraphPattern> {
         match self.kind {
             HeadKind::Linear(len) => {
-                vec![GraphPattern::LinearDeclLabel(len, SgLabel::Extend)]
+                vec![GraphPattern::LinearDeclLabel(len, SgLabel::Parent)]
             }
             HeadKind::FanChain { length, num_decl } => {
                 let mut v = Vec::new();
                 let mut cntr = 0;
                 for _ in 0..length {
-                    v.push(GraphPattern::Linear(1));
+                    v.push(GraphPattern::LinearLabel(1, SgLabel::Extend));
                     for _ in 0..num_decl {
                         let x = format!("x_{cntr}");
-                        cntr = (cntr + 1) % NUM_DATA.end();
+                        cntr = (cntr + 1) % NUM_DATA;
                         v.push(GraphPattern::Decl(SgData::var(x, "int")));
                     }
                 }
@@ -87,42 +90,32 @@ impl HeadGenerator {
 
     pub fn order(&self) -> LabelOrder<SgLabel> {
         match self.kind {
-            // HeadKind::Linear(_) => LabelOrderBuilder::new()
-            //     .push(SgLabel::Declaration, SgLabel::Parent)
-            //     .build(),
-            // HeadKind::FanChain { .. } => LabelOrderBuilder::new()
-            //     .push(SgLabel::Declaration, SgLabel::Parent)
-            //     .push(SgLabel::Extend, SgLabel::Parent)
-                // .build(),
-            _ => LabelOrderBuilder::new()
+            HeadKind::Linear(_) => LabelOrderBuilder::new()
                 .push(SgLabel::Declaration, SgLabel::Parent)
-                .push(SgLabel::Declaration, SgLabel::Extend)
-                .push(SgLabel::Declaration, SgLabel::Implement)
-                .push(SgLabel::Extend, SgLabel::Parent)
-                .push(SgLabel::Implement, SgLabel::Parent)
                 .build(),
+            HeadKind::FanChain { .. } => LabelOrderBuilder::new()
+                .push(SgLabel::Declaration, SgLabel::Parent)
+                .push(SgLabel::Extend, SgLabel::Parent)
+                .build(),
+            // _ => LabelOrderBuilder::new()
+            //     .push(SgLabel::Declaration, SgLabel::Parent)
+            //     .push(SgLabel::Declaration, SgLabel::Extend)
+            //     .push(SgLabel::Declaration, SgLabel::Implement)
+            //     .push(SgLabel::Extend, SgLabel::Parent)
+            //     .push(SgLabel::Implement, SgLabel::Parent)
+            //     .build(),
         }
     }
 
     pub fn reg(&self) -> Regex<SgLabel> {
         match self.kind {
-            // // P*D
-            // HeadKind::Linear(_) => Regex::concat(
-            //     Regex::kleene(SgLabel::Parent),
-            //     SgLabel::Declaration,
-            // ),
+            // P*D
+            HeadKind::Linear(_) => Regex::concat(
+                Regex::kleene(SgLabel::Parent),
+                SgLabel::Declaration,
+            ),
             // P*E*D
-            // HeadKind::FanChain { .. } => Regex::concat(
-            //     Regex::concat_iter([
-            //         Regex::kleene(SgLabel::Parent),
-            //         Regex::kleene(SgLabel::Extend),
-            //     ]),
-            //     SgLabel::Declaration,
-            // ),
-
-            // complex thing from .stx
-            // boils down to P*E*I*D
-            _ => Regex::concat(
+            HeadKind::FanChain { .. } => Regex::concat(
                 Regex::concat_iter([
                     Regex::kleene(SgLabel::Parent),
                     Regex::kleene(SgLabel::Extend),
@@ -130,6 +123,17 @@ impl HeadGenerator {
                 ]),
                 SgLabel::Declaration,
             ),
+
+            // // complex thing from .stx
+            // // boils down to P*E*I*D
+            // _ => Regex::concat(
+            //     Regex::concat_iter([
+            //         Regex::kleene(SgLabel::Parent),
+            //         Regex::kleene(SgLabel::Extend),
+            //         Regex::kleene(SgLabel::Implement),
+            //     ]),
+            //     SgLabel::Declaration,
+            // ),
         }
     }
 }
@@ -160,10 +164,11 @@ impl TailIndex {
         let branch = branch % self.branches;
         let start = self.range.start + branch * self.tail_size;
         let end = (start + self.tail_size).min(self.range.end);
-        if start >= end {
-            panic!("Invalid range: start {start} >= end {end}");
-        }
-        rng.random_range(start..end)
+        (end - 1)
+        // if start >= end {
+        //     panic!("Invalid range: start {start} >= end {end}");
+        // }
+        // rng.random_range(start..end)
     }
 }
 
@@ -192,7 +197,7 @@ impl<Args> PatternGenerator<Args>
         (self.generator)(arg)
     }
 
-    pub fn pattern_iter(&self) -> impl IntoIterator<Item = GraphPattern> + '_ {
+    pub fn pattern_iter(&self) -> impl Iterator<Item = GraphPattern> + '_ {
         self.args.iter().map(|arg| (self.generator)(arg))
     }
 }
@@ -263,27 +268,16 @@ impl<'a, Args: std::fmt::Debug + Send + Sync> PatternBencher<'a, Args> {
         multi.println(format!("Benchmarking {}", self.name)).unwrap();
 
         let mut results = BenchmarkMap::default();
-        let mut handles = Vec::new();
         let name: Arc<str> = Arc::from(self.name);
+
         for head in heads {
             for pattern in self.generator.pattern_iter() {
                 let name_c = name.clone();
                 let h_clone = head.clone();
                 let m_bar = multi.clone();
-                let h = std::thread::spawn(move || {
-                    Self::bench_thread(&name_c, &h_clone, pattern, m_bar)
-                });
-                handles.push(h);
-            }
-        }
+                let h = Self::bench_thread(&name_c, &h_clone, pattern, m_bar);
+                results.extend(h);
 
-        for h in handles {
-            match h.join() {
-                Ok(bench_results) => results.extend(bench_results),
-                Err(e) => {
-                    println!("Error joining thread: {e:?}");
-                    continue;
-                }
             }
         }
         results
@@ -434,7 +428,7 @@ impl<'a, R: Rng> VariationBencher<'a, R> {
         let (mut base_stat_total, mut cached_stat_total) = (QueryStats::default(), QueryStats::default());
         self.variation.reset_cache();
         for i in 0..num_queries {
-            let start_scope = self.get_start_scope(i * 3);
+            let start_scope = self.get_start_scope(0);
             let params = GraphParams::new(&mut self.rng, self.head);
             let (base_stats, cached_stats) = self.perform_query(start_scope, &params);
             base_stat_total = base_stat_total + base_stats;
@@ -445,22 +439,24 @@ impl<'a, R: Rng> VariationBencher<'a, R> {
     }
 
     fn perform_query(&mut self, start_scope: Scope, params: &GraphParams) -> (QueryStats, QueryStats) {
-        let (base_envs, base_stats)  = self.variation.query_stats(
-            start_scope,
-            &params.matcher,
-            &params.order,
-            |d1, d2| d1.name() == d2.name(),
-            |data: &SgData| data.name() == params.x.as_str(),
-        );
-
-        let x_wfd = Arc::from(params.x.as_str());
-        let (cached_envs, cached_stats) = self.variation.query_proj_stats(
+        let x_wfd: Arc<str> = Arc::from(params.x.as_str());
+        let (base_envs, base_stats)  = std::hint::black_box(self.variation.query_proj_stats(
             start_scope,
             &params.matcher,
             &params.order,
             SgProjection::VarName,
-            x_wfd
-        );
+            x_wfd.clone(),
+            false
+        ));
+
+        let (cached_envs, cached_stats) = std::hint::black_box(self.variation.query_proj_stats(
+            start_scope,
+            &params.matcher,
+            &params.order,
+            SgProjection::VarName,
+            x_wfd,
+            true
+        ));
 
         self.cmp_envs(start_scope, params, base_envs, cached_envs);
 
@@ -468,12 +464,20 @@ impl<'a, R: Rng> VariationBencher<'a, R> {
     }
 
     fn cmp_envs(&self, start_scope: Scope, params: &GraphParams, base: Vec<QueryResult<SgLabel, SgData>>, cached: Vec<QueryResult<SgLabel, SgData>>) {
-        if base == cached {
+        if UnsortedVec(&base) == UnsortedVec(&cached) {
             return;
         }
         println!("Base and cached queries returned different results");
         println!("self.name: {0:?}", self.name);
         println!("start_scope: {start_scope:?}");
+        println!("pretty output:");
+        for e in &base {
+            println!("Base env: {e}");
+        }
+        for e in &cached {
+            println!("Cached env: {e}");
+        }
+        println!("debug output:");
         for e in &base {
             println!("Base env: {e:?}");
         }
@@ -491,8 +495,24 @@ impl<'a, R: Rng> VariationBencher<'a, R> {
 
         panic!("Base and cached queries returned different results");
     }
-
 }
+
+
+#[derive(Debug)]
+struct UnsortedVec<'a, T>(&'a [T]);
+
+impl<T: PartialEq> PartialEq for UnsortedVec<'_, T> {
+    fn eq(&self, other: &Self) -> bool {
+        for item in self.0 {
+            if !other.0.contains(item) {
+                return false;
+            }
+        }
+        true
+    }
+}
+
+impl<T: Eq> Eq for UnsortedVec<'_, T> {}
 
 
 #[cfg(test)]
@@ -516,5 +536,12 @@ mod tests {
             t.sample_branch(2, &mut rng),
             t.sample_branch(3, &mut rng),
         ))
+    }
+
+    #[test]
+    fn test_vec_eq() {
+        let v1 = UnsortedVec(&[1, 2, 3]);
+        let v2 = UnsortedVec(&[2, 3, 1]);
+        assert_eq!(v1, v2);
     }
 }

@@ -32,8 +32,8 @@ pub mod regex;
 mod slides;
 pub mod util;
 
-/// Enable caching when doing forward resolution
-pub const ENABLE_CACHING: bool = true;
+/// Enable circular path check in cached resolver
+pub const DO_CIRCLE_CHECK: bool = true;
 /// Draw caches in the graph
 pub const DRAW_CACHES: bool = true;
 /// Draw memory addresses for the paths
@@ -41,7 +41,6 @@ pub const DRAW_MEM_ADDR: bool = false;
 /// Prompt to save the graph
 pub const SAVE_GRAPH: bool = false;
 
-pub const DO_CIRCLE_CHECK: bool = false;
 
 
 pub struct ForeGroundColor;

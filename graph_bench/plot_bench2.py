@@ -23,9 +23,30 @@ class Time:
     def as_num(self):
         return float(self)
 
+    def __add__(self, other: "Time") -> "Time":
+        secs = self.secs + other.secs
+        nanos = self.nanos + other.nanos
+        if nanos >= 1_000_000_000:
+            secs += 1
+            nanos -= 1_000_000_000
+        return Time(secs, nanos)
+
+    def __sub__(self, other: "Time") -> "Time":
+        secs = self.secs - other.secs
+        nanos = self.nanos - other.nanos
+        if nanos < 0:
+            secs -= 1
+            nanos += 1_000_000_000
+        return Time(secs, nanos)
+
 
 class BenchStats:
     time: Time
+    circle_check_time: Time
+    no_circle_check_time: Time
+    cache_read_time: Time
+    cache_store_time: Time
+    cache_access_time: Time
     edges_traversed: int
     nodes_visited: int
     cache_reads: int
@@ -35,15 +56,22 @@ class BenchStats:
 
     def __init__(
         self,
-        time,
-        edges_traversed,
-        nodes_visited,
-        cache_reads,
-        cache_writes,
-        cache_hits,
-        cache_size_estimate,
+        time: Time,
+        circle_check_time: Time,
+        cache_read_time: Time,
+        cache_store_time: Time,
+        edges_traversed: int,
+        nodes_visited: int,
+        cache_reads: int,
+        cache_writes: int,
+        cache_hits: int,
+        cache_size_estimate: int,
     ):
         self.time = time
+        self.circle_check_time = circle_check_time
+        self.cache_read_time = cache_read_time
+        self.cache_store_time = cache_store_time
+        self.cache_access_time = cache_read_time + cache_store_time
         self.edges_traversed = edges_traversed
         self.nodes_visited = nodes_visited
         self.cache_reads = cache_reads
@@ -51,9 +79,16 @@ class BenchStats:
         self.cache_hits = cache_hits
         self.cache_size_estimate = cache_size_estimate
 
+
+    def time_uncached(self) -> Time:
+        return self.time - self.cache_access_time - self.circle_check_time
+
     def from_json(data):
         return BenchStats(
             time=Time.from_json(data["time"]),
+            circle_check_time=Time.from_json(data["circle_check_time"]),
+            cache_read_time=Time.from_json(data["cache_read_time"]),
+            cache_store_time=Time.from_json(data["cache_store_time"]),
             edges_traversed=data["edges_traversed"],
             nodes_visited=data["nodes_visited"],
             cache_reads=data["cache_reads"],
@@ -154,7 +189,6 @@ class VariationData:
 BENCH_FILE_Q1 = "./q-21-07-2025.json"
 BENCH_FILE = "../scope-graph/output/benches/results.json"
 
-
 def load_results2() -> list[BenchResult2]:
     with open(BENCH_FILE, "r") as f:
         data = json.load(f)
@@ -167,30 +201,72 @@ for d in bench_data:
     d.display()
 
 
-NUM_QUERIES = ["1", "2", "5"]
+NUM_QUERIES = ["1", "5", "10"]
 
 
-def get_data(bench_data: list[BenchResult2], var: VariationData) -> list[list[float]]:
+def get_data(bench_data: list[BenchResult2], var: VariationData) -> list[list[plb.Bar]]:
     y = []
 
-    def get_entry(num_queries: int, pattern_var: str, q_type: str):
+    def get_entry(num_queries: int, pattern_var: str, q_type: str) -> BenchResult2:
         matcher = BenchResult2(var.name, var.head_type, pattern_var, q_type, q, [])
         matcher.query_type = q_type
         try:
-            data = next(r for r in bench_data if r.eq_br(matcher))
-            return data.stats.time.as_num()
+            return next(r for r in bench_data if r.eq_br(matcher))
         except StopIteration:
             raise Exception(f"Data not found for {matcher.to_str()}")
 
     for q in NUM_QUERIES:
-        y.append([get_entry(q, pat, "base") for pat in var.pattern_var])
+        uncached_time = []
+        for pat in var.pattern_var:
+            bench_res =  get_entry(q, pat, "base")
+            uncached_time.append(bench_res.stats.time_uncached().as_num())
+        brightness = 15 + 2 * int(q)
+        y.append(plb.Bar([
+            plb.BarSegment(
+                np.array(uncached_time),
+                label=f"{var.name} ({q} queries)",
+                color=plb.Color.PURPLE.rgb(brightness)
+            ),
+        ]))
+
     for q in NUM_QUERIES:
-        y.append([get_entry(q, pat, "cached") for pat in var.pattern_var])
+        uncached_time = []
+        cache_time = []
+        circle_time = []
+        for pat in var.pattern_var:
+            bench_res =  get_entry(q, pat, "cached")
+            uncached_time.append(bench_res.stats.time_uncached().as_num())
+            cache_time.append(bench_res.stats.cache_access_time.as_num())
+            circle_time.append(bench_res.stats.circle_check_time.as_num())
+        brightness = 15 + 3 * int(q)
+        color = plb.Color.GREEN.rgb(brightness)
+        y.append(plb.Bar([
+            plb.BarSegment(
+                np.array(uncached_time),
+                label=f"{var.name} uncached ({q} queries)",
+                color=color,
+            ),
+            plb.BarSegment(
+                np.array(cache_time),
+                label=f"{var.name} cache ({q} queries)",
+                color=color,
+                facecolor=plb.Color.ORANGE.rgb(brightness + 15),
+                hatch='o',
+            ),
+            # plb.BarSegment(
+            #     np.array(circle_time),
+            #     label=f"{pat} circle check ({q} queries)",
+            #     color=color,
+            #     facecolor=plb.Color.BLUE.rgb(brightness),
+            #     hatch='/',
+            # ),
+        ]))
+
 
     return y
 
 
-fan_pat = "fanchain-10-10"
+fan_pat = "fanchain-15-10"
 lin_pat = "linear-25"
 
 VARIATIONS = {
@@ -212,14 +288,14 @@ VARIATIONS = {
         "sg_linear",
         fan_pat,
         "Linear pattern with fan head",
-        ["linear-4", "linear-8", "linear-16"],
+        ["linear-20", "linear-40", "linear-80"],
         fname="sg_linear-fan",
     ),
     "sg_linear-lin": VariationData(
         "sg_linear",
         lin_pat,
         "Linear pattern with linear head",
-        ["linear-4", "linear-8", "linear-16"],
+        ["linear-20", "linear-40", "linear-80"],
         fname="sg_linear-lin",
     ),
     "sg_diamond-w-fan": VariationData(
@@ -286,7 +362,8 @@ def plot_var(var: VariationData, save: bool = False):
     for i in range(len(NUM_QUERIES)):
         colors.append(plb.Color.PURPLE.rgb(15 * i))
 
-    fig.multiple_bars(y, labels, colors)
+    # fig.multiple_bars(y, labels, colors)
+    fig.multiple_bars2(y)
     fig.set_text(
         title=var.plot_title, xlabel="Number of queries", ylabel="Execution time ($ms$)"
     )
@@ -297,10 +374,32 @@ def plot_var(var: VariationData, save: bool = False):
         fig.save_figure(f"plots/{var.fname}", file_extension="png")
         fig.save_figure(f"plots/{var.fname}", file_extension="eps")
 
-    plt.show()
 
 
 plot_var(VARIATIONS["sg_linear-lin"], save=False)
-
 # for v in VARIATIONS.values():
-#     plot_var(v, save=True)
+#     plot_var(v, save=False)
+
+
+# bar = [
+#     plb.Bar([
+#         plb.BarSegment(np.array([1, 2, 3]), label="Base", color=plb.Color.RED.rgb(15)),
+#         plb.BarSegment(np.array([4, 5, 6]), label="Cached", color=plb.Color.GREEN.rgb(15))
+#     ]),
+#     plb.Bar([
+#         plb.BarSegment(np.array([1, 1, 1]), label="Base2", color=plb.Color.BLUE.rgb(15)),
+#         plb.BarSegment(np.array([2, 4, 6]), label="Cached2", color=plb.Color.PURPLE.rgb(15))
+#     ])
+# ]
+
+# fig = plb.SuperFigure.subplots()
+# fig.set_default_plot_style()
+# fig.multiple_bars2(bar, width=0.1, bar_offset=0.01)
+# fig.set_xtick_label(["Bar1", "Bar2", "bar3"])
+# fig.set_text(
+#     title="test", xlabel="Number of queries", ylabel="Execution time ($ms$)"
+# )
+
+
+plt.show()
+

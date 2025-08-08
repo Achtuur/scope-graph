@@ -17,7 +17,7 @@ use crate::{label::ScopeGraphLabel, path::segment::PathSegment, scope::Scope, ut
 #[derive(DeepSizeOf)]
 pub enum Path<Lbl>
 where
-    Lbl: ScopeGraphLabel + Clone,
+    Lbl: ScopeGraphLabel,
 {
     Start(Scope),
     Step {
@@ -31,7 +31,7 @@ where
 
 impl<Lbl: ScopeGraphLabel> Path<Lbl>
 where
-    Lbl: ScopeGraphLabel + Clone,
+    Lbl: ScopeGraphLabel,
 {
     pub fn start(start: impl Into<Scope>) -> Self {
         Self::Start(start.into())
@@ -90,6 +90,13 @@ where
         }
     }
 
+    pub fn without_head_unless_start(&self) -> &Self {
+        match self {
+            Self::Start(_) => self,
+            Self::Step { from, .. } => from,
+        }
+    }
+
 
     /// Returns true if `other` is partially contained within this path.
     pub fn partially_contains(&self, other: &Self) -> bool {
@@ -97,7 +104,7 @@ where
             return false;
         }
 
-        let mut visited = ContainsContainer::<_, 16>::new();
+        let mut visited = ContainsContainer::<_, 16>::with_capacity(self.len());
 
         for s in self.iter() {
             visited.insert(s.target_ref());
@@ -145,6 +152,35 @@ where
         PathIterator { current: Some(self) }
     }
 
+    pub fn parent(&self) -> Option<&Self> {
+        match self {
+            Self::Start(_) => None,
+            Self::Step { from, .. } => Some(from),
+        }
+    }
+
+    pub fn is_circular2(&self) -> bool {
+        let mut slow = self;
+        let mut fast = self;
+        loop {
+            slow = match slow.parent() {
+                Some(s) => s,
+                None => return false,
+            };
+
+            fast = match fast.parent() {
+                Some(f) => match f.parent() {
+                    Some(ff) => ff,
+                    None => return false,
+                },
+                None => return false,
+            };
+            if slow.target() == fast.target() && slow.automaton_idx() == fast.automaton_idx() {
+                return true;
+            }
+        }
+    }
+
     pub fn is_circular(&self) -> bool {
         // todo: pass hashset as argument maybe?
         static SET: OnceLock<Mutex<hashbrown::HashSet<(Scope, usize)>>> = OnceLock::new();
@@ -164,8 +200,8 @@ where
                     if set.contains(&(*target, prev_index)) {
                         return true;
                     }
-                    // unsafe { set.insert_unique_unchecked((*target, prev_index)); }
-                    set.insert((*target, prev_index));
+                    unsafe { set.insert_unique_unchecked((*target, prev_index)); }
+                    // set.insert((*target, prev_index));
                     current = from;
                     prev_index = *automaton_idx;
                 }
@@ -230,7 +266,6 @@ where
 
     /// Identical to using `std::fmt::Display`
     pub fn display(&self) -> String {
-        return String::new();
         match self {
             Self::Start(s) => format!("{s}"),
             Self::Step {

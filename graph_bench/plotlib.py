@@ -25,7 +25,7 @@ class Color(Enum):
 
     def rgb(self, luminance=0):
         lumi = luminance / 255
-        return tuple(val + lumi for val in self.value)
+        return tuple(min(val + lumi, 1.0) for val in self.value)
 
     def hsl(self, luminance=0):
         rgb = self.rgb(luminance)
@@ -60,6 +60,57 @@ class FontSize(Enum):
 # FONT_LARGE = 18
 
 LINE_STYLE = "--"
+
+
+class BarSegment:
+    value: np.ndarray
+    label: str
+    color: Color
+    edgecolor: Color
+    facecolor: Color
+    hatch: str | None
+    def __init__(self, value: np.ndarray, label: str, color: Color, facecolor: Color | None = None, hatch: str | None = None):
+        self.value = value
+        self.label = label
+        self.color = color
+        self.edgecolor = color
+        if facecolor is None:
+            self.facecolor = color
+        else:
+            self.facecolor = facecolor
+        self.hatch = hatch
+
+
+class Bar:
+    n_bars: int
+    segments: list[BarSegment]
+    def __init__(self, segments: list[BarSegment]):
+        self.segments = segments
+        self.n_bars = len(segments[0].value) if segments else 0
+
+    def add_segment(self, value: np.ndarray, label: str, color: Color):
+        """Add a segment to the bar"""
+        if len(value) != self.n_bars:
+            raise ValueError(f"Value length {len(value)} does not match number of bars {self.n_bars}")
+        self.segments.append(BarSegment(value, label, color))
+
+    def plot(self, ax: matplotlib.axes.Axes, x: np.ndarray, width: float, **kwargs):
+        bottom = np.zeros_like(x)
+        for seg in self.segments:
+            ax.bar(
+                x,
+                seg.value,
+                bottom=bottom,
+                width=width,
+                label=seg.label,
+                color=Color.BLUE.rgb(25),
+                edgecolor=seg.edgecolor,
+                facecolor=seg.facecolor,
+                hatch = seg.hatch if seg.hatch is not None else None,
+                **kwargs
+            )
+            bottom += seg.value
+
 
 # I'm calling it superfigure and no one can stop me
 class SuperFigure:
@@ -268,6 +319,25 @@ class SuperFigure:
     def show(self):
         """Show the plot"""
         plt.show()
+
+    def multiple_bars2(self, bars: list[Bar], width=0.1, bar_offset=0, **kwargs):
+        """Plot multiple bars on the ax
+
+        Args:
+            bars (list[Bar]): List of Bar objects to plot
+            width (float): Width of each bar
+            bar_offset (float): Offset for each bar
+            **kwargs: Additional keyword arguments for plt.bar()
+        """
+        num_labels = bars[0].n_bars
+        num_bars = len(bars)
+        X = np.arange(num_labels)
+        for i, bar in enumerate(bars):
+            i_o = i - num_bars / 2
+            offset_x = X + (width * i_o) + (bar_offset * i_o)
+            offset_x += width / 2 + bar_offset / 2
+
+            bar.plot(self.__ax, offset_x, width, **kwargs)
 
     def multiple_bars(self, y_data, labels: list[str], colors: list[Color], width=0.1, bar_offset=0, **kwargs):
         num_bars = len(y_data)

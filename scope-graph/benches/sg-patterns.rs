@@ -15,7 +15,7 @@ pub fn main() {
 
     let linear = PatternGenerator::with_args(
         |n| GraphPattern::Linear(*n),
-        [4, 8, 16]
+        [20, 40, 80]
     );
 
     let circle = PatternGenerator::with_args(
@@ -30,7 +30,7 @@ pub fn main() {
 
     let heads = [
         HeadGenerator::linear(25),
-        HeadGenerator::fan_chain(10, 10),
+        // HeadGenerator::fan_chain(15, 10),
     ];
 
     let results = [

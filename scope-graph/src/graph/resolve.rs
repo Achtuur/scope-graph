@@ -1,4 +1,4 @@
-use std::{collections::HashSet, sync::atomic::AtomicUsize, time::{Duration, Instant}};
+use std::{cell::RefCell, collections::HashSet, ops::AddAssign, rc::Rc, sync::{atomic::AtomicUsize, Mutex}, time::{Duration, Instant}};
 
 use deepsize::DeepSizeOf;
 use smallvec::SmallVec;
@@ -12,6 +12,9 @@ use super::ScopeData;
 #[derive(Debug)]
 pub(crate) struct QueryProfiler {
     pub start_time: Instant,
+    pub circ_check_time: RefCell<Duration>,
+    pub cache_store_time: RefCell<Duration>,
+    pub cache_read_time: RefCell<Duration>,
     pub edges_traversed: AtomicUsize,
     pub nodes_visited: AtomicUsize,
     pub cache_reads: AtomicUsize,
@@ -26,6 +29,9 @@ impl QueryProfiler {
     pub fn new() -> Self {
         Self {
             start_time: Instant::now(),
+            circ_check_time: RefCell::new(Duration::ZERO),
+            cache_store_time: RefCell::new(Duration::ZERO),
+            cache_read_time: RefCell::new(Duration::ZERO),
             edges_traversed: AtomicUsize::new(0),
             nodes_visited: AtomicUsize::new(0),
             cache_reads: AtomicUsize::new(0),
@@ -41,6 +47,21 @@ impl QueryProfiler {
     pub fn inc_edges_traversed(&self) {
         self.edges_traversed
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    #[inline(always)]
+    pub fn inc_circ_check_timer(&self, dur: Duration) {
+        self.circ_check_time.borrow_mut().add_assign(dur);
+    }
+
+    #[inline(always)]
+    pub fn inc_cache_store_timer(&self, dur: Duration) {
+        self.cache_store_time.borrow_mut().add_assign(dur);
+    }
+
+    #[inline(always)]
+    pub fn inc_cache_read_timer(&self, dur: Duration) {
+        self.cache_read_time.borrow_mut().add_assign(dur);
     }
 
     #[inline(always)]
@@ -71,6 +92,9 @@ impl QueryProfiler {
 #[derive(Debug, Default, serde::Serialize)]
 pub struct QueryStats {
     pub time: Duration,
+    pub circle_check_time: Duration,
+    pub cache_store_time: Duration,
+    pub cache_read_time: Duration,
     pub edges_traversed: usize,
     pub nodes_visited: usize,
     pub cache_reads: usize,
@@ -86,6 +110,9 @@ impl std::ops::Add for QueryStats {
     fn add(self, other: Self) -> Self {
         Self {
             time: self.time + other.time,
+            circle_check_time: self.circle_check_time + other.circle_check_time,
+            cache_store_time: self.cache_store_time + other.cache_store_time,
+            cache_read_time: self.cache_read_time + other.cache_read_time,
             edges_traversed: self.edges_traversed + other.edges_traversed,
             nodes_visited: self.nodes_visited + other.nodes_visited,
             cache_reads: self.cache_reads + other.cache_reads,
@@ -102,6 +129,9 @@ impl std::ops::Div<usize> for QueryStats {
     fn div(self, rhs: usize) -> Self {
         Self {
             time: self.time / rhs as u32,
+            circle_check_time: self.circle_check_time / rhs as u32,
+            cache_store_time: self.cache_store_time / rhs as u32,
+            cache_read_time: self.cache_read_time / rhs as u32,
             edges_traversed: self.edges_traversed / rhs,
             nodes_visited: self.nodes_visited / rhs,
             cache_reads: self.cache_reads / rhs,
@@ -132,6 +162,9 @@ impl From<&QueryProfiler> for QueryStats {
     fn from(profiler: &QueryProfiler) -> Self {
         Self {
             time: profiler.start_time.elapsed(),
+            circle_check_time: *profiler.circ_check_time.borrow(),
+            cache_store_time: *profiler.cache_store_time.borrow(),
+            cache_read_time: *profiler.cache_read_time.borrow(),
             edges_traversed: profiler.edges_traversed.load(std::sync::atomic::Ordering::Relaxed),
             nodes_visited: profiler.nodes_visited.load(std::sync::atomic::Ordering::Relaxed),
             cache_reads: profiler.cache_reads.load(std::sync::atomic::Ordering::Relaxed),
@@ -152,7 +185,32 @@ where
     Data: ScopeGraphData,
 {
     pub path: ReversePath<Lbl>,
-    pub data: Data,
+    pub data: Rc<Data>,
+}
+
+impl<Lbl, Data> QueryResult<Lbl, Data>
+where
+    Lbl: ScopeGraphLabel,
+    Data: ScopeGraphData,
+{
+    pub fn start(scope: impl Into<Scope>, data: Data) -> Self {
+        Self {
+            path: ReversePath::start(scope.into()),
+            data: Rc::new(data),
+        }
+    }
+
+    pub fn step(
+        &self,
+        label: Lbl,
+        target: impl Into<Scope>,
+        reg_idx: usize,
+    ) -> Self {
+        Self {
+            path: self.path.step(label, target.into(), reg_idx),
+            data: self.data.clone(),
+        }
+    }
 }
 
 impl<Lbl, Data> std::fmt::Display for QueryResult<Lbl, Data>
@@ -227,7 +285,7 @@ where
 
     /// recursive call site for resolving
     fn resolve_all<'a: 'r>(
-        &mut self,
+        &self,
         path: Path<Lbl>,
         reg: RegexState<'a, Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
@@ -239,7 +297,7 @@ where
     }
 
     fn get_env(
-        &mut self,
+        &self,
         path: Path<Lbl>,
         reg: RegexState<'r, Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
@@ -253,15 +311,16 @@ where
             .iter()
             .map(|e| e.lbl())
             // get unique labels by using hashset
-            .fold(HashSet::new(), |mut set, lbl| {
+            .fold(Vec::new(), |mut set, lbl| {
                 let mut this_reg = reg.clone();
                 if this_reg.step(lbl).is_some() {
-                    set.insert(LabelOrEnd::Label((lbl.clone(), this_reg)));
+                    let lbl = LabelOrEnd::Label((lbl.clone(), this_reg));
+                    if !set.contains(&lbl) {
+                        set.push(lbl);
+                    }
                 }
                 set
-            })
-            .into_iter()
-            .collect::<Vec<_>>();
+            });
 
         if reg.is_accepting() {
             labels.push(LabelOrEnd::End);
@@ -271,7 +330,7 @@ where
     }
 
     fn get_env_for_labels<'a>(
-        &mut self,
+        &self,
         labels: &'a [LabelOrEnd<'r, Lbl>],
         path: Path<Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
@@ -295,7 +354,7 @@ where
     }
 
     fn get_shadowed_env<'a>(
-        &mut self,
+        &self,
         max_lbl: &'a LabelOrEnd<'r, Lbl>,
         lower_lbls: &'a [LabelOrEnd<'r, Lbl>],
         path: Path<Lbl>,
@@ -305,57 +364,8 @@ where
         self.shadow(lower_paths, max_path)
     }
 
-    // fn get_env_for_label<'a>(
-    //     &mut self,
-    //     label: &'a LabelOrEnd<'r, Lbl>,
-    //     path: Path<Lbl>,
-    // ) -> Either<impl Iterator<Item = QueryResult<Lbl, Data>>, impl Iterator<Item = QueryResult<Lbl, Data>>> {
-    //     let scope = self.get_scope(path.target()).unwrap().clone();
-    //     match label {
-    //         // reached end of a path
-    //         LabelOrEnd::End => {
-    //             let iter = match self.data_wfd(&scope.data) {
-    //                 true => Some(std::iter::once(QueryResult {
-    //                     path: ReversePath::from(path),
-    //                     data: scope.data.clone(),
-    //                 })),
-    //                 false => None,
-    //             };
-    //             either::Left(iter.into_iter().flatten())
-    //         },
-    //         // not yet at end
-    //         LabelOrEnd::Label((label, partial_reg)) => {
-    //             let paths = self
-    //             .get_scope(path.target())
-    //             .unwrap()
-    //             .outgoing()
-    //             .iter()
-    //             .filter_map(|e| {
-    //                 if e.lbl() != label {
-    //                     return None;
-    //                 }
-    //                 let p = path.step(e.lbl().clone(), e.target(), partial_reg.index());
-    //                 if p.is_circular() {
-    //                     return None;
-    //                 }
-    //                 Some(p)
-    //             })
-    //             .collect::<SmallVec<[_; 8]>>(); // prevent cloning scope data every time, instead only do a (cheap) clone of the path
-
-
-    //             let iter = paths
-    //             .into_iter()
-    //                 .flat_map(|p| {
-    //                     self.profiler.inc_edges_traversed();
-    //                     self.resolve_all(p, partial_reg.clone())
-    //                 }) ;// resolve new paths
-    //             either::Right(iter)
-    //         }
-    //     }
-    // }
-
     fn get_env_for_label<'a>(
-        &mut self,
+        &self,
         label: &'a LabelOrEnd<'r, Lbl>,
         path: Path<Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
@@ -363,73 +373,32 @@ where
         match label {
             // reached end of a path
             LabelOrEnd::End => match self.data_wfd(&scope.data) {
-                true => vec![QueryResult {
-                    path: ReversePath::from(path),
-                    data: scope.data.clone(),
-                }],
+                true => vec![QueryResult::start(path.target(), scope.data)],
                 false => Vec::new(),
             },
             // not yet at end
             LabelOrEnd::Label((label, partial_reg)) => {
-
-                let paths = self
-                .get_scope(path.target())
-                .unwrap()
-                .outgoing()
-                .iter()
-                .filter_map(|e| {
-                    if e.lbl() != label {
-                        return None;
-                    }
-                    let p = path.step(e.lbl().clone(), e.target(), partial_reg.prev_index());
-                    if p.is_circular() {
-                        return None;
-                    }
-                    Some(p)
-                })
-                .collect::<Vec<_>>(); // prevent cloning scope data every time, instead only do a (cheap) clone of the path
-                paths
-                    .into_iter()
+                scope
+                    .outgoing()
+                    .iter()
+                    .filter(|e| e.lbl() == label)
+                    .map(|e| {
+                        path.clone()
+                            .step(e.lbl().clone(), e.target(), partial_reg.index())
+                    })
+                    .filter(|p| !p.is_circular())
                     .flat_map(|p| {
                         self.profiler.inc_edges_traversed();
                         self.resolve_all(p, partial_reg.clone())
                     }) // resolve new paths
-                    .filter(|qr| !qr.path.is_circular())
+                    // .filter(|qr| !qr.ath.is_circular())
+                    .map(|qr| {
+                        qr.step(label.clone(), path.target(), partial_reg.index())
+                    })
                     .collect::<Vec<_>>()
-
-                // scope
-                //     .outgoing()
-                //     .iter()
-                //     .filter(|e| e.lbl() == label)
-                //     .map(|e| {
-                //         path.clone()
-                //             .step(e.lbl().clone(), e.target(), partial_reg.index())
-                //     })
-                //     .filter(|p| !p.is_circular())
-                //     .flat_map(|p| {
-                //         self.profiler.inc_edges_traversed();
-                //         self.resolve_all(p, partial_reg.clone())
-                //     }) // resolve new paths
-                //     .filter(|qr| !qr.path.is_circular())
-                    // .collect::<Vec<_>>()
             }
         }
     }
-
-    // fn shadow(
-    //     &self,
-    //     a1: impl IntoIterator<Item = QueryResult<Lbl, Data>>,
-    //     a2: impl IntoIterator<Item = QueryResult<Lbl, Data>>,
-    // ) -> impl Iterator<Item = QueryResult<Lbl, Data>> {
-    //     debugonly_trace!("Shadowing...");
-    //     // a2.retain(|qr2| !a1.iter().any(|qr1| (self.data_eq)(&qr1.data, &qr2.data)));
-    //     // a1.append(&mut a2);
-    //     // a1
-
-    //     a2.into_iter().filter(|qr2| {
-    //         !a1.into_iter().any(|qr1| (self.data_eq)(&qr1.data, &qr2.data))
-    //     })
-    // }
 
     fn shadow(
         &self,

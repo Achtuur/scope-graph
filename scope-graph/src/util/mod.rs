@@ -22,6 +22,15 @@ impl<'a, T: Eq + Hash, const N: usize> ContainsContainer<'a, T, N> {
         }
     }
 
+    pub fn with_capacity(cap: usize) -> Self {
+        if cap <= N {
+            Self::new()
+        } else {
+            let mut set = hashbrown::HashSet::with_capacity(cap);
+            Self::BrownSet(set)
+        }
+    }
+
     /// Inserts item and return true if collection already contained it
     pub fn insert(&mut self, item: &'a T) -> bool {
         match self {
