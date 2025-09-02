@@ -98,7 +98,6 @@ impl PatternMatcher for CircleMatcher {
                 } else if !m.contains(&edge.to) {
                     cur_matches.push(step);
                 }
-
             }
         }
         finished

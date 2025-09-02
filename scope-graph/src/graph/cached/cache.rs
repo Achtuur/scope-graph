@@ -144,19 +144,19 @@ where Lbl: ScopeGraphLabel, Data: ScopeGraphData
 
     pub fn get_env(&self, path: &Path<Lbl>, profiler: &QueryProfiler) -> Option<ProjEnvs<Lbl, Data>> {
         debug_tracing!(trace, "Checking cache ({}) for path: {}", self.path, path);
-        if !DO_CIRCLE_CHECK {
-            return Some(self.cache.clone());
-        }
+        return Some(self.cache.clone());
+        // if !DO_CIRCLE_CHECK {
+        // }
 
-        let timer = Instant::now();
-        let is_circular = &self.path != path && self.path.partially_contains(path.without_head_unless_start());
-        profiler.inc_circ_check_timer(timer.elapsed());
+        // let timer = Instant::now();
+        // let is_circular = &self.path != path && self.path.partially_contains(path.without_head_unless_start());
+        // profiler.inc_circ_check_timer(timer.elapsed());
 
-        if is_circular {
-            debug_tracing!(trace, "Cache invalid; path is contained");
-            return None;
-        }
-        Some(self.cache.clone())
+        // if is_circular {
+        //     debug_tracing!(trace, "Cache invalid; path is contained");
+        //     return None;
+        // }
+        // Some(self.cache.clone())
     }
 
     // pub fn insert(&mut self, hash: ProjHash, path: Path<Lbl>, env: Vec<QueryResult<Lbl, Data>>) {

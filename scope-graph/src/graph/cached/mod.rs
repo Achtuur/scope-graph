@@ -1,4 +1,6 @@
 
+use std::cell::RefCell;
+
 use graphing::{
     mermaid::{
         item::{ItemShape, MermaidItem},
@@ -11,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use deepsize::DeepSizeOf;
 
 use crate::{
-    data::ScopeGraphData, debug_tracing, graph::{resolve::{QueryStats, Resolver}, Edge, ScopeData, ScopeMap}, label::ScopeGraphLabel, order::LabelOrder, path::Path, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackgroundColor, ColorSet, ForeGroundColor
+    data::ScopeGraphData, debug_tracing, graph::{circle::CircleMatcher, resolve::{QueryStats, Resolver}, Edge, ScopeData, ScopeMap}, label::ScopeGraphLabel, order::LabelOrder, path::Path, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackgroundColor, ColorSet, ForeGroundColor
 };
 
 use super::{ScopeGraph, resolve::QueryResult};
@@ -57,6 +59,10 @@ where
     pub scopes: ScopeMap<Lbl, Data>,
     #[serde(skip)]
     resolve_cache: ResolveCache<Lbl, Data>,
+    #[serde(skip)]
+    scopes_in_cycle: RefCell<hashbrown::HashSet<Scope>>,
+    #[serde(skip)]
+    cycle_scope_cache: RefCell<hashbrown::HashMap<Scope, bool>>,
 }
 
 impl<Lbl, Data> CachedScopeGraph<Lbl, Data>
@@ -111,6 +117,7 @@ where
         let mut resolver = CachedResolver::new(
             &self.scopes,
             cache_entry,
+            self.scopes_in_cycle.borrow(),
             path_regex,
             order,
             data_proj,
@@ -136,6 +143,10 @@ where
         //     tracing::info!("\t{}", qr);
         // }
         (envs, stats)
+    }
+
+    pub(crate) fn map(&self) -> &ScopeMap<Lbl, Data> {
+        &self.scopes
     }
 }
 
@@ -175,6 +186,9 @@ where
             .expect("Attempting to add edge to non-existant scope")
             .incoming_mut()
             .push(edge_to_child);
+
+        self.determine_cycles(source);
+        self.determine_cycles(target);
     }
 
     fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>> {
@@ -240,6 +254,7 @@ where
         let mut resolver = CachedResolver::new(
             &self.scopes,
             cache_entry,
+            self.scopes_in_cycle.borrow(),
             path_regex,
             order,
             data_proj,
@@ -262,106 +277,10 @@ where
 
     fn generate_cache_uml(&self) -> Vec<PlantUmlItem> {
         self.resolve_cache.generate_uml(self).collect()
-        // self.resolve_cache
-        // .cache
-        //     .iter()
-        //     .flat_map(|(query_params, query_cache)| {
-        //         let params_str = format!(
-        //             "({}, {})",
-        //             query_params.0,
-        //             query_params.1,
-        //             // query_params.2 % 256
-        //         );
-        //         query_cache
-        //         .cache
-        //             .iter()
-        //             .filter(|(key, _)| !self.scope_holds_data(key.1))
-        //             // map with scope as key to not have duplicate notes
-        //             .fold(hashbrown::HashMap::new(), |mut acc, (keys, envs)| {
-        //                 let key = keys.1; // scope
-        //                 let entry: &mut QueryCache<Lbl, Data> = acc.entry(key).or_default();
-        //                 entry.cache.insert(*keys, envs.clone());
-        //                 acc
-        //             })
-        //             .into_iter()
-        //             .filter_map(move |(key, envs)| {
-        //                 if envs.cache.is_empty() {
-        //                     return None;
-        //                 }
-
-        //                 let vals = envs
-        //                     .cache.iter()
-        //                     .map(|(keys, env)| {
-        //                         let cache_str = env
-        //                             .cache
-        //                             .values()
-        //                             .flat_map(|result| result.iter().map(|x| x.to_string()))
-        //                             .collect::<Vec<String>>()
-        //                             .join("\n");
-        //                         format!("<b>(p{}, s{})</b>\n{}", keys.0, keys.1, cache_str)
-        //                     })
-        //                     .collect::<Vec<String>>()
-        //                     .join("\n");
-
-        //                 let cache_str =
-        //                     format!("<i>{}</i>\n<b>{:?}</b>\n{}", params_str.clone(), key, vals);
-        //                 let item = PlantUmlItem::note(key.uml_id(), cache_str, EdgeDirection::Left)
-        //                     .add_class("cache-entry")
-        //                     .add_class(BackgroundColor::get_class_name(key.0));
-        //                 Some(item)
-        //             })
-        //     })
-        //     .collect()
     }
 
     fn generate_cache_mmd(&self) -> Vec<MermaidItem> {
         todo!()
-        // self.resolve_cache
-        //     .cache.iter()
-        //     .flat_map(|(query_params, query_cache)| {
-        //         let params_str = format!("({}, {})", query_params.0, query_params.1);
-        //         query_cache
-        //             .cache.iter()
-        //             .filter(|(key, _)| !self.scope_holds_data(key.1))
-        //             // map with scope as key to not have duplicate notes
-        //             .fold(hashbrown::HashMap::new(), |mut acc, (keys, envs)| {
-        //                 let key = keys.1; // scope
-        //                 let entry: &mut QueryCache<Lbl, Data> = acc.entry(key).or_default();
-        //                 entry.cache.insert(*keys, envs.clone());
-        //                 acc
-        //             })
-        //             .into_iter()
-        //             .flat_map(move |(key, envs)| {
-        //                 if envs.cache.is_empty() {
-        //                     return Vec::new();
-        //                 }
-
-        //                 let vals = envs
-        //                     .cache.iter()
-        //                     .map(|(keys, env)| {
-        //                         let cache_str = env
-        //                             .values()
-        //                             .flat_map(|result| result.iter().map(|x| x.to_string()))
-        //                             // .map(|result| result.to_string())
-        //                             .collect::<Vec<String>>()
-        //                             .join("\n");
-        //                         // cache_str
-        //                         // // uncomment this to show cache key
-        //                         format!("<b>(reg{})</b><br>{}", keys.0, cache_str)
-        //                     })
-        //                     .collect::<Vec<String>>()
-        //                     .join("<br>");
-
-        //                 let id = format!("cache-{}", key.uml_id());
-        //                 let cache_str = format!("{}<b>{:?}</b><br>{}", params_str, key, vals);
-        //                 let note = MermaidItem::node(&id, cache_str, ItemShape::Card)
-        //                     .add_class("cache-entry")
-        //                     .add_class(BackgroundColor::get_class_name(key.0));
-        //                 let edge = MermaidItem::edge(key.uml_id(), id, "", EdgeType::Dotted);
-        //                 vec![note, edge]
-        //             })
-        //     })
-        //     .collect()
     }
 }
 
@@ -384,7 +303,28 @@ where
         Self {
             scopes: ScopeMap::new(),
             resolve_cache: ResolveCache::new(),
+            scopes_in_cycle:RefCell::new(hashbrown::HashSet::new()),
+            cycle_scope_cache: RefCell::new(hashbrown::HashMap::new()),
         }
+    }
+
+    pub fn scope_is_in_cycle(&self, scope: Scope) -> bool {
+        if let Some(b) = self.cycle_scope_cache.borrow().get(&scope) {
+            return *b;
+        }
+
+        // add scopes
+        let scopes = CircleMatcher::scopes_in_cycle(self.scopes(), scope);
+        let contains = scopes.contains(&scope);
+
+        self.cycle_scope_cache.borrow_mut().extend(scopes.into_iter().map(|s| (s, true)));
+        self.cycle_scope_cache.borrow_mut().insert(scope, contains);
+        contains
+    }
+
+    fn determine_cycles(&mut self, scope: Scope) {
+        let scopes = CircleMatcher::scopes_in_cycle(self.scopes(), scope);
+        self.scopes_in_cycle.borrow_mut().extend(scopes);
     }
 
     pub fn scopes(&self) -> &ScopeMap<Lbl, Data> {

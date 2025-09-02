@@ -30,6 +30,7 @@ fn graph_builder() -> UsedScopeGraph {
     let patterns = [
         GraphPattern::Linear(1),
         GraphPattern::Decl(SgData::var("x", "int")),
+        GraphPattern::Circle(3),
         // GraphPattern::Decl(SgData::var("x1", "int")),
         // GraphPattern::Decl(SgData::var("x2", "int")),
         // GraphPattern::Decl(SgData::var("x3", "int")),

@@ -1,5 +1,5 @@
 use std::{
-    hash::{DefaultHasher, Hash, Hasher}, rc::Rc, time::Instant
+    cell::Ref, hash::{DefaultHasher, Hash, Hasher}, rc::Rc, time::Instant
 };
 
 use hashbrown::hash_set::HashSet;
@@ -7,7 +7,7 @@ use smallvec::SmallVec;
 
 use crate::{
     data::ScopeGraphData, debug_tracing, graph::{
-        resolve::{QueryProfiler, QueryStats}, ScopeMap
+        resolve::{QueryProfiler, QueryStats}, scope_is_part_of_cycle, ScopeMap
     }, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, projection::ScopeGraphDataProjection, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, util::DisplayVec, DO_CIRCLE_CHECK
 };
 
@@ -31,9 +31,10 @@ where
     Proj: ScopeGraphDataProjection<Data>,
 {
     // scopegraph contains cache
-    scope_graph: &'r ScopeMap<Lbl, Data>,
+    scope_map: &'r ScopeMap<Lbl, Data>,
 
     cache: &'r mut QueryCache<Lbl, Data>,
+    cycle_cache: Ref<'r, hashbrown::HashSet<Scope>>,
 
     path_re: &'r RegexAutomaton<Lbl>,
     lbl_order: &'r LabelOrder<Lbl>,
@@ -57,6 +58,7 @@ where
     pub fn new(
         scope_graph: &'r ScopeMap<Lbl, Data>,
         cache: &'r mut QueryCache<Lbl, Data>,
+        cycle_cache: Ref<'r, hashbrown::HashSet<Scope>>,
         path_re: &'r RegexAutomaton<Lbl>,
         lbl_order: &'r LabelOrder<Lbl>,
         data_proj: Proj,
@@ -64,8 +66,9 @@ where
         caching_enabled: bool,
     ) -> CachedResolver<'r, Lbl, Data, Proj> {
         Self {
-            scope_graph,
+            scope_map: scope_graph,
             cache,
+            cycle_cache,
             path_re,
             lbl_order,
             data_proj,
@@ -117,7 +120,7 @@ where
             return cached_env;
         } else {
             // invalid cache entry: clear it
-            self.cache.clear_envs(&reg, &path);
+            // self.cache.clear_envs(&reg, &path);
         }
 
         let scope = self.get_scope(path.target()).expect("Scope not found");
@@ -250,7 +253,7 @@ where
     }
 
     fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>> {
-        self.scope_graph.get(&scope)
+        self.scope_map.get(&scope)
     }
 
     fn cache_env(
@@ -262,6 +265,22 @@ where
         if !self.caching_enabled {
             return;
         }
+
+        let is_circular = match DO_CIRCLE_CHECK {
+            true => {
+                let timer = Instant::now();
+                let b = self.cycle_cache.contains(&path.target());
+                // let b = scope_is_part_of_cycle(self.scope_map, path.target());
+                self.profiler.inc_circ_check_timer(timer.elapsed());
+                b
+            }
+            false => false,
+        };
+        if is_circular {
+            debug_tracing!(debug, "Not caching envs for scope {}: it's in a cycle", path.target());
+            return;
+        }
+
         // debug_tracing!(debug, "Caching envs {env_map} for path {path}");
         self.profiler.inc_cache_writes();
         let timer = Instant::now();

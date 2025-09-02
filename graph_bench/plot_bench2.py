@@ -253,13 +253,13 @@ def get_data(bench_data: list[BenchResult2], var: VariationData) -> list[list[pl
                 facecolor=plb.Color.ORANGE.rgb(brightness + 15),
                 hatch='o',
             ),
-            # plb.BarSegment(
-            #     np.array(circle_time),
-            #     label=f"{pat} circle check ({q} queries)",
-            #     color=color,
-            #     facecolor=plb.Color.BLUE.rgb(brightness),
-            #     hatch='/',
-            # ),
+            plb.BarSegment(
+                np.array(circle_time),
+                label=f"{pat} circle check ({q} queries)",
+                color=color,
+                facecolor=plb.Color.BLUE.rgb(brightness),
+                hatch='/',
+            ),
         ]))
 
 
@@ -376,9 +376,10 @@ def plot_var(var: VariationData, save: bool = False):
 
 
 
-plot_var(VARIATIONS["sg_linear-lin"], save=False)
-# for v in VARIATIONS.values():
-#     plot_var(v, save=False)
+# plot_var(VARIATIONS["sg_linear-lin"], save=False)
+for v in VARIATIONS.values():
+    if "fan" not in v.plot_title:
+        plot_var(v, save=False)
 
 
 # bar = [

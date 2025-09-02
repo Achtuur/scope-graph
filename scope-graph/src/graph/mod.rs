@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::{Mutex, OnceLock}};
 
 use deepsize::DeepSizeOf;
 use graphing::{
@@ -11,12 +11,13 @@ use graphing::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    data::ScopeGraphData, debug_tracing, label::ScopeGraphLabel, order::LabelOrder, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor
+    data::ScopeGraphData, debug_tracing, graph::circle::{CircleMatch, CircleMatcher}, label::ScopeGraphLabel, order::LabelOrder, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor
 };
 
 // mod base;
 mod cached;
 mod resolve;
+mod circle;
 
 // pub use base::*;
 pub use cached::*;
@@ -109,6 +110,15 @@ where
 
 pub type ScopeMap<Lbl, Data> = HashMap<Scope, ScopeData<Lbl, Data>>;
 
+
+pub(crate) fn scope_is_part_of_cycle<Lbl, Data>(map: &ScopeMap<Lbl, Data>, scope: Scope) -> bool
+where
+    Lbl: ScopeGraphLabel,
+    Data: ScopeGraphData,
+{
+    CircleMatcher::scope_is_in_cycle(map, scope)
+}
+
 pub trait ScopeGraph<Lbl, Data>
 where
     Lbl: ScopeGraphLabel,
@@ -194,6 +204,11 @@ where
     }
 
     fn scope_holds_data(&self, scope: Scope) -> bool;
+
+    fn scope_is_part_of_cycle(&self, scope: Scope) -> bool {
+        // todo: implement
+        false
+    }
 
     fn as_uml_diagram(&self, title: &str, options: &GraphRenderOptions) -> PlantUmlDiagram {
         let mut style_sheet: PlantUmlStyleSheet = [

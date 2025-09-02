@@ -34,10 +34,10 @@ pub fn main() {
     ];
 
     let results = [
-        // PatternBencher::new("sg_circle", circle).bench(&heads),
-        // PatternBencher::new("sg_tree", tree).bench(&heads),
+        PatternBencher::new("sg_circle", circle).bench(&heads),
+        PatternBencher::new("sg_tree", tree).bench(&heads),
         PatternBencher::new("sg_linear", linear).bench(&heads),
-        // PatternBencher::new("sg_diamond", diamond).bench(&heads),
+        PatternBencher::new("sg_diamond", diamond).bench(&heads),
     ]
     .into_iter()
     .fold(BenchmarkMap::default(), |mut acc, bench| {
