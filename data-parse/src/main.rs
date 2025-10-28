@@ -32,6 +32,7 @@ fn main() -> ParseResult<()> {
     Ok(())
 }
 
+// attempt to parse query data; unsucessful
 fn queries_data() -> ParseResult<()> {
     let file = File::open(format!("{}/{}", BASE_PATH, QUERIES_FILE))?;
     let mut buf = BufReader::new(file);
@@ -39,16 +40,6 @@ fn queries_data() -> ParseResult<()> {
     let timer = std::time::Instant::now();
     let mut deserializer = serde_json::Deserializer::from_reader(&mut buf);
     deserializer.disable_recursion_limit();
-    // let json: serde_json::Value = Deserialize::deserialize(&mut deserializer)?;
-    // println!("{:?}", timer.elapsed());
-
-    // let arr = json.as_array().unwrap();
-
-    // let first = arr[3].as_object().unwrap();
-    // println!("first.keys().collect::<Vec<_>>()); {0:?}", first.keys().collect::<Vec<_>>());
-
-    // let d = first.get("dataWf").unwrap();
-    // println!("d: {0:#?}", d);
 
     let mut des: Vec<RawQueryData> = Deserialize::deserialize(&mut deserializer)?;
     let mut iter = des.iter().enumerate();
@@ -60,9 +51,6 @@ fn queries_data() -> ParseResult<()> {
         }
     }
 
-    // for d in des.iter().take(5) {
-    //     println!("d: {0:#?}", d.dataOrd);
-    // }
 
     let mut d = des.get_mut(7871).unwrap();
     // let mut d = des.get_mut(7871).unwrap();
@@ -80,65 +68,21 @@ fn parsed_scopegraph_data() -> ParseResult<()> {
     let mut parsed_graph =
         ParsedScopeGraph::from_file(format!("{BASE_PATH}/{SCOPEGRAPH_FILE}"))?;
 
-    println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
-    parsed_graph.filter_scopes(|s| {
-        !s.resource.contains("commons") || s.name.to_ascii_lowercase().contains("object")
-    });
-    println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
-    parsed_graph.combine_scopes();
-    println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
-    parsed_graph.filter_edges(|e| {
-        !matches!(
-            e.label,
-            JavaLabel::WithKind | JavaLabel::WithType | JavaLabel::LocalType
-        )
-    });
-    // println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
-    // parsed_graph.filter_edges(|e| matches!(e.label, JavaLabel::Extend | JavaLabel::Impl));
-
-    // parsed_graph.filter_scope_by_edge_labels(|_, e_in, e_out| {
-    //     let in_label = e_in.as_ref().map(|e| &e.label);
-    //     let out_label = e_out.as_ref().map(|e| &e.label);
-
-    //     matches!(in_label, Some(JavaLabel::Impl)) && matches!(out_label, Some(JavaLabel::Extend))
+    println!("Filtering scope graph for stdlib scopes only...");
+    // parsed_graph.filter_scopes(|s| {
+    //     !s.resource.contains("commons") || s.name.to_ascii_lowercase().contains("object")
+    // });
+    // parsed_graph.combine_scopes();
+    // parsed_graph.filter_edges(|e| {
+    //     !matches!(
+    //         e.label,
+    //         JavaLabel::WithKind | JavaLabel::WithType | JavaLabel::LocalType
+    //     )
     // });
     println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
-    parsed_graph.to_cosmograph_csv("output/cosmo.csv")?;
-    println!("Written cosmo");
-
-    return Ok(());
-
-    let mut scope_vec = parsed_graph.scopes.keys().cloned().collect::<Vec<_>>();
-    scope_vec.sort();
-    let scope = scope_vec.get(2).cloned().unwrap();
-    let full_graph = ScopeGraph::new(scope_vec, parsed_graph.edges);
-    let mut partial_graph = get_scopegraph_section(&scope, &full_graph, 3);
-
-    // partial_graph.filter_scopes(|s| !s.is_data());
-
-    let mut style = PlantUmlStyleSheet::new();
-    style.push(CssClass::new_class(
-        "starting_scope".to_string(),
-        ElementCss::new().background_color(Color::LIGHT_CYAN),
-    ));
-
-    let mut graph = PlantUmlDiagram::new("raw_data");
-    graph.set_style_sheet(style);
-    for s in full_graph.scopes {
-        let mut item = PlantUmlItem::node(s.id(), &s.name, s.graph_node_type());
-        if s == scope {
-            item = item.add_class("starting_scope");
-        }
-        graph.push(item);
-    }
-    for e in full_graph.edges {
-        let item = PlantUmlItem::edge(e.from.id(), e.to.id(), &e.label, EdgeDirection::Up);
-        graph.push(item);
-    }
-
-    println!("graph.num_items(): {0:?}", graph.num_items());
-    graph.render_to_file("output/parsed_graph.puml")?;
-
+    std::fs::create_dir_all("./output/")?;
+    parsed_graph.to_cosmograph_csv("./output/cosmo.csv")?;
+    println!("Written scope graph to output/cosmo.csv");
     Ok(())
 }
 

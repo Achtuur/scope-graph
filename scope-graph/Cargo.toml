@@ -20,16 +20,8 @@ deepsize = "0.2.0"
 criterion = "0.6.0"
 
 [[bench]]
-name = "sg-query"
-harness= false
-
-[[bench]]
-name="sg-simple"
-harness = false
-
-[[bench]]
 name = "sg-patterns"
-harness = false
+harness= false
 
 [[bench]]
 name="contains"

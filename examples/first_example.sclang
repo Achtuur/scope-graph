@@ -1,3 +1,0 @@
-let x = 3;
-let times_two = fun(x: num) { x + x };
-times_two(x)

@@ -1,8 +1,0 @@
-let r = {x = 3, y = false};
-let c = r.x + r.x;
-let d = c + r.x;
-let f = fun(r: {x: num, y: bool}) {
-    let p = r.x;
-    p + p
-};
-f(r)

@@ -115,13 +115,13 @@ pub enum PlantUmlItemKind {
 
 impl Ord for PlantUmlItemKind {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.partial_cmp(other).unwrap()
+        self.num().cmp(&other.num())
     }
 }
 
 impl PartialOrd for PlantUmlItemKind {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.num().cmp(&other.num()))
+        Some(self.cmp(other))
     }
 }
 
@@ -144,13 +144,13 @@ pub struct PlantUmlItem {
 
 impl PartialOrd for PlantUmlItem {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.kind.cmp(&other.kind))
+        Some(self.cmp(other))
     }
 }
 
 impl Ord for PlantUmlItem {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.partial_cmp(other).unwrap()
+        self.kind.cmp(&other.kind)
     }
 }
 

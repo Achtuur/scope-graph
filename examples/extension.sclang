@@ -1,9 +1,0 @@
-let r = {x = 3, y = false};
-let a = r.x;
-let q = {z = 4, x = true} extends r;
-let b = q.x;
-let p = with q do {
-    let z = z;
-    z
-};
-a

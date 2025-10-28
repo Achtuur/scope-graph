@@ -1,9 +1,0 @@
-[package]
-name = "sg-parse"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-scopegraphs = {workspace = true}
-scope-graph = { path= "../scope-graph" }
-sclang = { path = "../sclang" }

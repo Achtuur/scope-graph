@@ -6,7 +6,7 @@ use rand::{rngs::{SmallRng, ThreadRng}, Rng, SeedableRng};
 use crate::{bench_util::{construct_cached_graph, Graph, HEAD_RANGE}, generator::GraphPattern, graph::{CachedScopeGraph, GraphRenderOptions, QueryResult, QueryStats, ScopeGraph}, order::{LabelOrder, LabelOrderBuilder}, regex::{dfs::RegexAutomaton, Regex}, scope::Scope, SgData, SgLabel, SgProjection};
 use serde::{Deserialize, Serialize};
 
-const QUERY_SIZES: &[usize] = &[1, 2, 4];
+const QUERY_SIZES: &[usize] = &[1, 5, 10];
 const NUM_SUBJECTS: usize = 50;
 const NUM_RUNS: usize = 5;
 const NUM_WARMUP: usize = 3;
