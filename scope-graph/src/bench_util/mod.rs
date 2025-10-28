@@ -52,7 +52,7 @@ pub fn construct_cached_graph(
 ) -> CachedScopeGraph<SgLabel, SgData> {
     let _lock = SG_CREATION_LOCK.lock().unwrap();
     let graph = CachedScopeGraph::<SgLabel, SgData>::new();
-    let g = GraphGenerator::new(graph).with_patterns(pattern).build();
+    let g = GraphGenerator::with_graph(graph).with_patterns(pattern).build();
     Scope::reset_counter();
     g
 }

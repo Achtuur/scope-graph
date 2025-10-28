@@ -31,6 +31,8 @@ fn graph_builder() -> UsedScopeGraph {
         GraphPattern::Linear(1),
         GraphPattern::Decl(SgData::var("x", "int")),
         GraphPattern::Circle(3),
+        GraphPattern::Tree(3),
+        GraphPattern::Linear(15),
         // GraphPattern::Decl(SgData::var("x1", "int")),
         // GraphPattern::Decl(SgData::var("x2", "int")),
         // GraphPattern::Decl(SgData::var("x3", "int")),
@@ -43,14 +45,14 @@ fn graph_builder() -> UsedScopeGraph {
         // GraphPattern::Decl(SgData::var("x10", "int")),
         // GraphPattern::Decl(SgData::var("x11", "int")),
         // GraphPattern::Decl(SgData::var("x12", "int")),
-        GraphPattern::Linear(3),
+        // GraphPattern::Linear(3),
         GraphPattern::Decl(SgData::var("y", "int")),
         // GraphPattern::Diamond(16, 1),
         GraphPattern::Tree(2),
         // GraphPattern::Join,
         GraphPattern::Linear(5),
     ];
-    let graph = GraphGenerator::new(graph).with_patterns(patterns).build();
+    let graph = GraphGenerator::with_graph(graph).with_patterns(patterns).build();
     graph
         .as_uml_diagram("graph", &GraphRenderOptions::default())
         .render_to_file("output/output0.puml")
@@ -77,7 +79,7 @@ fn query_test(graph: &mut UsedScopeGraph) {
     matcher.to_mmd().render_to_file("output/regex.md").unwrap();
 
     let x_match: Arc<str> = Arc::from("x");
-    let query_scope_set = [(x_match.clone(), vec![16]), (x_match.clone(), vec![11])];
+    let query_scope_set = [(x_match.clone(), vec![16]), (x_match.clone(), vec![22])];
 
     for (idx, set) in query_scope_set.into_iter().enumerate() {
         let title = format!(
@@ -93,10 +95,12 @@ fn query_test(graph: &mut UsedScopeGraph) {
         let timer = std::time::Instant::now();
         let (res_uml, res_mmd) = start_scopes
             .into_iter()
-            .flat_map(|s| {
+            .map(|s| {
                 let scope = graph.first_scope_without_data(s).unwrap();
-                graph.query_proj(scope, &matcher, &order, SgProjection::VarName, p.clone())
+                graph.query_proj_stats(scope, &matcher, &order, SgProjection::VarName, p.clone(), true)
             })
+            .inspect(|(_, stats)| tracing::info!("stats: {stats}"))
+            .flat_map(|(qr, _)| qr)
             .fold((Vec::new(), Vec::new()), |(mut uml_acc, mut mmd_acc), r| {
                 let fg_class = ForeGroundColor::next_class();
                 let uml = r.path.as_uml(fg_class.clone(), true);
@@ -105,6 +109,8 @@ fn query_test(graph: &mut UsedScopeGraph) {
                 mmd_acc.extend(mmd);
                 (uml_acc, mmd_acc)
             });
+
+        // println!("graph.resolve_cache: {0:#?}", graph.cache());
 
         println!("{:?}", timer.elapsed());
         // mmd
@@ -158,7 +164,7 @@ fn diamond_example() {
     graph.add_edge(s4, s3, SgLabel::Parent);
     let sd0 = graph.add_decl(s0, SgLabel::Declaration, SgData::var("x", "int"));
 
-    
+
     graph
         .as_uml_diagram("circle sg", &GraphRenderOptions::default())
         .render_to_file("output/diamond0.puml")
@@ -230,7 +236,7 @@ fn aron_example() {
         SgProjection::VarName,
         wfd.clone(),
     );
-    
+
     println!("env: {0:?}", env);
 
     let mut style_sheet: PlantUmlStyleSheet = [
@@ -292,6 +298,8 @@ fn aron_example() {
     diagram.push(PlantUmlItem::edge(s0.uml_id(), sd0.uml_id(), "D", EdgeDirection::Left));
     diagram.push(PlantUmlItem::edge(s2.uml_id(), sd2.uml_id(), "D", EdgeDirection::Right));
 
+    println!("{:?}", graph.cache());
+
     let mut cache = graph.generate_cache_uml();
     for item in &mut cache {
         match item.node_id() {
@@ -300,6 +308,8 @@ fn aron_example() {
             _ => ()
         }
     }
+
+    println!("cache: {0:?}", cache);
 
     let mut d1 = diagram.clone();
     d1.extend(cache);
@@ -344,16 +354,16 @@ fn aron_example() {
 
 fn main() {
     tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::TRACE)
+        .with_max_level(tracing::Level::INFO)
         .init();
     aron_example();
-    Scope::reset_counter();
+    // Scope::reset_counter();
 
-    diamond_example();
-    Scope::reset_counter();
+    // diamond_example();
+    // Scope::reset_counter();
 
-    let mut graph = graph_builder();
-    query_test(&mut graph);
+    // let mut graph = graph_builder();
+    // query_test(&mut graph);
 }
 
 fn save_graph(graph: &UsedScopeGraph, fname: &str) {

@@ -1,0 +1,4562 @@
+{
+  "sg_tree": {
+    "fanchain-25-10": {
+      "tree-40": {
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 290861
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 277,
+            "nodes_visited": 278,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.0101569835,
+            "cache_size": 1514,
+            "graph_size": 149060
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 2608290
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 2770,
+            "nodes_visited": 2780,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 34.148125,
+            "cache_size": 5090120,
+            "graph_size": 1490600
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1332992
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1385,
+            "nodes_visited": 1390,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 12.005112,
+            "cache_size": 1789482,
+            "graph_size": 745300
+          }
+        },
+        "cached": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 1400671
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 748784
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 13368
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 17394
+            },
+            "edges_traversed": 294,
+            "nodes_visited": 304,
+            "cache_reads": 304,
+            "cache_writes": 45,
+            "cache_hits": 9,
+            "cache_size_estimate": 39.404453,
+            "cache_size": 5873628,
+            "graph_size": 1490600
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1027613
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 530056
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 12125
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 11385
+            },
+            "edges_traversed": 284,
+            "nodes_visited": 289,
+            "cache_reads": 289,
+            "cache_writes": 35,
+            "cache_hits": 4,
+            "cache_size_estimate": 15.778975,
+            "cache_size": 2352014,
+            "graph_size": 745300
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 695274
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 339232
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 6649
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 5518
+            },
+            "edges_traversed": 277,
+            "nodes_visited": 278,
+            "cache_reads": 278,
+            "cache_writes": 28,
+            "cache_hits": 0,
+            "cache_size_estimate": 2.5121026,
+            "cache_size": 374454,
+            "graph_size": 149060
+          }
+        }
+      },
+      "tree-80": {
+        "base": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1361363
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1385,
+            "nodes_visited": 1390,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 6.58571,
+            "cache_size": 1794290,
+            "graph_size": 1362260
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 2681175
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 2770,
+            "nodes_visited": 2780,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 18.735542,
+            "cache_size": 5104536,
+            "graph_size": 2724520
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 360822
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 277,
+            "nodes_visited": 278,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.005556942,
+            "cache_size": 1514,
+            "graph_size": 272452
+          }
+        },
+        "cached": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 835285
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 428126
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 7335
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 6014
+            },
+            "edges_traversed": 277,
+            "nodes_visited": 278,
+            "cache_reads": 278,
+            "cache_writes": 28,
+            "cache_hits": 0,
+            "cache_size_estimate": 1.3743852,
+            "cache_size": 374454,
+            "graph_size": 272452
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 1419241
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 781406
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 13515
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 18734
+            },
+            "edges_traversed": 294,
+            "nodes_visited": 304,
+            "cache_reads": 304,
+            "cache_writes": 45,
+            "cache_hits": 9,
+            "cache_size_estimate": 21.646572,
+            "cache_size": 5897652,
+            "graph_size": 2724520
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1081191
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 594030
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 9900
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 12084
+            },
+            "edges_traversed": 285,
+            "nodes_visited": 290,
+            "cache_reads": 290,
+            "cache_writes": 36,
+            "cache_hits": 4,
+            "cache_size_estimate": 8.668058,
+            "cache_size": 2361630,
+            "graph_size": 1362260
+          }
+        }
+      },
+      "tree-160": {
+        "base": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 2587077
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 2770,
+            "nodes_visited": 2780,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 9.849379,
+            "cache_size": 5114152,
+            "graph_size": 5192360
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1741311
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1385,
+            "nodes_visited": 1390,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 3.4556346,
+            "cache_size": 1794290,
+            "graph_size": 2596180
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 293490
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 277,
+            "nodes_visited": 278,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.0029158224,
+            "cache_size": 1514,
+            "graph_size": 519236
+          }
+        },
+        "cached": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 1578715
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 907942
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 13644
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 18273
+            },
+            "edges_traversed": 294,
+            "nodes_visited": 304,
+            "cache_reads": 304,
+            "cache_writes": 45,
+            "cache_hits": 9,
+            "cache_size_estimate": 11.395367,
+            "cache_size": 5916884,
+            "graph_size": 5192360
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1176844
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 676835
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 10362
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 11381
+            },
+            "edges_traversed": 285,
+            "nodes_visited": 290,
+            "cache_reads": 290,
+            "cache_writes": 36,
+            "cache_hits": 4,
+            "cache_size_estimate": 4.548279,
+            "cache_size": 2361630,
+            "graph_size": 2596180
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1016051
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 484319
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 6606
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 5596
+            },
+            "edges_traversed": 277,
+            "nodes_visited": 278,
+            "cache_reads": 278,
+            "cache_writes": 28,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.7211634,
+            "cache_size": 374454,
+            "graph_size": 519236
+          }
+        }
+      }
+    },
+    "linear-50": {
+      "tree-160": {
+        "base": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 297274
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 360,
+            "nodes_visited": 365,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.5599892,
+            "cache_size": 280829,
+            "graph_size": 2507450
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 60876
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 72,
+            "nodes_visited": 73,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.0015334304,
+            "cache_size": 769,
+            "graph_size": 501490
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 613199
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 720,
+            "nodes_visited": 730,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 1.4536918,
+            "cache_size": 729012,
+            "graph_size": 5014900
+          }
+        },
+        "cached": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 458734
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 333453
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 9983
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 3914
+            },
+            "edges_traversed": 89,
+            "nodes_visited": 99,
+            "cache_reads": 99,
+            "cache_writes": 70,
+            "cache_hits": 9,
+            "cache_size_estimate": 1.6534846,
+            "cache_size": 829206,
+            "graph_size": 5014900
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 401370
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 298984
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 7959
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 2446
+            },
+            "edges_traversed": 80,
+            "nodes_visited": 85,
+            "cache_reads": 85,
+            "cache_writes": 61,
+            "cache_hits": 4,
+            "cache_size_estimate": 0.7218788,
+            "cache_size": 362015,
+            "graph_size": 2507450
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 353990
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 271933
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 6186
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 1210
+            },
+            "edges_traversed": 72,
+            "nodes_visited": 73,
+            "cache_reads": 73,
+            "cache_writes": 53,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.12354185,
+            "cache_size": 61955,
+            "graph_size": 501490
+          }
+        }
+      },
+      "tree-40": {
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 58091
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 72,
+            "nodes_visited": 73,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.005856192,
+            "cache_size": 769,
+            "graph_size": 131314
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 593570
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 720,
+            "nodes_visited": 730,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 5.536805,
+            "cache_size": 727060,
+            "graph_size": 1313140
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 303422
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 360,
+            "nodes_visited": 365,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 2.1356215,
+            "cache_size": 280437,
+            "graph_size": 656570
+          }
+        },
+        "cached": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 213371
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 133768
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 6005
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 1192
+            },
+            "edges_traversed": 72,
+            "nodes_visited": 73,
+            "cache_reads": 73,
+            "cache_writes": 53,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.47180805,
+            "cache_size": 61955,
+            "graph_size": 131314
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 262426
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 162365
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 7991
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 2552
+            },
+            "edges_traversed": 79,
+            "nodes_visited": 84,
+            "cache_reads": 84,
+            "cache_writes": 60,
+            "cache_hits": 4,
+            "cache_size_estimate": 2.750895,
+            "cache_size": 361231,
+            "graph_size": 656570
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 311244
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 189338
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 9215
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 3899
+            },
+            "edges_traversed": 89,
+            "nodes_visited": 99,
+            "cache_reads": 99,
+            "cache_writes": 70,
+            "cache_hits": 9,
+            "cache_size_estimate": 6.2879357,
+            "cache_size": 825694,
+            "graph_size": 1313140
+          }
+        }
+      },
+      "tree-80": {
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 61709
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 72,
+            "nodes_visited": 73,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.003019167,
+            "cache_size": 769,
+            "graph_size": 254706
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 607811
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 720,
+            "nodes_visited": 730,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 2.8590922,
+            "cache_size": 728228,
+            "graph_size": 2547060
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 308858
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 360,
+            "nodes_visited": 365,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 1.1025614,
+            "cache_size": 280829,
+            "graph_size": 1273530
+          }
+        },
+        "cached": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 325087
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 221276
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 8223
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 2456
+            },
+            "edges_traversed": 80,
+            "nodes_visited": 85,
+            "cache_reads": 85,
+            "cache_writes": 61,
+            "cache_hits": 4,
+            "cache_size_estimate": 1.4213053,
+            "cache_size": 362015,
+            "graph_size": 1273530
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 387168
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 253522
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 14917
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 4039
+            },
+            "edges_traversed": 89,
+            "nodes_visited": 99,
+            "cache_reads": 99,
+            "cache_writes": 70,
+            "cache_hits": 9,
+            "cache_size_estimate": 3.2493854,
+            "cache_size": 827638,
+            "graph_size": 2547060
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 274519
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 189428
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 6459
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 3136
+            },
+            "edges_traversed": 72,
+            "nodes_visited": 73,
+            "cache_reads": 73,
+            "cache_writes": 53,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.24324122,
+            "cache_size": 61955,
+            "graph_size": 254706
+          }
+        }
+      }
+    }
+  },
+  "sg_circle": {
+    "fanchain-25-10": {
+      "circle-4": {
+        "cached": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 1298501
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 638856
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 8693
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 21032
+            },
+            "edges_traversed": 363,
+            "nodes_visited": 373,
+            "cache_reads": 373,
+            "cache_writes": 31,
+            "cache_hits": 9,
+            "cache_size_estimate": 74.05168,
+            "cache_size": 4933916,
+            "graph_size": 666280
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 993951
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 489127
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 7692
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 12062
+            },
+            "edges_traversed": 328,
+            "nodes_visited": 333,
+            "cache_reads": 333,
+            "cache_writes": 29,
+            "cache_hits": 4,
+            "cache_size_estimate": 31.227924,
+            "cache_size": 2080654,
+            "graph_size": 333140
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 673269
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 308398
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 6264
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 5975
+            },
+            "edges_traversed": 280,
+            "nodes_visited": 281,
+            "cache_reads": 281,
+            "cache_writes": 26,
+            "cache_hits": 0,
+            "cache_size_estimate": 5.199826,
+            "cache_size": 346454,
+            "graph_size": 66628
+          }
+        },
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 309333
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 280,
+            "nodes_visited": 281,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.02272318,
+            "cache_size": 1514,
+            "graph_size": 66628
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1315891
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1400,
+            "nodes_visited": 1405,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 24.028362,
+            "cache_size": 1600962,
+            "graph_size": 333140
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 2692907
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 2800,
+            "nodes_visited": 2810,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 65.381996,
+            "cache_size": 4356272,
+            "graph_size": 666280
+          }
+        }
+      },
+      "circle-64": {
+        "cached": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1108310
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 500554
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 7114
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 16260
+            },
+            "edges_traversed": 568,
+            "nodes_visited": 573,
+            "cache_reads": 573,
+            "cache_writes": 29,
+            "cache_hits": 4,
+            "cache_size_estimate": 28.000406,
+            "cache_size": 2080654,
+            "graph_size": 371540
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 1445664
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 649585
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 8411
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 26626
+            },
+            "edges_traversed": 735,
+            "nodes_visited": 745,
+            "cache_reads": 745,
+            "cache_writes": 31,
+            "cache_hits": 9,
+            "cache_size_estimate": 66.39818,
+            "cache_size": 4933916,
+            "graph_size": 743080
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 714169
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 326387
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 6203
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 7020
+            },
+            "edges_traversed": 340,
+            "nodes_visited": 341,
+            "cache_reads": 341,
+            "cache_writes": 26,
+            "cache_hits": 0,
+            "cache_size_estimate": 4.662405,
+            "cache_size": 346454,
+            "graph_size": 74308
+          }
+        },
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 323653
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 340,
+            "nodes_visited": 341,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.020374658,
+            "cache_size": 1514,
+            "graph_size": 74308
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 2907642
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 3400,
+            "nodes_visited": 3410,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 58.624535,
+            "cache_size": 4356272,
+            "graph_size": 743080
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1449391
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1700,
+            "nodes_visited": 1705,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 21.544949,
+            "cache_size": 1600962,
+            "graph_size": 371540
+          }
+        }
+      },
+      "circle-16": {
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 335595
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 292,
+            "nodes_visited": 293,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.022211138,
+            "cache_size": 1514,
+            "graph_size": 68164
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1423084
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1460,
+            "nodes_visited": 1465,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 23.486912,
+            "cache_size": 1600962,
+            "graph_size": 340820
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 2941163
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 2920,
+            "nodes_visited": 2930,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 63.90869,
+            "cache_size": 4356272,
+            "graph_size": 681640
+          }
+        },
+        "cached": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 1446109
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 704616
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 9654
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 23103
+            },
+            "edges_traversed": 437,
+            "nodes_visited": 447,
+            "cache_reads": 447,
+            "cache_writes": 31,
+            "cache_hits": 9,
+            "cache_size_estimate": 72.38301,
+            "cache_size": 4933916,
+            "graph_size": 681640
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 705061
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 324471
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 6618
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 6454
+            },
+            "edges_traversed": 292,
+            "nodes_visited": 293,
+            "cache_reads": 293,
+            "cache_writes": 26,
+            "cache_hits": 0,
+            "cache_size_estimate": 5.0826535,
+            "cache_size": 346454,
+            "graph_size": 68164
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1078415
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 522114
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 7301
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 15924
+            },
+            "edges_traversed": 376,
+            "nodes_visited": 381,
+            "cache_reads": 381,
+            "cache_writes": 29,
+            "cache_hits": 4,
+            "cache_size_estimate": 30.524237,
+            "cache_size": 2080654,
+            "graph_size": 340820
+          }
+        }
+      }
+    },
+    "linear-50": {
+      "circle-64": {
+        "cached": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 192902
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 88083
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 5507
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 2466
+            },
+            "edges_traversed": 135,
+            "nodes_visited": 136,
+            "cache_reads": 136,
+            "cache_writes": 51,
+            "cache_hits": 0,
+            "cache_size_estimate": 1.6204885,
+            "cache_size": 59715,
+            "graph_size": 36850
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 325143
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 122398
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 5815
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 7270
+            },
+            "edges_traversed": 333,
+            "nodes_visited": 338,
+            "cache_reads": 338,
+            "cache_writes": 54,
+            "cache_hits": 4,
+            "cache_size_estimate": 8.847517,
+            "cache_size": 326031,
+            "graph_size": 184250
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 421832
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 145520
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 6649
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 11898
+            },
+            "edges_traversed": 478,
+            "nodes_visited": 488,
+            "cache_reads": 488,
+            "cache_writes": 56,
+            "cache_hits": 9,
+            "cache_size_estimate": 19.410963,
+            "cache_size": 715294,
+            "graph_size": 368500
+          }
+        },
+        "base": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 395552
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 675,
+            "nodes_visited": 680,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 6.9613295,
+            "cache_size": 256525,
+            "graph_size": 184250
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 800404
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1350,
+            "nodes_visited": 1360,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 17.290312,
+            "cache_size": 637148,
+            "graph_size": 368500
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 76786
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 135,
+            "nodes_visited": 136,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.020868385,
+            "cache_size": 769,
+            "graph_size": 36850
+          }
+        }
+      },
+      "circle-4": {
+        "base": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 619901
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 750,
+            "nodes_visited": 760,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 32.988922,
+            "cache_size": 637148,
+            "graph_size": 193140
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 305879
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 375,
+            "nodes_visited": 380,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 13.2818165,
+            "cache_size": 256525,
+            "graph_size": 96570
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 59665
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 75,
+            "nodes_visited": 76,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.03981568,
+            "cache_size": 769,
+            "graph_size": 19314
+          }
+        },
+        "cached": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 233491
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 124636
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 6056
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 2623
+            },
+            "edges_traversed": 93,
+            "nodes_visited": 98,
+            "cache_reads": 98,
+            "cache_writes": 54,
+            "cache_hits": 4,
+            "cache_size_estimate": 16.88055,
+            "cache_size": 326031,
+            "graph_size": 96570
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 270014
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 148472
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 6497
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 4098
+            },
+            "edges_traversed": 106,
+            "nodes_visited": 116,
+            "cache_reads": 116,
+            "cache_writes": 56,
+            "cache_hits": 9,
+            "cache_size_estimate": 37.035004,
+            "cache_size": 715294,
+            "graph_size": 193140
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 177468
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 93118
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 5629
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 1283
+            },
+            "edges_traversed": 75,
+            "nodes_visited": 76,
+            "cache_reads": 76,
+            "cache_writes": 51,
+            "cache_hits": 0,
+            "cache_size_estimate": 3.0917988,
+            "cache_size": 59715,
+            "graph_size": 19314
+          }
+        }
+      },
+      "circle-16": {
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 62981
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 87,
+            "nodes_visited": 88,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.036882494,
+            "cache_size": 769,
+            "graph_size": 20850
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 638008
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 870,
+            "nodes_visited": 880,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 30.558655,
+            "cache_size": 637148,
+            "graph_size": 208500
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 326945
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 435,
+            "nodes_visited": 440,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 12.303356,
+            "cache_size": 256525,
+            "graph_size": 104250
+          }
+        },
+        "cached": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 295853
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 146391
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 6597
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 5634
+            },
+            "edges_traversed": 180,
+            "nodes_visited": 190,
+            "cache_reads": 190,
+            "cache_writes": 56,
+            "cache_hits": 9,
+            "cache_size_estimate": 34.306664,
+            "cache_size": 715294,
+            "graph_size": 208500
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 174969
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 88781
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 6141
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 1535
+            },
+            "edges_traversed": 87,
+            "nodes_visited": 88,
+            "cache_reads": 88,
+            "cache_writes": 51,
+            "cache_hits": 0,
+            "cache_size_estimate": 2.8640287,
+            "cache_size": 59715,
+            "graph_size": 20850
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 243117
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 122357
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 5992
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 3792
+            },
+            "edges_traversed": 141,
+            "nodes_visited": 146,
+            "cache_reads": 146,
+            "cache_writes": 54,
+            "cache_hits": 4,
+            "cache_size_estimate": 15.636978,
+            "cache_size": 326031,
+            "graph_size": 104250
+          }
+        }
+      }
+    }
+  },
+  "sg_diamond": {
+    "linear-50": {
+      "diamond-4-4": {
+        "cached": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 420381
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 252603
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 9713
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 8331
+            },
+            "edges_traversed": 96,
+            "nodes_visited": 106,
+            "cache_reads": 106,
+            "cache_writes": 74,
+            "cache_hits": 12,
+            "cache_size_estimate": 64.117355,
+            "cache_size": 1345054,
+            "graph_size": 209780
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 292392
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 167620
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 7595
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 1946
+            },
+            "edges_traversed": 91,
+            "nodes_visited": 92,
+            "cache_reads": 92,
+            "cache_writes": 69,
+            "cache_hits": 3,
+            "cache_size_estimate": 5.210935,
+            "cache_size": 109315,
+            "graph_size": 20978
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 364227
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 221153
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 8815
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 4573
+            },
+            "edges_traversed": 94,
+            "nodes_visited": 99,
+            "cache_reads": 99,
+            "cache_writes": 72,
+            "cache_hits": 7,
+            "cache_size_estimate": 28.910236,
+            "cache_size": 606479,
+            "graph_size": 104890
+          }
+        },
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 255026
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 301,
+            "nodes_visited": 302,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.03665745,
+            "cache_size": 769,
+            "graph_size": 20978
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 2577377
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 3010,
+            "nodes_visited": 3020,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 57.039375,
+            "cache_size": 1196572,
+            "graph_size": 209780
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1303807
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1505,
+            "nodes_visited": 1510,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 22.637669,
+            "cache_size": 474893,
+            "graph_size": 104890
+          }
+        }
+      },
+      "diamond-4-1": {
+        "base": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1218481
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1445,
+            "nodes_visited": 1450,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 19.587132,
+            "cache_size": 380813,
+            "graph_size": 97210
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 249546
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 289,
+            "nodes_visited": 290,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.039553545,
+            "cache_size": 769,
+            "graph_size": 19442
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 2360547
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 2890,
+            "nodes_visited": 2900,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 50.65796,
+            "cache_size": 984892,
+            "graph_size": 194420
+          }
+        },
+        "cached": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 247319
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 146227
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 7200
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 1721
+            },
+            "edges_traversed": 79,
+            "nodes_visited": 80,
+            "cache_reads": 80,
+            "cache_writes": 57,
+            "cache_hits": 3,
+            "cache_size_estimate": 4.412869,
+            "cache_size": 85795,
+            "graph_size": 19442
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 328583
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 191713
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 8277
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 6549
+            },
+            "edges_traversed": 84,
+            "nodes_visited": 94,
+            "cache_reads": 94,
+            "cache_writes": 62,
+            "cache_hits": 12,
+            "cache_size_estimate": 57.08538,
+            "cache_size": 1109854,
+            "graph_size": 194420
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 301916
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 173645
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 11056
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 4071
+            },
+            "edges_traversed": 82,
+            "nodes_visited": 87,
+            "cache_reads": 87,
+            "cache_writes": 60,
+            "cache_hits": 7,
+            "cache_size_estimate": 25.14551,
+            "cache_size": 488879,
+            "graph_size": 97210
+          }
+        }
+      },
+      "diamond-16-1": {
+        "base": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 4617409
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 5765,
+            "nodes_visited": 5770,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 36.036186,
+            "cache_size": 769805,
+            "graph_size": 106810
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1087258
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1153,
+            "nodes_visited": 1154,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.0359985,
+            "cache_size": 769,
+            "graph_size": 21362
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 9078917
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 11530,
+            "nodes_visited": 11540,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 105.195946,
+            "cache_size": 2247196,
+            "graph_size": 213620
+          }
+        },
+        "cached": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 693078
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 456497
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 10162
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 9706
+            },
+            "edges_traversed": 106,
+            "nodes_visited": 111,
+            "cache_reads": 111,
+            "cache_writes": 72,
+            "cache_hits": 19,
+            "cache_size_estimate": 47.588753,
+            "cache_size": 1016591,
+            "graph_size": 106810
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 471402
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 319605
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 8528
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 3481
+            },
+            "edges_traversed": 103,
+            "nodes_visited": 104,
+            "cache_reads": 104,
+            "cache_writes": 69,
+            "cache_hits": 15,
+            "cache_size_estimate": 7.274366,
+            "cache_size": 155395,
+            "graph_size": 21362
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 850747
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 568478
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 11328
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 16710
+            },
+            "edges_traversed": 108,
+            "nodes_visited": 118,
+            "cache_reads": 118,
+            "cache_writes": 74,
+            "cache_hits": 24,
+            "cache_size_estimate": 119.91228,
+            "cache_size": 2561566,
+            "graph_size": 213620
+          }
+        }
+      },
+      "diamond-4-2": {
+        "cached": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 266614
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 145575
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 7010
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 1836
+            },
+            "edges_traversed": 83,
+            "nodes_visited": 84,
+            "cache_reads": 84,
+            "cache_writes": 61,
+            "cache_hits": 3,
+            "cache_size_estimate": 4.692543,
+            "cache_size": 93635,
+            "graph_size": 19954
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 339549
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 182946
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 9373
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 4425
+            },
+            "edges_traversed": 86,
+            "nodes_visited": 91,
+            "cache_reads": 91,
+            "cache_writes": 64,
+            "cache_hits": 7,
+            "cache_size_estimate": 26.464819,
+            "cache_size": 528079,
+            "graph_size": 99770
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 364115
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 218252
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 8251
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 7310
+            },
+            "edges_traversed": 88,
+            "nodes_visited": 98,
+            "cache_reads": 98,
+            "cache_writes": 66,
+            "cache_hits": 12,
+            "cache_size_estimate": 59.549664,
+            "cache_size": 1188254,
+            "graph_size": 199540
+          }
+        },
+        "base": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1258162
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1465,
+            "nodes_visited": 1470,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 20.656158,
+            "cache_size": 412173,
+            "graph_size": 99770
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 257846
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 293,
+            "nodes_visited": 294,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.03853864,
+            "cache_size": 769,
+            "graph_size": 19954
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 2425777
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 2930,
+            "nodes_visited": 2940,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 52.894257,
+            "cache_size": 1055452,
+            "graph_size": 199540
+          }
+        }
+      },
+      "diamond-8-1": {
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 535721
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 577,
+            "nodes_visited": 578,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.038293,
+            "cache_size": 769,
+            "graph_size": 20082
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 2378199
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 2885,
+            "nodes_visited": 2890,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 25.419628,
+            "cache_size": 510477,
+            "graph_size": 100410
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 4586448
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 5770,
+            "nodes_visited": 5780,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 69.99601,
+            "cache_size": 1405660,
+            "graph_size": 200820
+          }
+        },
+        "cached": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 428721
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 265742
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 8590
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 5788
+            },
+            "edges_traversed": 90,
+            "nodes_visited": 95,
+            "cache_reads": 95,
+            "cache_writes": 64,
+            "cache_hits": 11,
+            "cache_size_estimate": 33.103424,
+            "cache_size": 664783,
+            "graph_size": 100410
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 510072
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 325380
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 8834
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 10127
+            },
+            "edges_traversed": 92,
+            "nodes_visited": 102,
+            "cache_reads": 102,
+            "cache_writes": 66,
+            "cache_hits": 16,
+            "cache_size_estimate": 79.3625,
+            "cache_size": 1593758,
+            "graph_size": 200820
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 330392
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 202093
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 8185
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 2395
+            },
+            "edges_traversed": 87,
+            "nodes_visited": 88,
+            "cache_reads": 88,
+            "cache_writes": 61,
+            "cache_hits": 7,
+            "cache_size_estimate": 5.4274974,
+            "cache_size": 108995,
+            "graph_size": 20082
+          }
+        }
+      }
+    },
+    "fanchain-25-10": {
+      "diamond-4-4": {
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1330963
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1121,
+            "nodes_visited": 1122,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.022169508,
+            "cache_size": 1514,
+            "graph_size": 68292
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 12529889
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 11210,
+            "nodes_visited": 11220,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 158.13155,
+            "cache_size": 10799120,
+            "graph_size": 682920
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 6239772
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 5605,
+            "nodes_visited": 5610,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 59.796898,
+            "cache_size": 4083650,
+            "graph_size": 341460
+          }
+        },
+        "cached": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 2467370
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 1429331
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 20208
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 50068
+            },
+            "edges_traversed": 301,
+            "nodes_visited": 311,
+            "cache_reads": 311,
+            "cache_writes": 49,
+            "cache_hits": 12,
+            "cache_size_estimate": 178.67598,
+            "cache_size": 12202140,
+            "graph_size": 682920
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 2273633
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 1202181
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 20989
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 28544
+            },
+            "edges_traversed": 299,
+            "nodes_visited": 304,
+            "cache_reads": 304,
+            "cache_writes": 47,
+            "cache_hits": 7,
+            "cache_size_estimate": 77.24873,
+            "cache_size": 5275470,
+            "graph_size": 341460
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1570381
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 856490
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 13495
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 8911
+            },
+            "edges_traversed": 296,
+            "nodes_visited": 297,
+            "cache_reads": 297,
+            "cache_writes": 44,
+            "cache_hits": 3,
+            "cache_size_estimate": 13.256808,
+            "cache_size": 905334,
+            "graph_size": 68292
+          }
+        }
+      },
+      "diamond-8-1": {
+        "cached": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 2556095
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 1402383
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 21579
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 49156
+            },
+            "edges_traversed": 295,
+            "nodes_visited": 300,
+            "cache_reads": 300,
+            "cache_writes": 39,
+            "cache_hits": 11,
+            "cache_size_estimate": 89.36243,
+            "cache_size": 6022670,
+            "graph_size": 336980
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 3319869
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 1872926
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 32294
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 97063
+            },
+            "edges_traversed": 297,
+            "nodes_visited": 307,
+            "cache_reads": 307,
+            "cache_writes": 41,
+            "cache_hits": 16,
+            "cache_size_estimate": 227.72478,
+            "cache_size": 15347740,
+            "graph_size": 673960
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1673388
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 949312
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 19079
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 15070
+            },
+            "edges_traversed": 292,
+            "nodes_visited": 293,
+            "cache_reads": 293,
+            "cache_writes": 36,
+            "cache_hits": 7,
+            "cache_size_estimate": 13.428305,
+            "cache_size": 905014,
+            "graph_size": 67396
+          }
+        },
+        "base": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 11320194
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 11085,
+            "nodes_visited": 11090,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 67.41008,
+            "cache_size": 4543170,
+            "graph_size": 336980
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 2277904
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 2217,
+            "nodes_visited": 2218,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.022464242,
+            "cache_size": 1514,
+            "graph_size": 67396
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 22172927
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 22170,
+            "nodes_visited": 22180,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 199.505,
+            "cache_size": 13445840,
+            "graph_size": 673960
+          }
+        }
+      },
+      "diamond-16-1": {
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 4433432
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 4433,
+            "nodes_visited": 4434,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.022045547,
+            "cache_size": 1514,
+            "graph_size": 68676
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 22473036
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 22165,
+            "nodes_visited": 22170,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 113.140686,
+            "cache_size": 7770050,
+            "graph_size": 343380
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 44781917
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 44330,
+            "nodes_visited": 44340,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 348.47574,
+            "cache_size": 23931920,
+            "graph_size": 686760
+          }
+        },
+        "cached": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 2511768
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 1410638
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 22290
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 22991
+            },
+            "edges_traversed": 308,
+            "nodes_visited": 309,
+            "cache_reads": 309,
+            "cache_writes": 44,
+            "cache_hits": 15,
+            "cache_size_estimate": 21.569893,
+            "cache_size": 1481334,
+            "graph_size": 68676
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 6004059
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 3442385
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 62817
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 216096
+            },
+            "edges_traversed": 313,
+            "nodes_visited": 323,
+            "cache_reads": 323,
+            "cache_writes": 49,
+            "cache_hits": 24,
+            "cache_size_estimate": 399.09927,
+            "cache_size": 27408540,
+            "graph_size": 686760
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 4522004
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 2608352
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 38466
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 108884
+            },
+            "edges_traversed": 311,
+            "nodes_visited": 316,
+            "cache_reads": 316,
+            "cache_writes": 47,
+            "cache_hits": 19,
+            "cache_size_estimate": 151.46297,
+            "cache_size": 10401870,
+            "graph_size": 343380
+          }
+        }
+      },
+      "diamond-4-1": {
+        "base": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 11315940
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 11090,
+            "nodes_visited": 11100,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 122.87734,
+            "cache_size": 8202800,
+            "graph_size": 667560
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 5737215
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 5545,
+            "nodes_visited": 5550,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 43.88714,
+            "cache_size": 2929730,
+            "graph_size": 333780
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1124420
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1109,
+            "nodes_visited": 1110,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.02267961,
+            "cache_size": 1514,
+            "graph_size": 66756
+          }
+        },
+        "cached": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 2046653
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 1152629
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 19190
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 48391
+            },
+            "edges_traversed": 289,
+            "nodes_visited": 299,
+            "cache_reads": 299,
+            "cache_writes": 37,
+            "cache_hits": 12,
+            "cache_size_estimate": 139.57307,
+            "cache_size": 9317340,
+            "graph_size": 667560
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1016103
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 513994
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 10241
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 8899
+            },
+            "edges_traversed": 284,
+            "nodes_visited": 285,
+            "cache_reads": 285,
+            "cache_writes": 32,
+            "cache_hits": 3,
+            "cache_size_estimate": 9.240428,
+            "cache_size": 616854,
+            "graph_size": 66756
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1527157
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 815744
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 13416
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 31748
+            },
+            "edges_traversed": 287,
+            "nodes_visited": 292,
+            "cache_reads": 292,
+            "cache_writes": 35,
+            "cache_hits": 7,
+            "cache_size_estimate": 57.41911,
+            "cache_size": 3833070,
+            "graph_size": 333780
+          }
+        }
+      },
+      "diamond-4-2": {
+        "base": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 5928273
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 5565,
+            "nodes_visited": 5570,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 49.271126,
+            "cache_size": 3314370,
+            "graph_size": 336340
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1240671
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1113,
+            "nodes_visited": 1114,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.022506988,
+            "cache_size": 1514,
+            "graph_size": 67268
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 11751472
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 11130,
+            "nodes_visited": 11140,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 134.80765,
+            "cache_size": 9068240,
+            "graph_size": 672680
+          }
+        },
+        "cached": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1196755
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 625077
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 11145
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 9128
+            },
+            "edges_traversed": 288,
+            "nodes_visited": 289,
+            "cache_reads": 289,
+            "cache_writes": 36,
+            "cache_hits": 3,
+            "cache_size_estimate": 10.599602,
+            "cache_size": 713014,
+            "graph_size": 67268
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1764549
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 957489
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 14331
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 27856
+            },
+            "edges_traversed": 291,
+            "nodes_visited": 296,
+            "cache_reads": 296,
+            "cache_writes": 39,
+            "cache_hits": 7,
+            "cache_size_estimate": 64.1296,
+            "cache_size": 4313870,
+            "graph_size": 336340
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 2212155
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 1177010
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 17412
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 49595
+            },
+            "edges_traversed": 293,
+            "nodes_visited": 303,
+            "cache_reads": 303,
+            "cache_writes": 41,
+            "cache_hits": 12,
+            "cache_size_estimate": 152.80582,
+            "cache_size": 10278940,
+            "graph_size": 672680
+          }
+        }
+      }
+    }
+  },
+  "sg_linear": {
+    "fanchain-25-10": {
+      "linear-20": {
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 588131
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 296,
+            "nodes_visited": 297,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.022045547,
+            "cache_size": 1514,
+            "graph_size": 68676
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 5114615
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 2960,
+            "nodes_visited": 2970,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 118.8916,
+            "cache_size": 8165000,
+            "graph_size": 686760
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 2613196
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1480,
+            "nodes_visited": 1485,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 50.24361,
+            "cache_size": 3450530,
+            "graph_size": 343380
+          }
+        },
+        "cached": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 2245356
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 1449846
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 16627
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 21869
+            },
+            "edges_traversed": 301,
+            "nodes_visited": 311,
+            "cache_reads": 311,
+            "cache_writes": 52,
+            "cache_hits": 9,
+            "cache_size_estimate": 132.82281,
+            "cache_size": 9121740,
+            "graph_size": 686760
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1664614
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 975968
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 14528
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 6169
+            },
+            "edges_traversed": 296,
+            "nodes_visited": 297,
+            "cache_reads": 297,
+            "cache_writes": 47,
+            "cache_hits": 0,
+            "cache_size_estimate": 12.13603,
+            "cache_size": 833454,
+            "graph_size": 68676
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 1869613
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 1117765
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 19087
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 15572
+            },
+            "edges_traversed": 299,
+            "nodes_visited": 304,
+            "cache_reads": 304,
+            "cache_writes": 50,
+            "cache_hits": 4,
+            "cache_size_estimate": 63.405994,
+            "cache_size": 4354470,
+            "graph_size": 343380
+          }
+        }
+      },
+      "linear-80": {
+        "cached": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 7474178
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 5770870
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 48276
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 7474
+            },
+            "edges_traversed": 356,
+            "nodes_visited": 357,
+            "cache_reads": 357,
+            "cache_writes": 107,
+            "cache_hits": 0,
+            "cache_size_estimate": 29.864506,
+            "cache_size": 2280334,
+            "graph_size": 76356
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 8440461
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 6553814
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 46158
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 25196
+            },
+            "edges_traversed": 361,
+            "nodes_visited": 371,
+            "cache_reads": 371,
+            "cache_writes": 112,
+            "cache_hits": 9,
+            "cache_size_estimate": 309.02505,
+            "cache_size": 23595916,
+            "graph_size": 763560
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 7819405
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 6090180
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 38600
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 14972
+            },
+            "edges_traversed": 359,
+            "nodes_visited": 364,
+            "cache_reads": 364,
+            "cache_writes": 110,
+            "cache_hits": 4,
+            "cache_size_estimate": 151.7742,
+            "cache_size": 11588870,
+            "graph_size": 381780
+          }
+        },
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 1338698
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 356,
+            "nodes_visited": 357,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.019828172,
+            "cache_size": 1514,
+            "graph_size": 76356
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 12287291
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 3560,
+            "nodes_visited": 3570,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 277.52246,
+            "cache_size": 21190504,
+            "graph_size": 763560
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 6138662
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1780,
+            "nodes_visited": 1785,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 120.98657,
+            "cache_size": 9238050,
+            "graph_size": 381780
+          }
+        }
+      },
+      "linear-40": {
+        "cached": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 3385427
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 2313988
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 22068
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 15670
+            },
+            "edges_traversed": 319,
+            "nodes_visited": 324,
+            "cache_reads": 324,
+            "cache_writes": 70,
+            "cache_hits": 4,
+            "cache_size_estimate": 95.188805,
+            "cache_size": 6780870,
+            "graph_size": 356180
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 3532170
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 2431677
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 23752
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 26270
+            },
+            "edges_traversed": 321,
+            "nodes_visited": 331,
+            "cache_reads": 331,
+            "cache_writes": 72,
+            "cache_hits": 9,
+            "cache_size_estimate": 196.17245,
+            "cache_size": 13974540,
+            "graph_size": 712360
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 3073396
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 2072044
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 20424
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 7579
+            },
+            "edges_traversed": 316,
+            "nodes_visited": 317,
+            "cache_reads": 317,
+            "cache_writes": 67,
+            "cache_hits": 0,
+            "cache_size_estimate": 18.512184,
+            "cache_size": 1318734,
+            "graph_size": 71236
+          }
+        },
+        "base": {
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 801404
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 316,
+            "nodes_visited": 317,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.021253299,
+            "cache_size": 1514,
+            "graph_size": 71236
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 4252536
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1580,
+            "nodes_visited": 1585,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 75.68715,
+            "cache_size": 5391650,
+            "graph_size": 356180
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 7850092
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 3160,
+            "nodes_visited": 3170,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 175.9296,
+            "cache_size": 12532520,
+            "graph_size": 712360
+          }
+        }
+      }
+    },
+    "linear-50": {
+      "linear-80": {
+        "base": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 1940824
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1510,
+            "nodes_visited": 1520,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 54.652576,
+            "cache_size": 2125876,
+            "graph_size": 388980
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 988696
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 755,
+            "nodes_visited": 760,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 23.932465,
+            "cache_size": 930925,
+            "graph_size": 194490
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 201177
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 151,
+            "nodes_visited": 152,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.019769654,
+            "cache_size": 769,
+            "graph_size": 38898
+          }
+        },
+        "cached": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 989788
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 705498
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 17437
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 6341
+            },
+            "edges_traversed": 156,
+            "nodes_visited": 166,
+            "cache_reads": 166,
+            "cache_writes": 137,
+            "cache_hits": 9,
+            "cache_size_estimate": 60.808422,
+            "cache_size": 2365326,
+            "graph_size": 388980
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 938114
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 659848
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 16048
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 4229
+            },
+            "edges_traversed": 154,
+            "nodes_visited": 159,
+            "cache_reads": 159,
+            "cache_writes": 135,
+            "cache_hits": 4,
+            "cache_size_estimate": 29.979717,
+            "cache_size": 1166151,
+            "graph_size": 194490
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 901623
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 622764
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 16837
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 2650
+            },
+            "edges_traversed": 151,
+            "nodes_visited": 152,
+            "cache_reads": 152,
+            "cache_writes": 132,
+            "cache_hits": 0,
+            "cache_size_estimate": 5.918942,
+            "cache_size": 230235,
+            "graph_size": 38898
+          }
+        }
+      },
+      "linear-40": {
+        "base": {
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 653786
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 555,
+            "nodes_visited": 560,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 17.214903,
+            "cache_size": 581485,
+            "graph_size": 168890
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 124477
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 111,
+            "nodes_visited": 112,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.022766298,
+            "cache_size": 769,
+            "graph_size": 33778
+          },
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 1248534
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 1110,
+            "nodes_visited": 1120,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 39.660015,
+            "cache_size": 1339636,
+            "graph_size": 337780
+          }
+        },
+        "cached": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 535222
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 339017
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 12323
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 5178
+            },
+            "edges_traversed": 116,
+            "nodes_visited": 126,
+            "cache_reads": 126,
+            "cache_writes": 97,
+            "cache_hits": 9,
+            "cache_size_estimate": 44.16265,
+            "cache_size": 1491726,
+            "graph_size": 337780
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 503409
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 312110
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 18899
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 3058
+            },
+            "edges_traversed": 114,
+            "nodes_visited": 119,
+            "cache_reads": 119,
+            "cache_writes": 95,
+            "cache_hits": 4,
+            "cache_size_estimate": 21.592485,
+            "cache_size": 729351,
+            "graph_size": 168890
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 462565
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 294139
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 10346
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 1810
+            },
+            "edges_traversed": 111,
+            "nodes_visited": 112,
+            "cache_reads": 112,
+            "cache_writes": 92,
+            "cache_hits": 0,
+            "cache_size_estimate": 4.229824,
+            "cache_size": 142875,
+            "graph_size": 33778
+          }
+        }
+      },
+      "linear-20": {
+        "cached": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 323482
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 185898
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 9650
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 4345
+            },
+            "edges_traversed": 96,
+            "nodes_visited": 106,
+            "cache_reads": 106,
+            "cache_writes": 77,
+            "cache_hits": 9,
+            "cache_size_estimate": 51.480476,
+            "cache_size": 1099726,
+            "graph_size": 213620
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 282179
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 160562
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 7957
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 1470
+            },
+            "edges_traversed": 91,
+            "nodes_visited": 92,
+            "cache_reads": 92,
+            "cache_writes": 72,
+            "cache_hits": 0,
+            "cache_size_estimate": 4.8532443,
+            "cache_size": 103675,
+            "graph_size": 21362
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 307648
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 175729
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 8784
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 2940
+            },
+            "edges_traversed": 94,
+            "nodes_visited": 99,
+            "cache_reads": 99,
+            "cache_writes": 75,
+            "cache_hits": 4,
+            "cache_size_estimate": 24.96728,
+            "cache_size": 533351,
+            "graph_size": 106810
+          }
+        },
+        "base": {
+          "10": {
+            "time": {
+              "secs": 0,
+              "nanos": 957722
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 910,
+            "nodes_visited": 920,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 46.19586,
+            "cache_size": 986836,
+            "graph_size": 213620
+          },
+          "1": {
+            "time": {
+              "secs": 0,
+              "nanos": 94711
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 91,
+            "nodes_visited": 92,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 0.0359985,
+            "cache_size": 769,
+            "graph_size": 21362
+          },
+          "5": {
+            "time": {
+              "secs": 0,
+              "nanos": 460091
+            },
+            "circle_check_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_store_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "cache_read_time": {
+              "secs": 0,
+              "nanos": 0
+            },
+            "edges_traversed": 455,
+            "nodes_visited": 460,
+            "cache_reads": 0,
+            "cache_writes": 0,
+            "cache_hits": 0,
+            "cache_size_estimate": 19.880396,
+            "cache_size": 424685,
+            "graph_size": 106810
+          }
+        }
+      }
+    }
+  }
+}

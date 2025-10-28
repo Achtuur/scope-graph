@@ -89,7 +89,7 @@ impl QueryProfiler {
     }
 }
 
-#[derive(Debug, Default, serde::Serialize)]
+#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct QueryStats {
     pub time: Duration,
     pub circle_check_time: Duration,
@@ -102,6 +102,8 @@ pub struct QueryStats {
     pub cache_hits: usize,
     /// cache size / scope map size
     pub cache_size_estimate: f32,
+    pub cache_size: usize,
+    pub graph_size: usize,
 }
 
 impl std::ops::Add for QueryStats {
@@ -119,6 +121,8 @@ impl std::ops::Add for QueryStats {
             cache_writes: self.cache_writes + other.cache_writes,
             cache_hits: self.cache_hits + other.cache_hits,
             cache_size_estimate: self.cache_size_estimate + other.cache_size_estimate,
+            cache_size: self.cache_size + other.cache_size,
+            graph_size: self.graph_size + other.graph_size,
         }
     }
 }
@@ -138,6 +142,8 @@ impl std::ops::Div<usize> for QueryStats {
             cache_writes: self.cache_writes / rhs,
             cache_hits: self.cache_hits / rhs,
             cache_size_estimate: self.cache_size_estimate / rhs as f32,
+            cache_size: self.cache_size / rhs,
+            graph_size: self.graph_size / rhs,
         }
     }
 }
@@ -146,14 +152,16 @@ impl std::fmt::Display for QueryStats {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Time: {:?}, Edges traversed: {}, Nodes visited: {}, Cache reads: {}, Cache writes: {}, Cache hits: {}, Cache size estimate: {} bytes",
+            "Time: {:?}, Edges traversed: {}, Nodes visited: {}, Cache reads: {}, Cache writes: {}, Cache hits: {}, Cache size estimate: {}% of graph, Cache size: {}, Graph size: {}",
             self.time,
             self.edges_traversed,
             self.nodes_visited,
             self.cache_reads,
             self.cache_writes,
             self.cache_hits,
-            self.cache_size_estimate
+            self.cache_size_estimate,
+            self.cache_size,
+            self.graph_size,
         )
     }
 }
@@ -172,6 +180,8 @@ impl From<&QueryProfiler> for QueryStats {
             cache_hits: profiler.cache_hits.load(std::sync::atomic::Ordering::Relaxed),
             cache_size_estimate: profiler.cache_size_estimate
                 .load(std::sync::atomic::Ordering::Relaxed) as f32,
+            cache_size: 0,
+            graph_size: 0,
         }
     }
 }

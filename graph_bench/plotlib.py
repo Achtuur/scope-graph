@@ -9,8 +9,9 @@ class FigSize(Enum):
     SMALL = (8, 6)
     MEDIUM = (12, 9)
     BIG = (16, 12)
-    OVERLEAF = (10, 6)  # Adjust this value as needed
+    OVERLEAF = (16, 12)
     MICRO = (3, 2)
+    WIDE = (16, 9)
 
 class Color(Enum):
     GREEN = tuple(x / 255 for x in (58, 153, 95))
@@ -64,12 +65,12 @@ LINE_STYLE = "--"
 
 class BarSegment:
     value: np.ndarray
-    label: str
-    color: Color
-    edgecolor: Color
-    facecolor: Color
+    label: str | None
+    color: Color | None
+    edgecolor: Color | None
+    facecolor: Color | None
     hatch: str | None
-    def __init__(self, value: np.ndarray, label: str, color: Color, facecolor: Color | None = None, hatch: str | None = None):
+    def __init__(self, value: np.ndarray, label: str | None = None, color: Color | None = None, facecolor: Color | None = None, hatch: str | None = None):
         self.value = value
         self.label = label
         self.color = color
@@ -83,10 +84,12 @@ class BarSegment:
 
 class Bar:
     n_bars: int
+    bar_label: str | None
     segments: list[BarSegment]
-    def __init__(self, segments: list[BarSegment]):
+    def __init__(self, segments: list[BarSegment], bar_label: str | None = None):
         self.segments = segments
         self.n_bars = len(segments[0].value) if segments else 0
+        self.bar_label = bar_label
 
     def add_segment(self, value: np.ndarray, label: str, color: Color):
         """Add a segment to the bar"""
@@ -96,8 +99,9 @@ class Bar:
 
     def plot(self, ax: matplotlib.axes.Axes, x: np.ndarray, width: float, **kwargs):
         bottom = np.zeros_like(x)
+        b_container = None
         for seg in self.segments:
-            ax.bar(
+            b_container = ax.bar(
                 x,
                 seg.value,
                 bottom=bottom,
@@ -106,11 +110,16 @@ class Bar:
                 color=Color.BLUE.rgb(25),
                 edgecolor=seg.edgecolor,
                 facecolor=seg.facecolor,
-                hatch = seg.hatch if seg.hatch is not None else None,
+                hatch = seg.hatch,
                 **kwargs
             )
             bottom += seg.value
 
+        if self.bar_label is not None and b_container is not None:
+            ax.bar_label(b_container, fmt=self.bar_label)
+
+    def max(self):
+        return max([max(seg.value) for seg in self.segments])
 
 # I'm calling it superfigure and no one can stop me
 class SuperFigure:
@@ -123,7 +132,8 @@ class SuperFigure:
         self.__fig = _fig
         self.__ax = _ax
 
-    def init_plb():
+    @classmethod
+    def init_plb(cls):
         """Initialise some plot constants (call this first):
         - Sets color order to my custom colors
         - Enables latex font
@@ -148,16 +158,26 @@ class SuperFigure:
     #     """Get the axes of this SuperFigure"""
     #     return self.__ax
 
-    def figure(**kwargs) -> 'SuperFigure':
+    @classmethod
+    def figure(cls, **kwargs) -> 'SuperFigure':
         SuperFigure.init_plb()
-        fix, axs = plt.figure(**kwargs)
-        return SuperFigure(fix, axs)
+        fig = plt.figure(**kwargs)
+        return SuperFigure(fig, fig.axes[0])
 
-    def subplots(nrows=1, ncols=1, **kwargs):
+    @classmethod
+    def subplots(cls, nrows: int = 1, ncols: int = 1, **kwargs) -> "SuperFigure":
         """Create subplots and return a SuperFigure object"""
         SuperFigure.init_plb()
         fig, axs = plt.subplots(nrows=nrows, ncols=ncols, **kwargs)
         return SuperFigure(fig, axs)
+
+    def get_figure(self) -> matplotlib.figure.Figure:
+        """Get the figure of this SuperFigure"""
+        return self.__fig
+
+    def get_ax(self) -> matplotlib.axes.Axes:
+        """Get the axes of this SuperFigure"""
+        return self.__ax
 
 
     def set_default_plot_style(self):
@@ -189,7 +209,7 @@ class SuperFigure:
         """
         self.set_size(FigSize.OVERLEAF)
         self.__fig.tight_layout(pad=1.0)
-        rows, cols = self.__axs.shape
+        rows, cols = self.__ax.shape
         for r in range(rows):
             for c in range(cols):
                 SuperFigure.__set_default_ax_style(self.__ax[r, c])
@@ -237,7 +257,8 @@ class SuperFigure:
 
         print(f"Figure saved as '{file_path}'.")
 
-    def __set_default_ax_style(ax):
+    @classmethod
+    def __set_default_ax_style(cls, ax):
         ax.grid(True, linestyle=LINE_STYLE, alpha=0.5)
         ax.tick_params(axis='both', which='major', labelsize=FontSize.ticks(), width=1.2, length=6)
         ax.tick_params(axis='both', which='minor', width=0.8, length=3)
@@ -258,16 +279,22 @@ class SuperFigure:
         self.__ax.set_title(title, fontsize=FontSize.title())
         self.__ax.set_xlabel(xlabel, fontsize=FontSize.label())
         self.__ax.set_ylabel(ylabel, fontsize=FontSize.label())
-        self.__ax.legend(fontsize=FontSize.legend(), loc=legend_loc)
+        leg = self.__ax.legend(fontsize=FontSize.legend(), loc=legend_loc)
+        leg.set_zorder(100)
+        leg.get_frame().set_alpha(None)
 
-    def set_xtick_label(self, labels):
+    def set_xtick_label(self, labels, xticks = None):
         """Set x tick labels for ax
 
         Args:
             ax (Matplotlib Axes): Axes of plot that should be changed (use plt.subplots() to get one)
             labels (list): List of labels
         """
-        self.__ax.set_xticks(np.arange(len(labels)))
+        if xticks is not None:
+            self.__ax.set_xticks(xticks)
+        else:
+            # default to arange of number of labels
+            self.__ax.set_xticks(np.arange(len(labels)))
         self.__ax.set_xticklabels(labels)
 
     def set_xtick_angle(self, angle=0.0):
@@ -350,7 +377,8 @@ class SuperFigure:
 
             self.__ax.bar(offset_x, y, width=width, label=labels[i], color=colors[i], **kwargs)
 
-    def get_color_order(luminance=25):
+    @classmethod
+    def get_color_order(cls, luminance=25):
         return [
             Color.GREEN.rgb(luminance),
             Color.PURPLE.rgb(luminance),
@@ -362,7 +390,8 @@ class SuperFigure:
             Color.CYAN.rgb(luminance),
         ]
 
-    def __str2size(size_str):
+    @classmethod
+    def __str2size(cls, size_str):
         # Get screen resolution in pixels
         screen_resolution = plt.gcf().dpi
 
@@ -387,13 +416,17 @@ class SuperFigure:
         return size
 
 
-    def __set_color_order():
+    @classmethod
+    def __set_color_order(cls):
         colors = SuperFigure.get_color_order()
-        plt.rcParams['axes.prop_cycle'] = plt.cycler(color=colors)
+        matplotlib.rcParams['axes.prop_cycle'] = plt.cycler(color=colors)
 
-    def __set_latex_font():
-        plt.rcParams.update({
+    @classmethod
+    def __set_latex_font(cls):
+        matplotlib.rcParams.update({
             "text.usetex": True,
-            "font.family": "serif",  # You can change this to "sans-serif" if you prefer
-            "font.size": 12,         # Adjust the font size as needed
+            "font.family": "serif",
+            "font.size": FontSize.LARGE.value,
+            "axes.labelsize": FontSize.label(),
+            "legend.fontsize": FontSize.legend(),
         })

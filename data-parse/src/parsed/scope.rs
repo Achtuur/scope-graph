@@ -57,11 +57,11 @@ impl ParsedScope {
 
     pub fn cosmo_color(&self) -> &'static str {
         match self {
-            s if s.is_class() => "#e8e8eb",
-            s if s.is_data() => "#c0fab9",
-            s if s.is_method() => "#fa98e3",
-            s if s.is_method_body() => "#fabbeb",
-            s if s.is_var() => "#94fc88",
+            s if s.is_class() => "rgba(58, 153, 95, 1)",
+            s if s.is_data() => "rgba(144, 103, 167, 1)",
+            s if s.is_method() => "rgba(211, 95, 96, 1)",
+            s if s.is_method_body() => "rgba(201, 149, 71, 1)",
+            s if s.is_var() => "rgba(39, 84, 138, 1)",
             _ => "#f07070",
         }
     }

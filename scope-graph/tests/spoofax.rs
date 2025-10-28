@@ -1,6 +1,8 @@
 // tests from:
 // https://github.com/metaborg/nabl/blob/master/statix.test/scopegraphs/nameresolution.spt
 
+use std::rc::Rc;
+
 use deepsize::DeepSizeOf;
 use graphing::Renderer;
 use scope_graph::{
@@ -448,7 +450,7 @@ fn test_resolve_occurence_relations_in_same_scope() {
 
     assert_eq!(envs.len(), 1);
     let env = envs.first().unwrap();
-    assert!(matches!(env.data, TestData::VarNum(_, 1)));
+    assert!(matches!(*env.data, TestData::VarNum(_, 1)));
 }
 
 // test resolve occurrence relations with resolution policy succeeds [[
@@ -497,7 +499,7 @@ fn test_resolve_occurence_relations_with_resolution() {
 
     assert_eq!(envs.len(), 1);
     let env = envs.first().unwrap();
-    assert!(matches!(env.data, TestData::VarNum(_, 4)));
+    assert!(matches!(*env.data, TestData::VarNum(_, 4)));
 }
 
 // test relations have multiset behavior [[
@@ -609,7 +611,7 @@ fn test_resolve_declaration_using_shorthand_with_relation_query() {
 
     assert_eq!(envs.len(), 1);
     let env = envs.first().unwrap();
-    assert!(matches!(env.data, TestData::VarNum(_, 8)));
+    assert!(matches!(*env.data, TestData::VarNum(_, 8)));
 }
 
 // test query relation added using occurrence + multiple relations short-hand notation succeeds [[
@@ -681,7 +683,7 @@ fn test_partial_order_2() {
     let envs = graph.query_proj(s, &regex, &lo, (), ());
     assert_eq!(envs.len(), 1);
     let first = envs.first().unwrap();
-    assert!(first.data == TestData::NoData);
+    assert!(first.data == Rc::from(TestData::NoData));
     assert!(first.path.target() == s);
 }
 
@@ -714,7 +716,7 @@ fn test_partial_order_3() {
 
     assert_eq!(envs.len(), 1);
     let first = envs.first().unwrap();
-    assert!(first.data == TestData::NoData);
+    assert!(first.data == Rc::from(TestData::NoData));
     assert!(first.path.target() == s);
 }
 

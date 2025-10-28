@@ -7,6 +7,7 @@ use std::{
     str::FromStr,
 };
 
+use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -147,8 +148,9 @@ impl ParsedScopeGraph {
     }
 
     pub fn filter_scopes(&mut self, filter: fn(&ParsedScope) -> bool) {
-        self.edges
-            .retain(|edge| filter(&edge.from) || filter(&edge.to));
+        self.edges = std::mem::take(&mut self.edges).into_par_iter().filter(|edge| filter(&edge.from) || filter(&edge.to)).collect::<Vec<_>>();
+        // self.edges
+            // .retain(|edge| filter(&edge.from) || filter(&edge.to));
         self.filter_scopes_without_edges();
     }
 
@@ -194,11 +196,10 @@ impl ParsedScopeGraph {
     }
 
     fn filter_scopes_without_edges(&mut self) {
-        self.scopes.retain(|scope, _| {
-            self.edges
-                .iter()
-                .any(|e| e.from == *scope || e.to == *scope)
-        });
+        self.scopes = std::mem::take(&mut self.scopes).into_par_iter().filter(|(scope, _)| {
+            self.edges.iter().any(|e| e.from == *scope || e.to == *scope)
+        })
+        .collect();
     }
 
     /// Combines scopes that refer to each other.

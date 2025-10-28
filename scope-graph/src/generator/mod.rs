@@ -70,7 +70,7 @@ impl GraphPattern {
             Self::ReverseTree(levels) => *levels,
             Self::Join => 1,
             Self::Decl(_) => 1,
-            Self::Circle(size) => size + 1,
+            Self::Circle(size) => *size,
         }
     }
 
@@ -299,8 +299,17 @@ where
     }
 }
 
+impl<G: Default> std::default::Default for GraphGenerator<G> {
+    fn default() -> Self {
+        Self {
+            patterns: Vec::new(),
+            graph: G::default(),
+        }
+    }
+}
+
 impl<G> GraphGenerator<G> {
-    pub fn new(graph: G) -> Self {
+    pub fn with_graph(graph: G) -> Self {
         Self {
             patterns: Vec::new(),
             graph,

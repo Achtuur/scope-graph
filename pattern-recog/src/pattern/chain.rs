@@ -6,7 +6,7 @@ use crate::{
 };
 
 const CHAIN_LABELS: &[MatchableLabel] = &[MatchableLabel::Parent, MatchableLabel::ExtendImpl];
-const MIN_SIZE: usize = 3;
+const MIN_SIZE: usize = 6;
 
 #[derive(Clone, Debug)]
 pub(crate) struct ChainScope {

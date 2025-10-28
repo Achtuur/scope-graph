@@ -122,37 +122,35 @@ impl Display for JavaLabel {
 impl JavaLabel {
     pub fn cosmo_color(&self) -> &'static str {
         match self {
-            JavaLabel::Extend => "#e8e8eb",
-            JavaLabel::Parent => "#fabbeb",
-            JavaLabel::VarDecl => "#c0fab9",
-            JavaLabel::ImportPackage => "#e8e8eb",
-            JavaLabel::Impl => "#fa98e3",
-            _ => "#222222",
-            // JavaLabel::ImportCu => "#00FF00",
-            // JavaLabel::ImportStaticOndemand => "#00FD00",
-            // JavaLabel::ImportSingleType => "#00FC00",
-            // JavaLabel::ImportTypeOndemand => "#00FB00",
-            // JavaLabel::ImportSingleStatic => "##00FA00",
-            // JavaLabel::Return => "#FF0000",
-            // JavaLabel::Method => "#FF0000",
-            // JavaLabel::LocalPackage => "#00FFFF",
-            // JavaLabel::Package => "#00FFFF",
-            // // class related
-            // JavaLabel::Impl => "#FF00FF",
-            // JavaLabel::Boxed => "#0000FE",
-            // JavaLabel::Extend => "#FF00FD",
-            // // vars
-            // JavaLabel::StaticParent => "#FF0000",
-            // JavaLabel::ParentPackage => "#FF0000",
-            // JavaLabel::StaticMember => "#FF0000",
-            // // idk
-            // JavaLabel::WithType => "#444444",
-            // JavaLabel::ElementType => "#444444",
-            // JavaLabel::JType => "#444444",
-            // JavaLabel::LocalType => "#444444",
-            // JavaLabel::WithKind => "#444444",
-            // JavaLabel::TypeName => "#444444",
-            // JavaLabel::TypeParams => "#444444",
+            Self::Extend |
+            Self::Impl => "#fa98e3",
+            Self::StaticParent |
+            Self::Parent => "#fabbeb",
+
+            Self::StaticMember |
+            Self::Boxed |
+            Self::VarDecl => "#c0fab9",
+
+            Self::ImportStaticOndemand |
+            Self::ImportSingleType |
+            Self::ImportTypeOndemand |
+            Self::ImportSingleStatic |
+            Self::ImportCu |
+            Self::ImportPackage => "#ebe8ebff",
+
+            Self::Method |
+            Self::Return => "#ebe9e8ff",
+
+            Self::LocalPackage |
+            Self::ParentPackage |
+            Self::Package => "#ebe8e8ff",
+            Self::TypeName |
+            Self::LocalType |
+            Self::ElementType |
+            Self::TypeParams |
+            Self::WithKind |
+            Self::WithType |
+            Self::JType => "#e8ebeaff",
         }
     }
 

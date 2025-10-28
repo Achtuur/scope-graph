@@ -258,6 +258,9 @@ mod tests {
             Regex::concat('b', Regex::question('c')),
         );
 
+        let regex = Regex::concat(Regex::kleene('P'), 'D');
+
+
         let automata = RegexAutomaton::from_regex(regex);
         let timer = std::time::Instant::now();
         automata

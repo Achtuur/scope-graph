@@ -47,17 +47,45 @@ impl PatternMatcher for DiamondMatcher {
     const NAME: &str = "Diamond";
 
     fn find_pattern_for_scope(graph: &ScopeGraph, scope: Scope) -> Vec<Self::Match> {
+
         let outgoing_edges = graph.get_outgoing_edges_with_labels(scope, DIAMOND_LABELS);
         let middle_scopes = outgoing_edges.map(|edge| edge.to);
-        // map of top scope -> [middle scopes]
-        let top_scopes: HashMap<Scope, Vec<Scope>> =
-            middle_scopes.fold(HashMap::new(), |mut acc, scope| {
-                let outgoing_edges = graph.get_outgoing_edges_with_labels(scope, DIAMOND_LABELS);
-                for e in outgoing_edges {
-                    acc.entry(e.to).or_default().push(scope);
-                }
-                acc
-            });
+
+        let top_scopes: HashMap<Scope, Vec<Scope>> = middle_scopes.fold(HashMap::new(), |mut acc, middle_scope| {
+            let outgoing_edges = graph.get_outgoing_edges_with_labels(middle_scope, DIAMOND_LABELS);
+            // level 1 diamond
+            for top_edge in outgoing_edges {
+                acc.entry(top_edge.to).or_default().push(middle_scope);
+
+                // lvl 2 scopes, pretend that an edge from middle -> top2 exists
+                graph.get_outgoing_edges_with_labels(top_edge.to, DIAMOND_LABELS).for_each(|next_top_edge| {
+                    acc.entry(next_top_edge.to).or_default().push(middle_scope);
+
+                    // // lvl 3, pretend edge from middle -> top3
+                    // graph.get_outgoing_edges_with_labels(next_top_edge.to, DIAMOND_LABELS).for_each(|next2_top_edge| {
+                    //     acc.entry(next2_top_edge.to).or_default().push(middle_scope);
+                    // });
+
+                });
+
+            }
+            acc
+        });
+
+
+
+        // let outgoing_edges = graph.get_outgoing_edges_with_labels(scope, DIAMOND_LABELS);
+        // let middle_scopes = outgoing_edges.map(|edge| edge.to);
+
+        // // map of top scope -> [middle scopes]
+        // let top_scopes: HashMap<Scope, Vec<Scope>> =
+        //     middle_scopes.fold(HashMap::new(), |mut acc, scope| {
+        //         let outgoing_edges = graph.get_outgoing_edges_with_labels(scope, DIAMOND_LABELS);
+        //         for e in outgoing_edges {
+        //             acc.entry(e.to).or_default().push(scope);
+        //         }
+        //         acc
+        //     });
 
         top_scopes
             .into_iter()
@@ -66,66 +94,3 @@ impl PatternMatcher for DiamondMatcher {
             .collect()
     }
 }
-
-// pub fn find_diamond(graph: &ScopeGraph) -> Vec<DiamondMatch> {
-//     let mut matches = Vec::<DiamondMatch>::new();
-
-//     let scopes = &graph.scopes;
-//     let mut available_scopes  = scopes.iter().cloned().collect::<HashSet<_>>();
-
-//     for s in &graph.scopes {
-//         // if !available_scopes.contains(s) {
-//         //     // already found a match for this scope, skip it
-//         //     continue;
-//         // }
-
-//         let new_matches = find_diamond_recursive(graph, *s);
-
-//         for m in new_matches {
-//             // for s in m.scopes() {
-//             //     available_scopes.remove(s);
-//             // }
-//             matches.push(m);
-//         }
-//     }
-
-//     matches
-// }
-
-// fn find_diamond_recursive(graph: &ScopeGraph, cur_scope: Scope) -> Vec<DiamondMatch> {
-
-//     // assume cur_scope = bottom
-//     // get all outgoing edges with labels
-//     // get all outgoing edges of those scopes
-//     // any scope that appears in at least 2 of them is a top
-
-//     let outgoing_edges = graph.get_outgoing_edges_with_labels(cur_scope, DIAMOND_LABELS);
-//     let middle_scopes = outgoing_edges.map(|edge| edge.to);
-//     // map of top scope -> [middle scopes]
-//     let top_scopes: HashMap<Scope, Vec<Scope>> = middle_scopes.fold(HashMap::new(), |mut acc, scope| {
-//         let outgoing_edges = graph.get_outgoing_edges_with_labels(scope, DIAMOND_LABELS);
-//         for e in outgoing_edges {
-//             acc.entry(e.to).or_default().push(scope);
-//         }
-//         acc
-//     });
-
-//     top_scopes
-//     .into_iter()
-//     .filter(|(_, middle_scopes)| middle_scopes.len() > 1)
-//     .map(|(top, middle_scopes)| {
-//         DiamondMatch::new(cur_scope, top, middle_scopes)
-//     })
-//     .collect()
-
-//     // let mut t = DiamondMatch::from_scope(cur_scope);
-//     // let outgoing_edges = graph.get_outgoing_edges_with_labels(cur_scope, DIAMOND_LABELS);
-//     // for edge in outgoing_edges {
-//     //     t.push_leaf(edge.to);
-//     // }
-
-//     // match t.middle.len() {
-//     //     0..=1 => Vec::new(),
-//     //     2.. => vec![t],
-//     // }
-// }

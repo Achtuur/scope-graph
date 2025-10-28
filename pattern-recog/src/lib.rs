@@ -162,6 +162,10 @@ impl ScopeGraph {
         }
     }
 
+    pub fn keys(&self) -> impl Iterator<Item = &Scope> {
+        self.scopes.iter()
+    }
+
     pub fn add_node<S: Into<Scope>>(&mut self, node: S) {
         self.scopes.push(node.into());
     }

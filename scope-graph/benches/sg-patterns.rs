@@ -29,11 +29,11 @@ pub fn main() {
     );
 
     let heads = [
-        HeadGenerator::linear(25),
-        // HeadGenerator::fan_chain(15, 10),
+        HeadGenerator::linear(50),
+        HeadGenerator::fan_chain(25, 10),
     ];
 
-    let results = [
+    let mut results = [
         PatternBencher::new("sg_circle", circle).bench(&heads),
         PatternBencher::new("sg_tree", tree).bench(&heads),
         PatternBencher::new("sg_linear", linear).bench(&heads),
@@ -47,6 +47,16 @@ pub fn main() {
 
     let _ = std::fs::create_dir_all("output/benches");
     let file = std::fs::File::create("output/benches/results.json").unwrap();
+    let mut reader = std::io::BufReader::new(&file);
+    let existing: Option<BenchmarkMap> = serde_json::from_reader(&mut reader).ok();
+    if let Some(ex) = existing {
+        for (k, v) in ex.map {
+            println!("Checking: {0:?}", k);
+            results.map.entry(k).or_insert(v);
+        }
+    }
+
+
     let mut writer = std::io::BufWriter::new(file);
     serde_json::to_writer_pretty(&mut writer, &results).unwrap();
 }

@@ -61,6 +61,18 @@ impl Stats {
             self.data_points[mid]
         }
     }
+
+    pub fn to_latex_table(&self, name: &str) -> String {
+        format!(
+            "{} & {} & {:.2} & {} & {} & {} \\\\",
+            name,
+            self.data_points.len(),
+            self.avg(),
+            self.median() as u32,
+            self.min() as u32,
+            self.max() as u32,
+        )
+    }
 }
 
 impl std::fmt::Display for Stats {

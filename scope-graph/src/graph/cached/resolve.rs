@@ -7,8 +7,8 @@ use smallvec::SmallVec;
 
 use crate::{
     data::ScopeGraphData, debug_tracing, graph::{
-        resolve::{QueryProfiler, QueryStats}, scope_is_part_of_cycle, ScopeMap
-    }, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, projection::ScopeGraphDataProjection, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, util::DisplayVec, DO_CIRCLE_CHECK
+        circle::CachedCircleMatcher, resolve::{QueryProfiler, QueryStats}, scope_is_part_of_cycle, ScopeMap
+    }, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, projection::ScopeGraphDataProjection, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, util::DisplayVec, DO_CIRCLE_CHECK, DO_SINGLE_EDGE_CHECK
 };
 
 use super::{ProjEnvs, QueryCache, QueryResult, ScopeData};
@@ -34,7 +34,7 @@ where
     scope_map: &'r ScopeMap<Lbl, Data>,
 
     cache: &'r mut QueryCache<Lbl, Data>,
-    cycle_cache: Ref<'r, hashbrown::HashSet<Scope>>,
+    cycle_matcher: CachedCircleMatcher<'r, Lbl, Data>,
 
     path_re: &'r RegexAutomaton<Lbl>,
     lbl_order: &'r LabelOrder<Lbl>,
@@ -58,7 +58,7 @@ where
     pub fn new(
         scope_graph: &'r ScopeMap<Lbl, Data>,
         cache: &'r mut QueryCache<Lbl, Data>,
-        cycle_cache: Ref<'r, hashbrown::HashSet<Scope>>,
+        cycle_matcher: CachedCircleMatcher<'r, Lbl, Data>,
         path_re: &'r RegexAutomaton<Lbl>,
         lbl_order: &'r LabelOrder<Lbl>,
         data_proj: Proj,
@@ -68,7 +68,7 @@ where
         Self {
             scope_map: scope_graph,
             cache,
-            cycle_cache,
+            cycle_matcher,
             path_re,
             lbl_order,
             data_proj,
@@ -123,7 +123,7 @@ where
             // self.cache.clear_envs(&reg, &path);
         }
 
-        let scope = self.get_scope(path.target()).expect("Scope not found");
+        let scope = self.get_scope(path.target()).unwrap_or_else(|| panic!("Scope {} not found", path.target()));
         let mut labels = scope
             .outgoing()
             .iter()
@@ -269,8 +269,7 @@ where
         let is_circular = match DO_CIRCLE_CHECK {
             true => {
                 let timer = Instant::now();
-                let b = self.cycle_cache.contains(&path.target());
-                // let b = scope_is_part_of_cycle(self.scope_map, path.target());
+                let b = self.cycle_matcher.contains(path.target());
                 self.profiler.inc_circ_check_timer(timer.elapsed());
                 b
             }
@@ -278,6 +277,16 @@ where
         };
         if is_circular {
             debug_tracing!(debug, "Not caching envs for scope {}: it's in a cycle", path.target());
+            return;
+        }
+
+        if DO_SINGLE_EDGE_CHECK
+        && !is_circular
+        && path.len() > 1 // don't do check if we're in the starting scope
+        && let Some(s) = self.get_scope(path.target())
+        && s.incoming().len() == 1 {
+            // don't cache in scopes with single incoming edge
+            debug_tracing!(debug, "Not caching envs for scope {}: it has a single incoming edge", path.target());
             return;
         }
 

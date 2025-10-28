@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use deepsize::DeepSizeOf;
 
 use crate::{
-    data::ScopeGraphData, debug_tracing, graph::{circle::CircleMatcher, resolve::{QueryStats, Resolver}, Edge, ScopeData, ScopeMap}, label::ScopeGraphLabel, order::LabelOrder, path::Path, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackgroundColor, ColorSet, ForeGroundColor
+    data::ScopeGraphData, debug_tracing, graph::{circle::{CachedCircleMatcher, CircleMatcher}, resolve::{QueryStats, Resolver}, Edge, ScopeData, ScopeMap}, label::ScopeGraphLabel, order::LabelOrder, path::Path, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackgroundColor, ColorSet, ForeGroundColor
 };
 
 use super::{ScopeGraph, resolve::QueryResult};
@@ -22,28 +22,6 @@ mod resolve;
 mod cache;
 
 pub(crate) use cache::*;
-
-// type ProjHash = u64;
-
-// /// Map of projected data -> environment
-// type ProjEnvs<Lbl, Data> = hashbrown::HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
-
-// /// Key for the cache.
-// ///
-// /// This is a tuple of index in regex automaton, the result from projecting the data and the target scope.
-// ///
-// /// You can alternatively think of this as a (usize, DataProj) cache per scope.
-// type QueryCacheKey = (usize, Scope);
-
-// /// Cache for the results of a certain query
-// type QueryCache<Lbl, Data> = hashbrown::HashMap<QueryCacheKey, ProjEnvs<Lbl, Data>>;
-
-// /// Key for `ScopeGraphCache` (label order, label regex, projection FUNCTION hash).
-// type ParameterKey<Lbl> = (LabelOrder<Lbl>, RegexAutomaton<Lbl>, ProjHash);
-// /// Cache for the entire scope graph.
-// ///
-// /// This contains a cache per set of query parameters
-// type ScopeGraphCache<Lbl, Data> = hashbrown::HashMap<ParameterKey<Lbl>, QueryCache<Lbl, Data>>;
 
 
 // type StdProjEnvs<Lbl, Data> = std::collections::HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
@@ -60,9 +38,7 @@ where
     #[serde(skip)]
     resolve_cache: ResolveCache<Lbl, Data>,
     #[serde(skip)]
-    scopes_in_cycle: RefCell<hashbrown::HashSet<Scope>>,
-    #[serde(skip)]
-    cycle_scope_cache: RefCell<hashbrown::HashMap<Scope, bool>>,
+    cycle_scope_cache: hashbrown::HashMap<Scope, bool>,
 }
 
 impl<Lbl, Data> CachedScopeGraph<Lbl, Data>
@@ -114,10 +90,12 @@ where
         let cache_entry = self
             .resolve_cache
             .get_mut((order.clone(), path_regex.clone(), proj_hash));
+
+        let cycle_matcher = CachedCircleMatcher::new(&self.scopes, &mut self.cycle_scope_cache);
         let mut resolver = CachedResolver::new(
             &self.scopes,
             cache_entry,
-            self.scopes_in_cycle.borrow(),
+            cycle_matcher,
             path_regex,
             order,
             data_proj,
@@ -126,22 +104,10 @@ where
         );
         let (envs, mut stats) = resolver.resolve(Path::start(scope));
 
-        // let std_cache: StdCache<Lbl, Data> = self.resolve_cache
-        // .iter()
-        // .fold(std::collections::HashMap::new(), |mut acc, (key, cache)| {
-        //     let entry = acc.entry(key.clone()).or_default();
-        //     cache.into_iter().for_each(|(k, v)| {
-        //         let entry2= entry.entry(*k).or_default();
-        //         entry2.extend(v.iter().map(|(k, v)| (*k, v.clone())));
-        //     });
-        //     acc
-        // });
-
-        // stats.cache_size_estimate = std_cache.deep_size_of() as f32 / self.scopes.deep_size_of() as f32;
-
-        // for qr in &envs {
-        //     tracing::info!("\t{}", qr);
-        // }
+        let std_cache = self.resolve_cache.clone().into_std();
+        stats.cache_size_estimate = std_cache.deep_size_of() as f32 / self.scopes.deep_size_of() as f32;
+        stats.cache_size = std_cache.deep_size_of();
+        stats.graph_size = self.scopes.deep_size_of();
         (envs, stats)
     }
 
@@ -157,6 +123,7 @@ where
 {
     fn reset_cache(&mut self) {
         self.resolve_cache.clear();
+        self.cycle_scope_cache.clear();
     }
 
     fn add_scope(&mut self, scope: Scope, data: Data) -> Scope {
@@ -186,9 +153,6 @@ where
             .expect("Attempting to add edge to non-existant scope")
             .incoming_mut()
             .push(edge_to_child);
-
-        self.determine_cycles(source);
-        self.determine_cycles(target);
     }
 
     fn get_scope(&self, scope: Scope) -> Option<&ScopeData<Lbl, Data>> {
@@ -251,10 +215,11 @@ where
         let cache_entry = self
             .resolve_cache
             .get_mut((order.clone(), path_regex.clone(), proj_hash));
+        let cycle_matcher = CachedCircleMatcher::new(&self.scopes, &mut self.cycle_scope_cache);
         let mut resolver = CachedResolver::new(
             &self.scopes,
             cache_entry,
-            self.scopes_in_cycle.borrow(),
+            cycle_matcher,
             path_regex,
             order,
             data_proj,
@@ -303,32 +268,16 @@ where
         Self {
             scopes: ScopeMap::new(),
             resolve_cache: ResolveCache::new(),
-            scopes_in_cycle:RefCell::new(hashbrown::HashSet::new()),
-            cycle_scope_cache: RefCell::new(hashbrown::HashMap::new()),
+            cycle_scope_cache: hashbrown::HashMap::new(),
         }
-    }
-
-    pub fn scope_is_in_cycle(&self, scope: Scope) -> bool {
-        if let Some(b) = self.cycle_scope_cache.borrow().get(&scope) {
-            return *b;
-        }
-
-        // add scopes
-        let scopes = CircleMatcher::scopes_in_cycle(self.scopes(), scope);
-        let contains = scopes.contains(&scope);
-
-        self.cycle_scope_cache.borrow_mut().extend(scopes.into_iter().map(|s| (s, true)));
-        self.cycle_scope_cache.borrow_mut().insert(scope, contains);
-        contains
-    }
-
-    fn determine_cycles(&mut self, scope: Scope) {
-        let scopes = CircleMatcher::scopes_in_cycle(self.scopes(), scope);
-        self.scopes_in_cycle.borrow_mut().extend(scopes);
     }
 
     pub fn scopes(&self) -> &ScopeMap<Lbl, Data> {
         &self.scopes
+    }
+
+    pub fn cache(&self) -> &ResolveCache<Lbl, Data> {
+        &self.resolve_cache
     }
 
     /// draw the path to the data in the cache for a specific scope

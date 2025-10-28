@@ -4,17 +4,19 @@ use graphing::Renderer;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use rand::{rngs::{SmallRng, ThreadRng}, Rng, SeedableRng};
 use crate::{bench_util::{construct_cached_graph, Graph, HEAD_RANGE}, generator::GraphPattern, graph::{CachedScopeGraph, GraphRenderOptions, QueryResult, QueryStats, ScopeGraph}, order::{LabelOrder, LabelOrderBuilder}, regex::{dfs::RegexAutomaton, Regex}, scope::Scope, SgData, SgLabel, SgProjection};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-const QUERY_SIZES: &[usize] = &[1, 5, 10];
-const NUM_SUBJECTS: usize = 100;
+const QUERY_SIZES: &[usize] = &[1, 2, 4];
+const NUM_SUBJECTS: usize = 50;
 const NUM_RUNS: usize = 5;
 const NUM_WARMUP: usize = 3;
 
 // unique number of data names before shadowing applies
 const NUM_DATA: usize = 20;
-const TAIL_LENGTH: std::ops::RangeInclusive<usize> = 10..=15;
+const TAIL_LENGTH: std::ops::RangeInclusive<usize> = 2..=10;
 const TAIL_TREE_CHILDS: std::ops::RangeInclusive<usize> = 6..=12;
+
+const LINEAR_HEAD_VAR_CHANCE: f64 = 0.33;
 
 
 #[derive(Serialize, Debug, Clone)]
@@ -40,22 +42,30 @@ impl std::fmt::Display for HeadKind {
 #[derive(Serialize, Debug, Clone)]
 pub struct HeadGenerator {
     kind: HeadKind,
+    seed: u64,
 }
 
 unsafe impl Send for HeadGenerator {}
 
 impl HeadGenerator {
     pub fn linear(length: usize) -> Self {
-        Self { kind: HeadKind::Linear(length) }
+        Self {
+            kind: HeadKind::Linear(length),
+            seed: rand::rng().random(),
+        }
     }
 
     pub fn fan_chain(length: usize, num_decl: usize) -> Self {
-        Self { kind: HeadKind::FanChain { length, num_decl } }
+        Self {
+            kind: HeadKind::FanChain { length, num_decl },
+            seed: rand::rng().random(),
+        }
     }
 
     pub fn num_scopes(&self) -> usize {
         match self.kind {
-            HeadKind::Linear(len) => len * 2, // every scope has data, so length is len*2
+            // HeadKind::Linear(len) => len * 2, // every scope has data, so length is len*2
+            HeadKind::Linear(len) => self.pattern().len(),
             HeadKind::FanChain { length, num_decl } => length + length * num_decl,
         }
     }
@@ -63,7 +73,23 @@ impl HeadGenerator {
     pub fn pattern(&self) -> Vec<GraphPattern> {
         match self.kind {
             HeadKind::Linear(len) => {
-                vec![GraphPattern::LinearDeclLabel(len, SgLabel::Parent)]
+                let mut v = Vec::new();
+                let mut cntr = 0;
+                let mut rng = SmallRng::seed_from_u64(self.seed);
+                let mut no_var = 0;
+                for _ in 0..len {
+                    let odds = LINEAR_HEAD_VAR_CHANCE  * 1.1_f64.powf(no_var as f64);
+                    if rng.random_bool(odds.min(1.0)) {
+                        no_var = 0;
+                        let x = format!("x_{cntr}");
+                        cntr = (cntr + 1) % NUM_DATA;
+                        v.push(GraphPattern::Decl(SgData::var(x, "int")))
+                    } else {
+                        no_var += 1;
+                    }
+                    v.push(GraphPattern::LinearLabel(1, SgLabel::Parent));
+                }
+                v
             }
             HeadKind::FanChain { length, num_decl } => {
                 let mut v = Vec::new();
@@ -150,21 +176,24 @@ impl TailIndex {
         // num_branches * chains, and we "skip" tail_size scopes.
         // the first "row" of branches is numbered left to right,
         // while the rest is numbered top to bottom. We want the top-bottom numbering.
-        let start_idx = head_size + pat.size() + pat.n_child() * branches + 1;
-        let tail_len = branches * tail_size * pat.n_child();
+        let real_branches = branches * pat.n_child();
+        let start_idx = head_size + pat.size() + 1; // + 1, since we want to skip the root scope
+
+        let tail_len = real_branches * tail_size;
         let range = start_idx..(start_idx + tail_len - 1); // -1 to account for root scope
         Self {
             range,
             tail_size,
-            branches: branches * pat.n_child(),
+            branches: real_branches,
         }
     }
 
-    pub fn sample_branch<R: Rng>(&self, branch: usize, rng: &mut R) -> usize {
-        let branch = branch % self.branches;
+    pub fn sample_branch<R: Rng>(&self, rng: &mut R) -> usize {
+        // let branch = branch % self.branches;
+        let branch = rng.random_range(0..self.branches);
         let start = self.range.start + branch * self.tail_size;
         let end = (start + self.tail_size).min(self.range.end);
-        (end - 1)
+        end - 1
         // if start >= end {
         //     panic!("Invalid range: start {start} >= end {end}");
         // }
@@ -202,19 +231,19 @@ impl<Args> PatternGenerator<Args>
     }
 }
 
-#[derive(Serialize, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryType {
     Base,
     Cached,
 }
 
-#[derive(Default, Serialize)]
+#[derive(Default, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct BenchmarkMap {
     /// [name -> head -> arg -> query_type -> stats]
     #[allow(clippy::type_complexity)] // whatever bro
-    map: HashMap<String, HashMap<String, HashMap<String, HashMap<QueryType, HashMap<usize, QueryStats>>>>>,
+    pub map: HashMap<String, HashMap<String, HashMap<String, HashMap<QueryType, HashMap<usize, QueryStats>>>>>,
 }
 
 impl BenchmarkMap {
@@ -311,6 +340,7 @@ impl<'a, Args: std::fmt::Debug + Send + Sync> PatternBencher<'a, Args> {
     fn construct_variation<R: Rng>(rng: &mut R, pattern: GraphPattern, head: &HeadGenerator) -> (Graph, TailIndex) {
         let head_size = head.num_scopes();
         let tail_size = rng.random_range(TAIL_LENGTH);
+        // let tail_size = 1;
         let tail_branches = rng.random_range(TAIL_TREE_CHILDS);
         let tail_range = TailIndex::new(
             tail_branches,
@@ -321,7 +351,7 @@ impl<'a, Args: std::fmt::Debug + Send + Sync> PatternBencher<'a, Args> {
         let mut pat = head.pattern();
         pat.push(pattern);
         pat.push(GraphPattern::Tree(tail_branches));
-        pat.push(GraphPattern::Linear(tail_size));
+        pat.push(GraphPattern::Linear(tail_size - 1)); // -1 since tree already adds one scope
         let graph = construct_cached_graph(pat);
         (graph, tail_range)
     }
@@ -401,14 +431,14 @@ impl<'a, R: Rng> VariationBencher<'a, R> {
         }
     }
 
-    fn get_start_scope(&mut self, branch: usize) -> Scope {
-        Scope(self.tail_idx.sample_branch(branch, &mut self.rng))
+    fn get_start_scope(&mut self) -> Scope {
+        Scope(self.tail_idx.sample_branch(&mut self.rng))
     }
 
     fn bench(mut self) -> (Vec<BenchStats>, Vec<BenchStats>) {
         for _ in 0..NUM_WARMUP {
             let params = GraphParams::new(&mut self.rng, self.head);
-            let start_scope = self.get_start_scope(0);
+            let start_scope = self.get_start_scope();
             self.perform_query(start_scope, &params);
         }
         self.variation.reset_cache();
@@ -428,7 +458,7 @@ impl<'a, R: Rng> VariationBencher<'a, R> {
         let (mut base_stat_total, mut cached_stat_total) = (QueryStats::default(), QueryStats::default());
         self.variation.reset_cache();
         for i in 0..num_queries {
-            let start_scope = self.get_start_scope(0);
+            let start_scope = self.get_start_scope();
             let params = GraphParams::new(&mut self.rng, self.head);
             let (base_stats, cached_stats) = self.perform_query(start_scope, &params);
             base_stat_total = base_stat_total + base_stats;
@@ -440,23 +470,23 @@ impl<'a, R: Rng> VariationBencher<'a, R> {
 
     fn perform_query(&mut self, start_scope: Scope, params: &GraphParams) -> (QueryStats, QueryStats) {
         let x_wfd: Arc<str> = Arc::from(params.x.as_str());
-        let (base_envs, base_stats)  = std::hint::black_box(self.variation.query_proj_stats(
+        let (base_envs, base_stats)  = self.variation.query_proj_stats(
             start_scope,
             &params.matcher,
             &params.order,
             SgProjection::VarName,
             x_wfd.clone(),
             false
-        ));
+        );
 
-        let (cached_envs, cached_stats) = std::hint::black_box(self.variation.query_proj_stats(
+        let (cached_envs, cached_stats) = self.variation.query_proj_stats(
             start_scope,
             &params.matcher,
             &params.order,
             SgProjection::VarName,
             x_wfd,
             true
-        ));
+        );
 
         self.cmp_envs(start_scope, params, base_envs, cached_envs);
 
@@ -530,11 +560,17 @@ mod tests {
             .unwrap();
 
         let mut rng = rand::rng();
+
+        for _ in 0..1000 {
+            let idx = t.sample_branch(&mut rng);
+            assert!(t.range.contains(&idx), "idx {idx} not in range {:?}", t.range);
+        }
+
         println!("{:?}", (
-            t.sample_branch(0, &mut rng),
-            t.sample_branch(1, &mut rng),
-            t.sample_branch(2, &mut rng),
-            t.sample_branch(3, &mut rng),
+            t.sample_branch(&mut rng),
+            t.sample_branch(&mut rng),
+            t.sample_branch(&mut rng),
+            t.sample_branch(&mut rng),
         ))
     }
 

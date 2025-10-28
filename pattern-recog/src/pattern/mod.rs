@@ -18,8 +18,19 @@ pub use fanout::*;
 pub use tree::*;
 pub use circle::*;
 
+
+macro_rules! size_stats {
+    ($matches:expr) => {
+        $matches
+            .iter()
+            .map(|m| m.size())
+            .collect::<Stats>()
+    };
+}
+
 #[derive(Debug)]
 pub struct PatternMatches {
+    total_scopes: usize,
     chain_matches: Vec<ChainMatch>,
     fanout_matches: Vec<FanoutMatch>,
     tree_matches: Vec<TreeMatch>,
@@ -47,6 +58,7 @@ impl PatternMatches {
         println!("circle: {:?}", timer.elapsed());
 
         Self {
+            total_scopes: graph.scopes.len(),
             chain_matches,
             fanout_matches,
             tree_matches,
@@ -54,19 +66,28 @@ impl PatternMatches {
             circle_matches,
         }
     }
+
+    pub fn to_latex_table(&self, name: &str) -> String {
+        let chain_stats = size_stats!(self.chain_matches);
+        let fanout_stats = size_stats!(self.fanout_matches);
+        let tree_stats = size_stats!(self.tree_matches);
+        let diamond_stats = size_stats!(self.diamond_matches);
+        let circle_stats = size_stats!(self.circle_matches);
+        [
+            format!("{name} & {} & & & & \\\\", self.total_scopes),
+            chain_stats.to_latex_table("Linear Chain"),
+            fanout_stats.to_latex_table("Fanout"),
+            tree_stats.to_latex_table("Tree"),
+            diamond_stats.to_latex_table("Diamond"),
+            circle_stats.to_latex_table("Circle"),
+        ]
+        .join("\n")
+
+    }
 }
 
 impl std::fmt::Display for PatternMatches {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        macro_rules! size_stats {
-            ($matches:expr) => {
-                $matches
-                    .iter()
-                    .map(|m| m.size())
-                    .collect::<Stats>()
-            };
-        }
-
         let chain_stats = size_stats!(self.chain_matches);
         let fanout_stats = size_stats!(self.fanout_matches);
         let tree_stats = size_stats!(self.tree_matches);

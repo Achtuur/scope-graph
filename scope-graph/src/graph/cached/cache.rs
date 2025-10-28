@@ -1,5 +1,6 @@
 use std::{cell::RefCell, fmt::Write, hash::RandomState, rc::Rc, sync::Arc, time::Instant};
 
+use deepsize::DeepSizeOf;
 use graphing::plantuml::{EdgeDirection, PlantUmlItem};
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +12,7 @@ pub type ProjHash = u64;
 pub type ResolveCacheKey<Lbl> = (LabelOrder<Lbl>, RegexAutomaton<Lbl>, ProjHash);
 
 /// Cache for entire scope graph, across multiple queries.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct ResolveCache<Lbl, Data>
 where Lbl: ScopeGraphLabel, Data: ScopeGraphData
 {
@@ -35,6 +36,14 @@ where Lbl: ScopeGraphLabel, Data: ScopeGraphData
         self.cache.clear();
     }
 
+    pub fn into_std(self) -> std::collections::HashMap<ResolveCacheKey<Lbl>, StdQueryCacheMap<Lbl, Data>> {
+        self.cache.into_iter().fold(std::collections::HashMap::new(), |mut acc, (k, v)| {
+            let std_v = v.into_std();
+            acc.insert(k, std_v);
+            acc
+        })
+    }
+
     pub fn generate_uml<S: ScopeGraph<Lbl, Data>>(&self, graph: &S) -> impl Iterator<Item = PlantUmlItem> {
         self.cache
         .iter()
@@ -48,9 +57,10 @@ where Lbl: ScopeGraphLabel, Data: ScopeGraphData
 
 pub type QueryCacheKey = (usize, Scope);
 pub type QueryCacheMap<Lbl, Data> = hashbrown::HashMap<QueryCacheKey, EnvCache<Lbl, Data>>;
+pub type StdQueryCacheMap<Lbl, Data> = std::collections::HashMap<QueryCacheKey, EnvCache<Lbl, Data>>;
 
 /// Cache for a single query
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[repr(transparent)]
 pub struct QueryCache<Lbl, Data>
 where Lbl: ScopeGraphLabel, Data: ScopeGraphData
@@ -79,6 +89,10 @@ where Lbl: ScopeGraphLabel, Data: ScopeGraphData
     pub fn clear_envs(&self, reg: &RegexState<'_, Lbl>, path: &Path<Lbl>) {
         let key = (reg.index(), path.target());
         self.cache.borrow_mut().remove(&key);
+    }
+
+    pub fn into_std(self) -> StdQueryCacheMap<Lbl, Data> {
+        self.cache.borrow().iter().map(|(k, v)| (k.clone(), v.clone())).collect()
     }
 
     pub fn insert(&self, reg: &RegexState<'_, Lbl>, path: &Path<Lbl>, envs: ProjEnvs<Lbl, Data>) {
@@ -121,7 +135,8 @@ where Lbl: ScopeGraphLabel, Data: ScopeGraphData
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+#[derive(DeepSizeOf)]
 pub struct EnvCache<Lbl, Data>
 where Lbl: ScopeGraphLabel, Data: ScopeGraphData
 {
@@ -144,33 +159,8 @@ where Lbl: ScopeGraphLabel, Data: ScopeGraphData
 
     pub fn get_env(&self, path: &Path<Lbl>, profiler: &QueryProfiler) -> Option<ProjEnvs<Lbl, Data>> {
         debug_tracing!(trace, "Checking cache ({}) for path: {}", self.path, path);
-        return Some(self.cache.clone());
-        // if !DO_CIRCLE_CHECK {
-        // }
-
-        // let timer = Instant::now();
-        // let is_circular = &self.path != path && self.path.partially_contains(path.without_head_unless_start());
-        // profiler.inc_circ_check_timer(timer.elapsed());
-
-        // if is_circular {
-        //     debug_tracing!(trace, "Cache invalid; path is contained");
-        //     return None;
-        // }
-        // Some(self.cache.clone())
+        Some(self.cache.clone())
     }
-
-    // pub fn insert(&mut self, hash: ProjHash, path: Path<Lbl>, env: Vec<QueryResult<Lbl, Data>>) {
-    //     self.path = path;
-    //     self.cache.insert(hash, env);
-    //     // let entry = self.cache.entry(hash).or_default();
-    //     // entry.append(&mut env);
-    //     // entry.reserve(env.len());
-    //     // for e in env {
-    //     //     // if !e.path.is_circular() {
-    //     //     // }
-    //     //     entry.push(e);
-    //     // }
-    // }
 
     pub fn insert(&mut self, path: Path<Lbl>, env: ProjEnvs<Lbl, Data>) {
         debug_tracing!(trace, "Inserting envs into cache for path: {}", path);
@@ -181,6 +171,7 @@ where Lbl: ScopeGraphLabel, Data: ScopeGraphData
 
 
 #[derive(Debug, Clone)]
+#[derive(DeepSizeOf)]
 #[repr(transparent)]
 pub(crate) struct ProjEnvs<Lbl: ScopeGraphLabel, Data: ScopeGraphData> {
     inner: Vec<(ProjHash, QueryResult<Lbl, Data>)>,
@@ -243,11 +234,6 @@ impl<Lbl: ScopeGraphLabel, Data: ScopeGraphData> ProjEnvs<Lbl, Data> {
         self.extend(other);
     }
 
-    pub fn step_paths(&mut self, label: &Lbl, scope: Scope, reg_idx: usize) {
-        for (_, env) in self.inner.iter_mut() {
-            env.path = env.path.step(label.clone(), scope, reg_idx);
-        }
-    }
 
     #[inline(always)]
     pub fn push(&mut self, hash: ProjHash, env: QueryResult<Lbl, Data>) {
@@ -255,25 +241,9 @@ impl<Lbl: ScopeGraphLabel, Data: ScopeGraphData> ProjEnvs<Lbl, Data> {
     }
 
     #[inline]
-    pub fn insert(&mut self, hash: ProjHash, env: Vec<QueryResult<Lbl, Data>>) {
-        for e in env {
-            self.inner.push((hash, e));
-        }
-    }
-
-    #[inline]
-    pub fn contains_key(&self, hash: ProjHash) -> bool {
-        self.inner.iter().any(|(h, _)| *h == hash)
-    }
-
-    #[inline]
     pub fn extend(&mut self, other: Self) {
         self.inner.extend(other.inner);
     }
-
-    // pub fn iter(&self) -> impl Iterator<Item = &(ProjHash, QueryResult<Lbl, Data>)> {
-    //     self.inner.borrow().iter()
-    // }
 
     pub(crate) fn group_by_hash(&self) -> hashbrown::HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>> {
         let mut map = hashbrown::HashMap::new();

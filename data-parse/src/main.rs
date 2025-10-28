@@ -82,7 +82,7 @@ fn parsed_scopegraph_data() -> ParseResult<()> {
 
     println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
     parsed_graph.filter_scopes(|s| {
-        s.resource.contains("commons") || s.name.to_ascii_lowercase().contains("object")
+        !s.resource.contains("commons") || s.name.to_ascii_lowercase().contains("object")
     });
     println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
     parsed_graph.combine_scopes();
@@ -105,6 +105,8 @@ fn parsed_scopegraph_data() -> ParseResult<()> {
     println!("parsed_graph.len(): {0:?}", parsed_graph.scopes.len());
     parsed_graph.to_cosmograph_csv("output/cosmo.csv")?;
     println!("Written cosmo");
+
+    return Ok(());
 
     let mut scope_vec = parsed_graph.scopes.keys().cloned().collect::<Vec<_>>();
     scope_vec.sort();

@@ -11,7 +11,7 @@ use graphing::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    data::ScopeGraphData, debug_tracing, graph::circle::{CircleMatch, CircleMatcher}, label::ScopeGraphLabel, order::LabelOrder, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor
+    data::ScopeGraphData, debug_tracing, graph::circle::{CircleMatch, CircleMatcher}, label::ScopeGraphLabel, order::LabelOrder, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor, DRAW_CACHES
 };
 
 // mod base;
@@ -32,11 +32,25 @@ pub enum LabelRenderStyle {
     Long,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct GraphRenderOptions {
     pub draw_caches: bool,
     pub draw_labels: LabelRenderStyle,
     pub draw_types: bool,
+    pub draw_node_label: bool,
+    pub draw_colors: bool,
+}
+
+impl std::default::Default for GraphRenderOptions {
+    fn default() -> Self {
+        Self {
+            draw_caches: DRAW_CACHES,
+            draw_labels: LabelRenderStyle::default(),
+            draw_types: true,
+            draw_node_label: true,
+            draw_colors: true,
+        }
+    }
 }
 
 /// Bi-directional edge between two scopes
@@ -272,11 +286,20 @@ where
                     };
                     (NodeType::Card, "data-scope", format!("{} ⊢ {}", s, d_str))
                 },
-                false => (NodeType::Card, "scope", s.to_string()),
+                false => {
+                    let contents = if options.draw_node_label {
+                        s.to_string()
+                    } else {
+                        String::from("0") // empty is not possible ugh
+                    };
+                    (NodeType::Card, "scope", contents)
+                },
             };
-            PlantUmlItem::node(s.uml_id(), contents, node_type)
-                .add_class(class)
-                .add_class(BackgroundColor::get_class_name(s.0))
+            let mut node = PlantUmlItem::node(s.uml_id(), contents, node_type).add_class(class);
+            if options.draw_colors {
+                node = node.add_class(BackgroundColor::get_class_name(s.0));
+            }
+            node
         });
 
         let mut decl_dir = 0;

@@ -3,7 +3,7 @@ use graphing::Renderer;
 use pattern_recog::{pattern::*, *};
 
 fn main() {
-    real_graph2();
+    real_graph();
     // test();
 }
 
@@ -20,6 +20,15 @@ fn test() {
     //     (300, MatchableLabel::Parent, 3),
     //     (301, MatchableLabel::Parent, 3),
     //     (302, MatchableLabel::Parent, 3),
+    // ]);
+
+    // let graph = ScopeGraph::from_edges([
+    //     (0, MatchableLabel::ExtendImpl, 1),
+    //     (0, MatchableLabel::ExtendImpl, 2),
+    //     (0, MatchableLabel::ExtendImpl, 3),
+    //     (1, MatchableLabel::ExtendImpl, 4),
+    //     (2, MatchableLabel::ExtendImpl, 3),
+    //     (3, MatchableLabel::ExtendImpl, 4),
     // ]);
 
     let graph = ScopeGraph::from_edges([
@@ -58,16 +67,32 @@ fn test() {
     }
 }
 
-fn real_graph2() {
-    println!("Parsing graph from file...");
-    let mut graph =
-        ParsedScopeGraph::from_file("data-parse/raw/commons-io.scopegraph.json").unwrap();
+fn real_graph() {
+    fn inner(path: &str, std_only: bool) -> PatternMatches {
+        println!("Parsing graph from file...");
+        let mut graph =
+            ParsedScopeGraph::from_file(path).unwrap();
 
-    // graph.filter_scopes(|s| s.resource.contains("commons"));
+        if std_only {
+            graph.filter_scopes(|s| !s.resource.contains("commons"));
+        }
 
-    graph.scopes = graph.scopes.into_iter().collect();
-    let searchable_graph = ScopeGraph::from(graph);
+        graph.scopes = graph.scopes.into_iter().collect();
+        let searchable_graph = ScopeGraph::from(graph);
+        PatternMatches::from_graph(&searchable_graph)
+    }
+    let m_csv = inner("data-parse/raw/commons-csv-scopegraph.json", false);
+    let m_io = inner("data-parse/raw/commons-io-scopegraph.json", false);
+    let m_lang3 = inner("data-parse/raw/commons-lang-scopegraph.json", false);
+    // let m_std = inner("data-parse/raw/commons-csv-scopegraph.json", true);
 
-    let matches = PatternMatches::from_graph(&searchable_graph);
-    println!("Matches: {}", matches);
+    let tab = [
+        // m_std.to_latex_table("Java Standard Library"),
+        m_csv.to_latex_table("Commons CSV"),
+        m_io.to_latex_table("Commons IO"),
+        m_lang3.to_latex_table("Commons Lang3"),
+    ].join("\n");
+    println!("{}", tab);
+
+
 }

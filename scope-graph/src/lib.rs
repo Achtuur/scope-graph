@@ -34,6 +34,9 @@ pub mod util;
 
 /// Enable circular path check in cached resolver
 pub const DO_CIRCLE_CHECK: bool = true;
+
+pub const DO_SINGLE_EDGE_CHECK: bool = false;
+
 /// Draw caches in the graph
 pub const DRAW_CACHES: bool = true;
 /// Draw memory addresses for the paths
