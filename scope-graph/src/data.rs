@@ -1,7 +1,15 @@
 use deepsize::DeepSizeOf;
 
 pub trait ScopeGraphData:
-    PartialEq + Clone + Default + std::fmt::Debug + std::fmt::Display + Eq + Ord + std::hash::Hash + DeepSizeOf
+    PartialEq
+    + Clone
+    + Default
+    + std::fmt::Debug
+    + std::fmt::Display
+    + Eq
+    + Ord
+    + std::hash::Hash
+    + DeepSizeOf
 {
     /// Returns true if the variant has data.
     ///

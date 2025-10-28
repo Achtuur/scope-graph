@@ -1,10 +1,23 @@
-use std::{cell::RefCell, collections::HashSet, ops::AddAssign, rc::Rc, sync::{atomic::AtomicUsize, Mutex}, time::{Duration, Instant}};
+use std::{
+    cell::RefCell,
+    ops::AddAssign,
+    rc::Rc,
+    sync::atomic::AtomicUsize,
+    time::{Duration, Instant},
+};
 
 use deepsize::DeepSizeOf;
-use smallvec::SmallVec;
 
 use crate::{
-    data::ScopeGraphData, debug_tracing, graph::ScopeMap, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, DRAW_MEM_ADDR
+    DRAW_MEM_ADDR,
+    data::ScopeGraphData,
+    debug_tracing,
+    graph::ScopeMap,
+    label::{LabelOrEnd, ScopeGraphLabel},
+    order::LabelOrder,
+    path::{Path, ReversePath},
+    regex::{RegexState, dfs::RegexAutomaton},
+    scope::Scope,
 };
 
 use super::ScopeData;
@@ -173,12 +186,23 @@ impl From<&QueryProfiler> for QueryStats {
             circle_check_time: *profiler.circ_check_time.borrow(),
             cache_store_time: *profiler.cache_store_time.borrow(),
             cache_read_time: *profiler.cache_read_time.borrow(),
-            edges_traversed: profiler.edges_traversed.load(std::sync::atomic::Ordering::Relaxed),
-            nodes_visited: profiler.nodes_visited.load(std::sync::atomic::Ordering::Relaxed),
-            cache_reads: profiler.cache_reads.load(std::sync::atomic::Ordering::Relaxed),
-            cache_writes: profiler.cache_writes.load(std::sync::atomic::Ordering::Relaxed),
-            cache_hits: profiler.cache_hits.load(std::sync::atomic::Ordering::Relaxed),
-            cache_size_estimate: profiler.cache_size_estimate
+            edges_traversed: profiler
+                .edges_traversed
+                .load(std::sync::atomic::Ordering::Relaxed),
+            nodes_visited: profiler
+                .nodes_visited
+                .load(std::sync::atomic::Ordering::Relaxed),
+            cache_reads: profiler
+                .cache_reads
+                .load(std::sync::atomic::Ordering::Relaxed),
+            cache_writes: profiler
+                .cache_writes
+                .load(std::sync::atomic::Ordering::Relaxed),
+            cache_hits: profiler
+                .cache_hits
+                .load(std::sync::atomic::Ordering::Relaxed),
+            cache_size_estimate: profiler
+                .cache_size_estimate
                 .load(std::sync::atomic::Ordering::Relaxed) as f32,
             cache_size: 0,
             graph_size: 0,
@@ -186,9 +210,7 @@ impl From<&QueryProfiler> for QueryStats {
     }
 }
 
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[derive(DeepSizeOf)]
+#[derive(Debug, Clone, PartialEq, Eq, DeepSizeOf)]
 pub struct QueryResult<Lbl, Data>
 where
     Lbl: ScopeGraphLabel + Clone,
@@ -210,12 +232,7 @@ where
         }
     }
 
-    pub fn step(
-        &self,
-        label: Lbl,
-        target: impl Into<Scope>,
-        reg_idx: usize,
-    ) -> Self {
+    pub fn step(&self, label: Lbl, target: impl Into<Scope>, reg_idx: usize) -> Self {
         Self {
             path: self.path.step(label, target.into(), reg_idx),
             data: self.data.clone(),
@@ -306,13 +323,13 @@ where
         (self.data_wfd)(data)
     }
 
-    fn get_env(
-        &self,
-        path: Path<Lbl>,
-        reg: RegexState<'r, Lbl>,
-    ) -> Vec<QueryResult<Lbl, Data>> {
+    fn get_env(&self, path: Path<Lbl>, reg: RegexState<'r, Lbl>) -> Vec<QueryResult<Lbl, Data>> {
         let Some(scope) = self.get_scope(path.target()) else {
-            panic!("Scope {} not found in scope graph (len = {})", path.target(), self.scope_map.len());
+            panic!(
+                "Scope {} not found in scope graph (len = {})",
+                path.target(),
+                self.scope_map.len()
+            );
         };
         self.profiler.inc_nodes_visited();
 
@@ -344,7 +361,12 @@ where
         labels: &'a [LabelOrEnd<'r, Lbl>],
         path: Path<Lbl>,
     ) -> Vec<QueryResult<Lbl, Data>> {
-        debug_tracing!(debug, "Resolving labels: {:?} for {:?}", labels, path.target());
+        debug_tracing!(
+            debug,
+            "Resolving labels: {:?} for {:?}",
+            labels,
+            path.target()
+        );
         labels
             .iter()
             // 'max' labels ie all labels with lowest priority
@@ -402,9 +424,7 @@ where
                         self.resolve_all(p, partial_reg.clone())
                     }) // resolve new paths
                     // .filter(|qr| !qr.ath.is_circular())
-                    .map(|qr| {
-                        qr.step(label.clone(), path.target(), partial_reg.index())
-                    })
+                    .map(|qr| qr.step(label.clone(), path.target(), partial_reg.index()))
                     .collect::<Vec<_>>()
             }
         }

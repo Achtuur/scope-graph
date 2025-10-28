@@ -55,7 +55,7 @@ impl Stats {
         }
 
         let mid = self.data_points.len() / 2;
-        if self.data_points.len() % 2 == 0 {
+        if self.data_points.len().is_multiple_of(2) {
             (self.data_points[mid - 1] + self.data_points[mid]) / 2.0
         } else {
             self.data_points[mid]

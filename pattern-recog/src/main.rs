@@ -70,8 +70,7 @@ fn test() {
 fn real_graph() {
     fn inner(path: &str, std_only: bool) -> PatternMatches {
         println!("Parsing graph from file...");
-        let mut graph =
-            ParsedScopeGraph::from_file(path).unwrap();
+        let mut graph = ParsedScopeGraph::from_file(path).unwrap();
 
         if std_only {
             graph.filter_scopes(|s| !s.resource.contains("commons"));
@@ -91,8 +90,7 @@ fn real_graph() {
         m_csv.to_latex_table("Commons CSV"),
         m_io.to_latex_table("Commons IO"),
         m_lang3.to_latex_table("Commons Lang3"),
-    ].join("\n");
+    ]
+    .join("\n");
     println!("{}", tab);
-
-
 }

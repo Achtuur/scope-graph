@@ -6,8 +6,7 @@ use serde::{Deserialize, Serialize};
 static SCOPE_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 /// A single scope in the scope graph. Each scope is assigned an incrementing id.
-#[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[derive(DeepSizeOf)]
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, DeepSizeOf)]
 pub struct Scope(pub usize);
 
 impl From<usize> for Scope {

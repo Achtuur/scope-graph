@@ -1,6 +1,9 @@
 mod segment;
 
-use std::{cell::{OnceCell, RefCell}, collections::HashSet, rc::Rc, sync::{LazyLock, Mutex, OnceLock}};
+use std::{
+    rc::Rc,
+    sync::{Mutex, OnceLock},
+};
 
 use deepsize::DeepSizeOf;
 use graphing::{
@@ -8,13 +11,14 @@ use graphing::{
     plantuml::{EdgeDirection, PlantUmlItem},
 };
 
-use crate::{label::ScopeGraphLabel, path::segment::PathSegment, scope::Scope, util::ContainsContainer, DO_CIRCLE_CHECK};
+use crate::{
+    label::ScopeGraphLabel, path::segment::PathSegment, scope::Scope, util::ContainsContainer,
+};
 
 /// Path enum "starts" at the target scope, ie its in reverse order
 ///
 /// This holds a path using a pointer to the head path segment.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[derive(DeepSizeOf)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, DeepSizeOf)]
 pub enum Path<Lbl>
 where
     Lbl: ScopeGraphLabel,
@@ -97,7 +101,6 @@ where
         }
     }
 
-
     /// Returns true if `other` is partially contained within this path.
     pub fn partially_contains(&self, other: &Self) -> bool {
         if self.len() < other.len() {
@@ -125,7 +128,8 @@ where
     ///
     /// This function is currently very expensive to run
     fn contains<'a>(&self, other: &Self) -> bool
-    where Lbl: 'a
+    where
+        Lbl: 'a,
     {
         if other.len() > self.len() {
             return false;
@@ -135,11 +139,7 @@ where
             let self_seg = PathSegment::from_path_with_offset(self, i, other.len());
             let other_seg = PathSegment::from_path(other);
 
-            let is_eq = self_seg
-            .zip(other_seg)
-            .all(|(s, o)| {
-                s.equals(&o)
-            });
+            let is_eq = self_seg.zip(other_seg).all(|(s, o)| s.equals(&o));
 
             if is_eq {
                 return true;
@@ -149,7 +149,9 @@ where
     }
 
     pub fn iter<'a>(&'a self) -> PathIterator<'a, Lbl> {
-        PathIterator { current: Some(self) }
+        PathIterator {
+            current: Some(self),
+        }
     }
 
     pub fn parent(&self) -> Option<&Self> {
@@ -185,7 +187,10 @@ where
         // todo: pass hashset as argument maybe?
         static SET: OnceLock<Mutex<hashbrown::HashSet<(Scope, usize)>>> = OnceLock::new();
         let mut current = self;
-        let mut set = SET.get_or_init(|| Mutex::new(hashbrown::HashSet::new())).lock().unwrap();
+        let mut set = SET
+            .get_or_init(|| Mutex::new(hashbrown::HashSet::new()))
+            .lock()
+            .unwrap();
         set.clear();
         let mut prev_index = 0;
         loop {
@@ -200,7 +205,9 @@ where
                     if set.contains(&(*target, prev_index)) {
                         return true;
                     }
-                    unsafe { set.insert_unique_unchecked((*target, prev_index)); }
+                    unsafe {
+                        set.insert_unique_unchecked((*target, prev_index));
+                    }
                     // set.insert((*target, prev_index));
                     current = from;
                     prev_index = *automaton_idx;
@@ -275,7 +282,13 @@ where
                 automaton_idx,
                 ..
             } => {
-                format!("{} -{}{}-> {}", from.display(), label.char(), automaton_idx, target)
+                format!(
+                    "{} -{}{}-> {}",
+                    from.display(),
+                    label.char(),
+                    automaton_idx,
+                    target
+                )
             }
         }
     }
@@ -323,12 +336,11 @@ impl<'a, Lbl: ScopeGraphLabel> Iterator for PathIterator<'a, Lbl> {
         let ret = self.current;
         self.current = match self.current {
             Some(Path::Start(_)) | None => None,
-            Some(Path::Step {from, ..}) => Some(from)
+            Some(Path::Step { from, .. }) => Some(from),
         };
         ret
     }
 }
-
 
 /// Path enum "starts" at the target scope, ie its in reverse order
 ///
@@ -337,8 +349,7 @@ impl<'a, Lbl: ScopeGraphLabel> Iterator for PathIterator<'a, Lbl> {
 /// This is more efficient for the cache
 ///
 /// Internally, this is the exact same structure, however the "start scope" now refers to the tail instead
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[derive(DeepSizeOf)]
+#[derive(Debug, Clone, PartialEq, Eq, DeepSizeOf)]
 #[repr(transparent)]
 pub struct ReversePath<Lbl>(Path<Lbl>)
 where
@@ -364,7 +375,13 @@ where
                 let mut rp = Path::Start(target);
                 rp = rp.step(label, from.target(), automaton_idx);
                 let mut current = from.as_ref();
-                while let Path::Step { label, from, automaton_idx, .. } = current {
+                while let Path::Step {
+                    label,
+                    from,
+                    automaton_idx,
+                    ..
+                } = current
+                {
                     rp = rp.step(label.clone(), from.target(), *automaton_idx);
                     current = from;
                 }
@@ -374,7 +391,6 @@ where
         ReversePath(rev_path)
     }
 }
-
 
 impl<Lbl> From<&Path<Lbl>> for ReversePath<Lbl>
 where
@@ -508,7 +524,6 @@ mod tests {
         println!("path: {0:?}", path);
         println!("path: {}", path);
         assert!(path.is_circular());
-
     }
 
     #[test]
@@ -531,8 +546,8 @@ mod tests {
         let p1z = p1.deep_size_of() as f32;
         let p2z = p2.deep_size_of() as f32;
         let p3z = p3.deep_size_of() as f32;
-        println!("p2z/p1z: {0:?}", p2z/p1z);
-        println!("p2z/p1z: {0:?}", p3z/p2z);
+        println!("p2z/p1z: {0:?}", p2z / p1z);
+        println!("p2z/p1z: {0:?}", p3z / p2z);
 
         // let empty_v = Vec::<usize>::new();
         // println!("empty_v.deep_size_of():; {0:?}", empty_v.deep_size_of());
@@ -541,7 +556,6 @@ mod tests {
         let v = vec![p1.clone(), p2.clone(), p3.clone()];
         let v2 = vec![p1, p2, p3];
         println!("v.deep_size_of(): {0:?}", (v, v2).deep_size_of());
-
     }
 
     #[test]
@@ -553,7 +567,6 @@ mod tests {
         let p1: Path<char> = Path::start(1).step('a', 2, 0);
         let p2: Path<char> = Path::start(1).step('a', 2, 0).step('b', 3, 0);
         assert!(p2.contains(&p1));
-
 
         let p1 = Path::start(1).step('a', 2, 0).step('b', 2, 1);
         let p2 = Path::start(2).step('a', 2, 0).step('b', 2, 1);
@@ -580,12 +593,18 @@ mod tests {
         let p2: Path<char> = Path::start(1).step('a', 2, 0).step('b', 3, 0);
         assert!(p2.partially_contains(&p1));
 
-        let p1: Path<char> = Path::start(0).step('d', 1, 0).step('a', 2, 0).step('c', 3, 0);
+        let p1: Path<char> = Path::start(0)
+            .step('d', 1, 0)
+            .step('a', 2, 0)
+            .step('c', 3, 0);
         let p2: Path<char> = Path::start(1).step('a', 2, 0).step('b', 3, 0);
         assert!(p2.partially_contains(&p1));
 
         // different
-        let p1: Path<char> = Path::start(0).step('d', 1, 0).step('a', 2, 0).step('c', 3, 0);
+        let p1: Path<char> = Path::start(0)
+            .step('d', 1, 0)
+            .step('a', 2, 0)
+            .step('c', 3, 0);
         let p2: Path<char> = Path::start(4).step('a', 5, 0).step('b', 6, 0);
         assert!(!p2.partially_contains(&p1));
     }

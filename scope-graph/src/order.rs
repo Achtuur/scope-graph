@@ -91,9 +91,7 @@ where
             self.traverse_graph(label2, label1),
         ) {
             (Some(l1), Some(l2)) => {
-                tracing::error!(
-                    "Circular label order: {l1:?} < {l2:?} while {l1:?} > {l2:?}"
-                );
+                tracing::error!("Circular label order: {l1:?} < {l2:?} while {l1:?} > {l2:?}");
                 panic!("Circular ordering")
             }
             (Some(_), None) => {
@@ -137,8 +135,7 @@ where
     }
 }
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq, Default)]
-#[derive(DeepSizeOf)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, Default, DeepSizeOf)]
 pub struct LabelOrder<Lbl>
 where
     Lbl: ScopeGraphLabel,

@@ -1,6 +1,4 @@
-use rand::Rng;
-
-use crate::{LibGraph, LibScope, SgData, SgLabel, graph::ScopeGraph, scope::Scope};
+use crate::{SgData, SgLabel, graph::ScopeGraph, scope::Scope};
 
 #[derive(Debug, Clone)]
 pub enum GraphPattern {
@@ -115,8 +113,8 @@ impl GraphPattern {
                         cur_scope = child_scope;
 
                         // if rng.random_bool(0.1) {
-                            let decl_data = SgData::var(format!("x_{i}"), "int");
-                            let _ = graph.add_decl(cur_scope, SgLabel::Declaration, decl_data);
+                        let decl_data = SgData::var(format!("x_{i}"), "int");
+                        let _ = graph.add_decl(cur_scope, SgLabel::Declaration, decl_data);
                         // }
                     }
                     new_child_scopes.push(cur_scope);
@@ -345,7 +343,7 @@ where
     }
 
     /// Build and append to existing graph
-    pub fn build_with_graph(mut self, mut graph: G, start_scope: Scope) -> G  {
+    pub fn build_with_graph(mut self, mut graph: G, start_scope: Scope) -> G {
         let root = self.graph.add_scope(start_scope, SgData::NoData);
         let mut child_scopes = vec![root];
         for pattern in self.patterns {

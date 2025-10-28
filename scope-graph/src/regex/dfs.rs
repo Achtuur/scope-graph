@@ -14,8 +14,7 @@ use crate::label::ScopeGraphLabel;
 
 use super::Regex;
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-#[derive(DeepSizeOf)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, DeepSizeOf)]
 pub struct AutomatonNode<Lbl>
 where
     Lbl: ScopeGraphLabel,
@@ -43,8 +42,7 @@ where
     }
 }
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-#[derive(DeepSizeOf)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, DeepSizeOf)]
 pub struct RegexAutomaton<Lbl>
 where
     Lbl: ScopeGraphLabel,
@@ -259,7 +257,6 @@ mod tests {
         );
 
         let regex = Regex::concat(Regex::kleene('P'), 'D');
-
 
         let automata = RegexAutomaton::from_regex(regex);
         let timer = std::time::Instant::now();

@@ -17,8 +17,7 @@ use scope_graph::{
 };
 use serde::Serialize;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, PartialOrd, Ord)]
-#[derive(DeepSizeOf)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, PartialOrd, Ord, DeepSizeOf)]
 enum TestLabel {
     D,
     P,
@@ -52,8 +51,7 @@ impl ScopeGraphLabel for TestLabel {
     }
 }
 
-#[derive(Default, Clone, Debug, PartialEq, Eq, Hash, Serialize, PartialOrd, Ord)]
-#[derive(DeepSizeOf)]
+#[derive(Default, Clone, Debug, PartialEq, Eq, Hash, Serialize, PartialOrd, Ord, DeepSizeOf)]
 enum TestData {
     #[default]
     NoData,

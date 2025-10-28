@@ -1,28 +1,30 @@
-
-use std::cell::RefCell;
-
-use graphing::{
-    mermaid::{
-        item::{ItemShape, MermaidItem},
-        theme::EdgeType,
-    },
-    plantuml::{EdgeDirection, PlantUmlItem},
-};
+use deepsize::DeepSizeOf;
+use graphing::{mermaid::item::MermaidItem, plantuml::PlantUmlItem};
 use resolve::CachedResolver;
 use serde::{Deserialize, Serialize};
-use deepsize::DeepSizeOf;
 
 use crate::{
-    data::ScopeGraphData, debug_tracing, graph::{circle::{CachedCircleMatcher, CircleMatcher}, resolve::{QueryStats, Resolver}, Edge, ScopeData, ScopeMap}, label::ScopeGraphLabel, order::LabelOrder, path::Path, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackgroundColor, ColorSet, ForeGroundColor
+    data::ScopeGraphData,
+    debug_tracing,
+    graph::{
+        Edge, ScopeData, ScopeMap,
+        circle::CachedCircleMatcher,
+        resolve::{QueryStats, Resolver},
+    },
+    label::ScopeGraphLabel,
+    order::LabelOrder,
+    path::Path,
+    projection::ScopeGraphDataProjection,
+    regex::dfs::RegexAutomaton,
+    scope::Scope,
 };
 
 use super::{ScopeGraph, resolve::QueryResult};
 
-mod resolve;
 mod cache;
+mod resolve;
 
 pub(crate) use cache::*;
-
 
 // type StdProjEnvs<Lbl, Data> = std::collections::HashMap<ProjHash, Vec<QueryResult<Lbl, Data>>>;
 // type StdQueryCache<Lbl, Data> = std::collections::HashMap<QueryCacheKey, StdProjEnvs<Lbl, Data>>;
@@ -46,7 +48,6 @@ where
     Lbl: ScopeGraphLabel,
     Data: ScopeGraphData,
 {
-
     /// Returns number of scopes
     pub fn size(&self) -> usize {
         self.scopes.len()
@@ -87,9 +88,9 @@ where
         Proj: ScopeGraphDataProjection<Data>,
     {
         let proj_hash = resolve::hash(&data_proj);
-        let cache_entry = self
-            .resolve_cache
-            .get_mut((order.clone(), path_regex.clone(), proj_hash));
+        let cache_entry =
+            self.resolve_cache
+                .get_mut((order.clone(), path_regex.clone(), proj_hash));
 
         let cycle_matcher = CachedCircleMatcher::new(&self.scopes, &mut self.cycle_scope_cache);
         let mut resolver = CachedResolver::new(
@@ -105,7 +106,8 @@ where
         let (envs, mut stats) = resolver.resolve(Path::start(scope));
 
         let std_cache = self.resolve_cache.clone().into_std();
-        stats.cache_size_estimate = std_cache.deep_size_of() as f32 / self.scopes.deep_size_of() as f32;
+        stats.cache_size_estimate =
+            std_cache.deep_size_of() as f32 / self.scopes.deep_size_of() as f32;
         stats.cache_size = std_cache.deep_size_of();
         stats.graph_size = self.scopes.deep_size_of();
         (envs, stats)
@@ -212,9 +214,9 @@ where
         Proj: ScopeGraphDataProjection<Data>,
     {
         let proj_hash = resolve::hash(&data_proj);
-        let cache_entry = self
-            .resolve_cache
-            .get_mut((order.clone(), path_regex.clone(), proj_hash));
+        let cache_entry =
+            self.resolve_cache
+                .get_mut((order.clone(), path_regex.clone(), proj_hash));
         let cycle_matcher = CachedCircleMatcher::new(&self.scopes, &mut self.cycle_scope_cache);
         let mut resolver = CachedResolver::new(
             &self.scopes,

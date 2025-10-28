@@ -1,18 +1,27 @@
 use std::{
-    cell::Ref, hash::{DefaultHasher, Hash, Hasher}, rc::Rc, time::Instant
+    hash::{DefaultHasher, Hash, Hasher},
+    time::Instant,
 };
 
-use hashbrown::hash_set::HashSet;
-use smallvec::SmallVec;
-
 use crate::{
-    data::ScopeGraphData, debug_tracing, graph::{
-        circle::CachedCircleMatcher, resolve::{QueryProfiler, QueryStats}, scope_is_part_of_cycle, ScopeMap
-    }, label::{LabelOrEnd, ScopeGraphLabel}, order::LabelOrder, path::{Path, ReversePath}, projection::ScopeGraphDataProjection, regex::{dfs::RegexAutomaton, RegexState}, scope::Scope, util::DisplayVec, DO_CIRCLE_CHECK, DO_SINGLE_EDGE_CHECK
+    DO_CIRCLE_CHECK, DO_SINGLE_EDGE_CHECK,
+    data::ScopeGraphData,
+    debug_tracing,
+    graph::{
+        ScopeMap,
+        circle::CachedCircleMatcher,
+        resolve::{QueryProfiler, QueryStats},
+    },
+    label::{LabelOrEnd, ScopeGraphLabel},
+    order::LabelOrder,
+    path::Path,
+    projection::ScopeGraphDataProjection,
+    regex::{RegexState, dfs::RegexAutomaton},
+    scope::Scope,
+    util::DisplayVec,
 };
 
 use super::{ProjEnvs, QueryCache, QueryResult, ScopeData};
-
 
 #[inline(always)]
 pub(super) fn hash<T: Hash>(t: &T) -> u64 {
@@ -85,7 +94,8 @@ where
     }
 
     pub fn resolve(&mut self, path: Path<Lbl>) -> (Vec<QueryResult<Lbl, Data>>, QueryStats) {
-        debug_tracing!(info,
+        debug_tracing!(
+            info,
             "Resolving query: {}, {}, {}",
             path,
             self.path_re,
@@ -123,7 +133,9 @@ where
             // self.cache.clear_envs(&reg, &path);
         }
 
-        let scope = self.get_scope(path.target()).unwrap_or_else(|| panic!("Scope {} not found", path.target()));
+        let scope = self
+            .get_scope(path.target())
+            .unwrap_or_else(|| panic!("Scope {} not found", path.target()));
         let mut labels = scope
             .outgoing()
             .iter()
@@ -162,7 +174,12 @@ where
         if labels.is_empty() {
             return ProjEnvs::default();
         }
-        debug_tracing!(trace, "Resolving labels: {} for {}", DisplayVec(labels), path);
+        debug_tracing!(
+            trace,
+            "Resolving labels: {} for {}",
+            DisplayVec(labels),
+            path
+        );
         labels
             .iter()
             .filter(|l1| !labels.iter().any(|l2| self.lbl_order.is_less(l1, l2)))
@@ -176,7 +193,12 @@ where
                     .cloned()
                     .collect::<Vec<_>>();
 
-                debug_tracing!(trace, "Resolving envs {} < {}", max_lbl, DisplayVec(&lower_labels));
+                debug_tracing!(
+                    trace,
+                    "Resolving envs {} < {}",
+                    max_lbl,
+                    DisplayVec(&lower_labels)
+                );
                 self.get_shadowed_env(max_lbl, &lower_labels, path)
             })
             .collect()
@@ -204,41 +226,43 @@ where
                 let data = &self.get_scope(path.target()).unwrap().data;
                 let hash = hash(&self.data_proj(data));
                 ProjEnvs::new_with_env(hash, QueryResult::start(path.target(), data.clone()))
-            },
+            }
             // not yet at end
             LabelOrEnd::Label((label, partial_reg)) => {
-                self
-                .get_scope(path.target())
-                .unwrap()
-                .outgoing()
-                .iter()
-                .filter(|e| e.lbl() == label)
-                .map(|e| {
-                    path.clone()
-                        .step(e.lbl().clone(), e.target(), partial_reg.index())
-                })
-                .filter(|p| !p.is_circular())
-                .flat_map(|p| {
-                    self.profiler.inc_edges_traversed();
-                    self.resolve_all(p, partial_reg.clone())
-                }) // resolve new paths
-                .filter(|(_, qr)| {
-                    // this is only required when reading from a cache
-                    if !DO_CIRCLE_CHECK || !self.caching_enabled {
-                        return true;
-                    }
-                    let timer = std::time::Instant::now();
-                    let b = !qr.path.is_circular();
-                    self.profiler.inc_circ_check_timer(timer.elapsed());
-                    b
-                })
-                .map(|(p, qr)| {
-                    (p, qr.step(label.clone(), path.target(), partial_reg.index()))
-                })
-                .fold(ProjEnvs::new(), |mut acc, (p, qr)| {
-                    acc.push(p, qr);
-                    acc
-                })
+                self.get_scope(path.target())
+                    .unwrap()
+                    .outgoing()
+                    .iter()
+                    .filter(|e| e.lbl() == label)
+                    .map(|e| {
+                        path.clone()
+                            .step(e.lbl().clone(), e.target(), partial_reg.index())
+                    })
+                    .filter(|p| !p.is_circular())
+                    .flat_map(|p| {
+                        self.profiler.inc_edges_traversed();
+                        self.resolve_all(p, partial_reg.clone())
+                    }) // resolve new paths
+                    .filter(|(_, qr)| {
+                        // this is only required when reading from a cache
+                        if !DO_CIRCLE_CHECK || !self.caching_enabled {
+                            return true;
+                        }
+                        let timer = std::time::Instant::now();
+                        let b = !qr.path.is_circular();
+                        self.profiler.inc_circ_check_timer(timer.elapsed());
+                        b
+                    })
+                    .map(|(p, qr)| {
+                        (
+                            p,
+                            qr.step(label.clone(), path.target(), partial_reg.index()),
+                        )
+                    })
+                    .fold(ProjEnvs::new(), |mut acc, (p, qr)| {
+                        acc.push(p, qr);
+                        acc
+                    })
             }
         }
     }
@@ -256,12 +280,7 @@ where
         self.scope_map.get(&scope)
     }
 
-    fn cache_env(
-        &self,
-        path: &Path<Lbl>,
-        reg: &RegexState<'_, Lbl>,
-        env_map: ProjEnvs<Lbl, Data>,
-    ) {
+    fn cache_env(&self, path: &Path<Lbl>, reg: &RegexState<'_, Lbl>, env_map: ProjEnvs<Lbl, Data>) {
         if !self.caching_enabled {
             return;
         }
@@ -276,7 +295,11 @@ where
             false => false,
         };
         if is_circular {
-            debug_tracing!(debug, "Not caching envs for scope {}: it's in a cycle", path.target());
+            debug_tracing!(
+                debug,
+                "Not caching envs for scope {}: it's in a cycle",
+                path.target()
+            );
             return;
         }
 
@@ -284,9 +307,14 @@ where
         && !is_circular
         && path.len() > 1 // don't do check if we're in the starting scope
         && let Some(s) = self.get_scope(path.target())
-        && s.incoming().len() == 1 {
+        && s.incoming().len() == 1
+        {
             // don't cache in scopes with single incoming edge
-            debug_tracing!(debug, "Not caching envs for scope {}: it has a single incoming edge", path.target());
+            debug_tracing!(
+                debug,
+                "Not caching envs for scope {}: it has a single incoming edge",
+                path.target()
+            );
             return;
         }
 
@@ -297,7 +325,11 @@ where
         self.profiler.inc_cache_store_timer(timer.elapsed());
     }
 
-    fn get_cached_env(&self, path: &Path<Lbl>, reg: &RegexState<'r, Lbl>) -> Option<ProjEnvs<Lbl, Data>> {
+    fn get_cached_env(
+        &self,
+        path: &Path<Lbl>,
+        reg: &RegexState<'r, Lbl>,
+    ) -> Option<ProjEnvs<Lbl, Data>> {
         if !self.caching_enabled {
             return None;
         }

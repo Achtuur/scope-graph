@@ -122,35 +122,28 @@ impl Display for JavaLabel {
 impl JavaLabel {
     pub fn cosmo_color(&self) -> &'static str {
         match self {
-            Self::Extend |
-            Self::Impl => "#fa98e3",
-            Self::StaticParent |
-            Self::Parent => "#fabbeb",
+            Self::Extend | Self::Impl => "#fa98e3",
+            Self::StaticParent | Self::Parent => "#fabbeb",
 
-            Self::StaticMember |
-            Self::Boxed |
-            Self::VarDecl => "#c0fab9",
+            Self::StaticMember | Self::Boxed | Self::VarDecl => "#c0fab9",
 
-            Self::ImportStaticOndemand |
-            Self::ImportSingleType |
-            Self::ImportTypeOndemand |
-            Self::ImportSingleStatic |
-            Self::ImportCu |
-            Self::ImportPackage => "#ebe8ebff",
+            Self::ImportStaticOndemand
+            | Self::ImportSingleType
+            | Self::ImportTypeOndemand
+            | Self::ImportSingleStatic
+            | Self::ImportCu
+            | Self::ImportPackage => "#ebe8ebff",
 
-            Self::Method |
-            Self::Return => "#ebe9e8ff",
+            Self::Method | Self::Return => "#ebe9e8ff",
 
-            Self::LocalPackage |
-            Self::ParentPackage |
-            Self::Package => "#ebe8e8ff",
-            Self::TypeName |
-            Self::LocalType |
-            Self::ElementType |
-            Self::TypeParams |
-            Self::WithKind |
-            Self::WithType |
-            Self::JType => "#e8ebeaff",
+            Self::LocalPackage | Self::ParentPackage | Self::Package => "#ebe8e8ff",
+            Self::TypeName
+            | Self::LocalType
+            | Self::ElementType
+            | Self::TypeParams
+            | Self::WithKind
+            | Self::WithType
+            | Self::JType => "#e8ebeaff",
         }
     }
 

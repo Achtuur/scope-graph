@@ -51,7 +51,6 @@ fn queries_data() -> ParseResult<()> {
         }
     }
 
-
     let mut d = des.get_mut(7871).unwrap();
     // let mut d = des.get_mut(7871).unwrap();
 
@@ -65,8 +64,7 @@ fn queries_data() -> ParseResult<()> {
 }
 
 fn parsed_scopegraph_data() -> ParseResult<()> {
-    let mut parsed_graph =
-        ParsedScopeGraph::from_file(format!("{BASE_PATH}/{SCOPEGRAPH_FILE}"))?;
+    let mut parsed_graph = ParsedScopeGraph::from_file(format!("{BASE_PATH}/{SCOPEGRAPH_FILE}"))?;
 
     println!("Filtering scope graph for stdlib scopes only...");
     // parsed_graph.filter_scopes(|s| {

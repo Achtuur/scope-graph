@@ -44,8 +44,6 @@ pub const DRAW_MEM_ADDR: bool = false;
 /// Prompt to save the graph
 pub const SAVE_GRAPH: bool = false;
 
-
-
 pub struct ForeGroundColor;
 pub struct BackgroundColor;
 pub struct BackGroundEdgeColor;
@@ -193,8 +191,8 @@ impl ColorSet for BackGroundEdgeColor {
     Serialize,
     Deserialize,
     scopegraphs::Label,
+    DeepSizeOf,
 )]
-#[derive(DeepSizeOf)]
 pub enum SgLabel {
     Parent,
     Declaration,
@@ -245,8 +243,9 @@ impl ScopeGraphLabel for SgLabel {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
-#[derive(DeepSizeOf)]
+#[derive(
+    Default, Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, DeepSizeOf,
+)]
 pub enum SgData {
     #[default]
     NoData,
@@ -323,8 +322,7 @@ impl RenderScopeLabel for SgLabel {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[derive(DeepSizeOf)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, DeepSizeOf)]
 pub enum SgProjection {
     None,
     VarName,

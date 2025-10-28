@@ -18,12 +18,20 @@ where
 {
     #[inline]
     pub fn new(automata: &'a RegexAutomaton<Lbl>) -> Self {
-        Self { automata, idx: 0, prev_idx: 0 }
+        Self {
+            automata,
+            idx: 0,
+            prev_idx: 0,
+        }
     }
 
     #[inline]
     pub fn with_index(automata: &'a RegexAutomaton<Lbl>, idx: usize) -> Self {
-        Self { automata, idx, prev_idx: 0 }
+        Self {
+            automata,
+            idx,
+            prev_idx: 0,
+        }
     }
 
     #[inline]

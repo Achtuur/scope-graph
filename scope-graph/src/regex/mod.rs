@@ -11,8 +11,7 @@ use crate::label::ScopeGraphLabel;
 /// Regular expressions with labels
 ///
 /// todo: allow easy way to match any label, without having to do an OR of all labels by
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[derive(DeepSizeOf)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, DeepSizeOf)]
 pub enum Regex<Lbl>
 where
     Lbl: ScopeGraphLabel,
@@ -85,7 +84,9 @@ where
     }
 
     pub fn concat_iter<R, I>(iter: I) -> Self
-    where R: Into<Self>, I: IntoIterator<Item = R>
+    where
+        R: Into<Self>,
+        I: IntoIterator<Item = R>,
     {
         let mut iter = iter.into_iter();
         if let Some(first) = iter.next() {

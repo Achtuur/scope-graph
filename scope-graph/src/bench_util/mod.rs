@@ -1,8 +1,7 @@
 pub mod bench;
 
-use std::sync::{atomic::AtomicUsize, Arc, Mutex};
+use std::sync::{Arc, Mutex, atomic::AtomicUsize};
 
-use rand::{Rng, SeedableRng, rngs::SmallRng};
 use crate::{
     LibGraph, SgData, SgLabel, SgProjection,
     generator::{GraphGenerator, GraphPattern},
@@ -11,9 +10,8 @@ use crate::{
     regex::dfs::RegexAutomaton,
     scope::Scope,
 };
-use scopegraphs::{
-    Storage, completeness::UncheckedCompleteness, label_order, query_regex, resolve::Resolve,
-};
+use rand::{Rng, SeedableRng, rngs::SmallRng};
+use scopegraphs::{label_order, query_regex, resolve::Resolve};
 
 const HEAD_RANGE: std::ops::RangeInclusive<usize> = 1..=20;
 const TAIL_RANGE: std::ops::RangeInclusive<usize> = 1..=20;
@@ -52,7 +50,9 @@ pub fn construct_cached_graph(
 ) -> CachedScopeGraph<SgLabel, SgData> {
     let _lock = SG_CREATION_LOCK.lock().unwrap();
     let graph = CachedScopeGraph::<SgLabel, SgData>::new();
-    let g = GraphGenerator::with_graph(graph).with_patterns(pattern).build();
+    let g = GraphGenerator::with_graph(graph)
+        .with_patterns(pattern)
+        .build();
     Scope::reset_counter();
     g
 }

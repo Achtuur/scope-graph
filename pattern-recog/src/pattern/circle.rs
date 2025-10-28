@@ -1,9 +1,10 @@
-use std::{collections::HashSet, rc::Rc};
+use std::rc::Rc;
 
 use hashbrown::HashMap;
 
 use crate::{
-    pattern::{ChainScope, ChainScopeIter, MatchedPattern, PatternMatcher}, MatchableLabel, Scope, ScopeGraph
+    MatchableLabel, Scope, ScopeGraph,
+    pattern::{ChainScope, ChainScopeIter, MatchedPattern, PatternMatcher},
 };
 
 // const CHAIN_LABELS: &[MatchableLabel] = &[MatchableLabel::Parent, MatchableLabel::ExtendImpl];
@@ -90,8 +91,7 @@ impl PatternMatcher for CircleMatcher {
         let mut finished = Vec::new();
 
         while let Some(m) = cur_matches.pop() {
-            let outgoing_edges = graph
-                .get_outgoing_edges_with_labels(m.tail(), CHAIN_LABELS);
+            let outgoing_edges = graph.get_outgoing_edges_with_labels(m.tail(), CHAIN_LABELS);
 
             for edge in outgoing_edges {
                 let step = m.clone().step(edge.to);
@@ -106,12 +106,12 @@ impl PatternMatcher for CircleMatcher {
     }
 }
 
-
-
 /// Returns (nodes_in_cycles, nodes_not_in_cycles)
 /// Tarjan’s algorithm
 /// I (with shame) asked chatgpt for this
-pub fn find_cycle_nodes(graph: &ScopeGraph) -> (hashbrown::HashSet<Scope>, hashbrown::HashSet<Scope>) {
+pub fn find_cycle_nodes(
+    graph: &ScopeGraph,
+) -> (hashbrown::HashSet<Scope>, hashbrown::HashSet<Scope>) {
     let mut index = 0;
     let mut stack = Vec::new();
     let mut on_stack = hashbrown::HashSet::new();
@@ -164,7 +164,10 @@ pub fn find_cycle_nodes(graph: &ScopeGraph) -> (hashbrown::HashSet<Scope>, hashb
             // If SCC has > 1 node, or a self-loop, it's a cycle
             if scc.len() > 1 {
                 cycles.extend(scc);
-            } else if graph.get_outgoing_edges_with_labels(&scc[0], CHAIN_LABELS).any(|e| e.to == scc[0]) {
+            } else if graph
+                .get_outgoing_edges_with_labels(&scc[0], CHAIN_LABELS)
+                .any(|e| e.to == scc[0])
+            {
                 cycles.insert(scc[0]);
             }
         }

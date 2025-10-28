@@ -1,28 +1,37 @@
-use std::{collections::HashMap, sync::{Mutex, OnceLock}};
+use std::collections::HashMap;
 
 use deepsize::DeepSizeOf;
 use graphing::{
+    Color,
     mermaid::{
-        item::{ItemShape, MermaidItem}, theme::{AnimationSpeed, AnimationStyle, EdgeType, ElementStyle, Size}, MermaidChartDirection, MermaidDiagram, MermaidStyleSheet
-    }, plantuml::{
-        theme::{ElementCss, FontFamily, FontStyle, HorizontalAlignment, LineStyle, PlantUmlStyleSheet}, EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem
-    }, Color
+        MermaidChartDirection, MermaidDiagram, MermaidStyleSheet,
+        item::{ItemShape, MermaidItem},
+        theme::{AnimationSpeed, AnimationStyle, EdgeType, ElementStyle, Size},
+    },
+    plantuml::{
+        EdgeDirection, NodeType, PlantUmlDiagram, PlantUmlItem,
+        theme::{
+            ElementCss, FontFamily, FontStyle, HorizontalAlignment, LineStyle, PlantUmlStyleSheet,
+        },
+    },
 };
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    data::ScopeGraphData, debug_tracing, graph::circle::{CircleMatch, CircleMatcher}, label::ScopeGraphLabel, order::LabelOrder, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton, scope::Scope, BackGroundEdgeColor, BackgroundColor, ColorSet, ForeGroundColor, DRAW_CACHES
+    BackGroundEdgeColor, BackgroundColor, ColorSet, DRAW_CACHES, ForeGroundColor,
+    data::ScopeGraphData, debug_tracing, graph::circle::CircleMatcher, label::ScopeGraphLabel,
+    order::LabelOrder, projection::ScopeGraphDataProjection, regex::dfs::RegexAutomaton,
+    scope::Scope,
 };
 
 // mod base;
 mod cached;
-mod resolve;
 mod circle;
+mod resolve;
 
 // pub use base::*;
 pub use cached::*;
 pub use resolve::{QueryResult, QueryStats};
-
 
 #[derive(Clone, Copy, Default, Debug)]
 pub enum LabelRenderStyle {
@@ -54,8 +63,7 @@ impl std::default::Default for GraphRenderOptions {
 }
 
 /// Bi-directional edge between two scopes
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-#[derive(DeepSizeOf)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, DeepSizeOf)]
 pub struct Edge<Lbl>
 where
     Lbl: ScopeGraphLabel,
@@ -77,8 +85,7 @@ impl<Lbl: ScopeGraphLabel> Edge<Lbl> {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[derive(DeepSizeOf)]
+#[derive(Clone, Debug, Serialize, Deserialize, DeepSizeOf)]
 pub struct ScopeData<Lbl, Data>
 where
     Lbl: ScopeGraphLabel + Clone,
@@ -124,7 +131,6 @@ where
 
 pub type ScopeMap<Lbl, Data> = HashMap<Scope, ScopeData<Lbl, Data>>;
 
-
 pub(crate) fn scope_is_part_of_cycle<Lbl, Data>(map: &ScopeMap<Lbl, Data>, scope: Scope) -> bool
 where
     Lbl: ScopeGraphLabel,
@@ -153,7 +159,8 @@ where
     }
 
     fn add_decl(&mut self, source: Scope, label: Lbl, data: Data) -> Scope {
-        debug_tracing!(debug,
+        debug_tracing!(
+            debug,
             "Adding decl: {} with label: {} and data: {}",
             source,
             label,
@@ -285,7 +292,7 @@ where
                         false => d.data.render_string(),
                     };
                     (NodeType::Card, "data-scope", format!("{} ⊢ {}", s, d_str))
-                },
+                }
                 false => {
                     let contents = if options.draw_node_label {
                         s.to_string()
@@ -293,7 +300,7 @@ where
                         String::from("0") // empty is not possible ugh
                     };
                     (NodeType::Card, "scope", contents)
-                },
+                }
             };
             let mut node = PlantUmlItem::node(s.uml_id(), contents, node_type).add_class(class);
             if options.draw_colors {

@@ -2,9 +2,8 @@ mod display;
 
 pub use display::*;
 
-use std::{hash::Hash, hint::black_box, mem::MaybeUninit};
+use std::{hash::Hash, mem::MaybeUninit};
 
-use rand::{rngs::SmallRng, Rng, SeedableRng};
 pub enum ContainsContainer<'a, T: Eq + Hash, const N: usize> {
     Array {
         arr: [MaybeUninit<&'a T>; N],
@@ -14,11 +13,17 @@ pub enum ContainsContainer<'a, T: Eq + Hash, const N: usize> {
     BrownSet(hashbrown::HashSet<&'a T>),
 }
 
+impl<'a, T: Eq + Hash, const N: usize> Default for ContainsContainer<'a, T, N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a, T: Eq + Hash, const N: usize> ContainsContainer<'a, T, N> {
     pub fn new() -> Self {
         Self::Array {
             arr: [MaybeUninit::uninit(); N],
-            ptr: 0
+            ptr: 0,
         }
     }
 
@@ -26,7 +31,7 @@ impl<'a, T: Eq + Hash, const N: usize> ContainsContainer<'a, T, N> {
         if cap <= N {
             Self::new()
         } else {
-            let mut set = hashbrown::HashSet::with_capacity(cap);
+            let set = hashbrown::HashSet::with_capacity(cap);
             Self::BrownSet(set)
         }
     }
@@ -39,7 +44,8 @@ impl<'a, T: Eq + Hash, const N: usize> ContainsContainer<'a, T, N> {
                     self.upgrade();
                     self.insert(item)
                 } else {
-                    let contains = arr.iter()
+                    let contains = arr
+                        .iter()
                         .take(*ptr)
                         // safety: ptr keeps track of length
                         .map(|i| unsafe { i.assume_init_ref() })
@@ -48,7 +54,7 @@ impl<'a, T: Eq + Hash, const N: usize> ContainsContainer<'a, T, N> {
                     *ptr += 1;
                     contains
                 }
-            },
+            }
             Self::StdSet(set) => set.insert(item),
             Self::BrownSet(set) => set.insert(item),
         }
@@ -62,7 +68,7 @@ impl<'a, T: Eq + Hash, const N: usize> ContainsContainer<'a, T, N> {
                     // safety: ptr keeps track of length
                     .map(|i| unsafe { i.assume_init_ref() })
                     .any(|i| *i == item)
-            },
+            }
             Self::StdSet(set) => set.contains(item),
             Self::BrownSet(set) => set.contains(item),
         }
@@ -86,7 +92,7 @@ impl<'a, T: Eq + Hash, const N: usize> ContainsContainer<'a, T, N> {
                     }
                 }
                 *self = Self::BrownSet(set)
-            },
+            }
             Self::StdSet(_) => (),
             Self::BrownSet(_) => (),
         }

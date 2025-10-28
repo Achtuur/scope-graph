@@ -1,7 +1,2 @@
-
-
-
 #[cfg(test)]
-mod slides_examples {
-
-}
+mod slides_examples {}

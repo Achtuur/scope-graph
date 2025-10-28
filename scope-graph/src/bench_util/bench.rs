@@ -1,9 +1,17 @@
-use std::{cell::RefCell, collections::HashMap, iter::Flatten, ops::{Range, RangeInclusive}, sync::{Arc, Mutex}, thread::JoinHandle};
+use std::{collections::HashMap, ops::Range, sync::Arc};
 
+use crate::{
+    SgData, SgLabel, SgProjection,
+    bench_util::{Graph, construct_cached_graph},
+    generator::GraphPattern,
+    graph::{GraphRenderOptions, QueryResult, QueryStats, ScopeGraph},
+    order::{LabelOrder, LabelOrderBuilder},
+    regex::{Regex, dfs::RegexAutomaton},
+    scope::Scope,
+};
 use graphing::Renderer;
-use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
-use rand::{rngs::{SmallRng, ThreadRng}, Rng, SeedableRng};
-use crate::{bench_util::{construct_cached_graph, Graph, HEAD_RANGE}, generator::GraphPattern, graph::{CachedScopeGraph, GraphRenderOptions, QueryResult, QueryStats, ScopeGraph}, order::{LabelOrder, LabelOrderBuilder}, regex::{dfs::RegexAutomaton, Regex}, scope::Scope, SgData, SgLabel, SgProjection};
+use indicatif::{MultiProgress, ProgressStyle};
+use rand::{Rng, SeedableRng, rngs::SmallRng};
 use serde::{Deserialize, Serialize};
 
 const QUERY_SIZES: &[usize] = &[1, 5, 10];
@@ -18,16 +26,12 @@ const TAIL_TREE_CHILDS: std::ops::RangeInclusive<usize> = 6..=12;
 
 const LINEAR_HEAD_VAR_CHANCE: f64 = 0.33;
 
-
 #[derive(Serialize, Debug, Clone)]
 pub enum HeadKind {
     // Chain with length
     Linear(usize),
     // chain of fanouts
-    FanChain {
-        length: usize,
-        num_decl: usize,
-    },
+    FanChain { length: usize, num_decl: usize },
 }
 
 impl std::fmt::Display for HeadKind {
@@ -78,7 +82,7 @@ impl HeadGenerator {
                 let mut rng = SmallRng::seed_from_u64(self.seed);
                 let mut no_var = 0;
                 for _ in 0..len {
-                    let odds = LINEAR_HEAD_VAR_CHANCE  * 1.1_f64.powf(no_var as f64);
+                    let odds = LINEAR_HEAD_VAR_CHANCE * 1.1_f64.powf(no_var as f64);
                     if rng.random_bool(odds.min(1.0)) {
                         no_var = 0;
                         let x = format!("x_{cntr}");
@@ -136,10 +140,9 @@ impl HeadGenerator {
     pub fn reg(&self) -> Regex<SgLabel> {
         match self.kind {
             // P*D
-            HeadKind::Linear(_) => Regex::concat(
-                Regex::kleene(SgLabel::Parent),
-                SgLabel::Declaration,
-            ),
+            HeadKind::Linear(_) => {
+                Regex::concat(Regex::kleene(SgLabel::Parent), SgLabel::Declaration)
+            }
             // P*E*D
             HeadKind::FanChain { .. } => Regex::concat(
                 Regex::concat_iter([
@@ -149,7 +152,6 @@ impl HeadGenerator {
                 ]),
                 SgLabel::Declaration,
             ),
-
             // // complex thing from .stx
             // // boils down to P*E*I*D
             // _ => Regex::concat(
@@ -201,19 +203,23 @@ impl TailIndex {
     }
 }
 
-pub struct PatternGenerator<Args>
-{
+pub struct PatternGenerator<Args> {
     generator: fn(&Args) -> GraphPattern,
     args: Vec<Args>,
 }
 
-impl<Args> PatternGenerator<Args>
-{
+impl<Args> PatternGenerator<Args> {
     pub fn new(generator: fn(&Args) -> GraphPattern) -> Self {
-        Self { generator, args: Vec::new() }
+        Self {
+            generator,
+            args: Vec::new(),
+        }
     }
 
-    pub fn with_args(generator: fn(&Args) -> GraphPattern, args: impl IntoIterator<Item = Args>) -> Self {
+    pub fn with_args(
+        generator: fn(&Args) -> GraphPattern,
+        args: impl IntoIterator<Item = Args>,
+    ) -> Self {
         let args = args.into_iter().collect();
         Self { generator, args }
     }
@@ -243,22 +249,44 @@ pub enum QueryType {
 pub struct BenchmarkMap {
     /// [name -> head -> arg -> query_type -> stats]
     #[allow(clippy::type_complexity)] // whatever bro
-    pub map: HashMap<String, HashMap<String, HashMap<String, HashMap<QueryType, HashMap<usize, QueryStats>>>>>,
+    pub map: HashMap<
+        String,
+        HashMap<String, HashMap<String, HashMap<QueryType, HashMap<usize, QueryStats>>>>,
+    >,
 }
 
 impl BenchmarkMap {
-    pub fn insert(&mut self, q_type: QueryType, name: impl Into<String>, head: &HeadGenerator, arg: impl Into<String>, stats: Vec<BenchStats>) {
+    pub fn insert(
+        &mut self,
+        q_type: QueryType,
+        name: impl Into<String>,
+        head: &HeadGenerator,
+        arg: impl Into<String>,
+        stats: Vec<BenchStats>,
+    ) {
         let named = self.map.entry(name.into()).or_default();
         let head = named.entry(format!("{}", head.kind)).or_default();
         let arg = head.entry(arg.into()).or_default();
         let q_type = arg.entry(q_type).or_default();
         q_type.extend(stats.into_iter().map(|s| (s.num_queries, s.stats)));
     }
-    pub fn insert_cached(&mut self, name: impl Into<String>, head: &HeadGenerator, arg: impl Into<String>, stats: Vec<BenchStats>) {
+    pub fn insert_cached(
+        &mut self,
+        name: impl Into<String>,
+        head: &HeadGenerator,
+        arg: impl Into<String>,
+        stats: Vec<BenchStats>,
+    ) {
         self.insert(QueryType::Cached, name, head, arg, stats);
     }
 
-    pub fn insert_base(&mut self, name: impl Into<String>, head: &HeadGenerator, arg: impl Into<String>, stats: Vec<BenchStats>) {
+    pub fn insert_base(
+        &mut self,
+        name: impl Into<String>,
+        head: &HeadGenerator,
+        arg: impl Into<String>,
+        stats: Vec<BenchStats>,
+    ) {
         self.insert(QueryType::Base, name, head, arg, stats);
     }
 
@@ -278,7 +306,6 @@ impl BenchmarkMap {
     }
 }
 
-
 pub struct PatternBencher<'a, Args: std::fmt::Debug + Send + Sync> {
     name: &'a str,
     generator: PatternGenerator<Args>,
@@ -286,15 +313,14 @@ pub struct PatternBencher<'a, Args: std::fmt::Debug + Send + Sync> {
 
 impl<'a, Args: std::fmt::Debug + Send + Sync> PatternBencher<'a, Args> {
     pub fn new(name: &'a str, generator: PatternGenerator<Args>) -> Self {
-        Self {
-            generator,
-            name,
-        }
+        Self { generator, name }
     }
 
     pub fn bench<'b>(self, heads: impl IntoIterator<Item = &'b HeadGenerator>) -> BenchmarkMap {
         let multi = MultiProgress::new();
-        multi.println(format!("Benchmarking {}", self.name)).unwrap();
+        multi
+            .println(format!("Benchmarking {}", self.name))
+            .unwrap();
 
         let mut results = BenchmarkMap::default();
         let name: Arc<str> = Arc::from(self.name);
@@ -306,18 +332,25 @@ impl<'a, Args: std::fmt::Debug + Send + Sync> PatternBencher<'a, Args> {
                 let m_bar = multi.clone();
                 let h = Self::bench_thread(&name_c, &h_clone, pattern, m_bar);
                 results.extend(h);
-
             }
         }
         results
     }
 
-
-    fn bench_thread(name: &str, head: &HeadGenerator, pat: GraphPattern, multi_bar: MultiProgress) -> BenchmarkMap {
+    fn bench_thread(
+        name: &str,
+        head: &HeadGenerator,
+        pat: GraphPattern,
+        multi_bar: MultiProgress,
+    ) -> BenchmarkMap {
         let subject_bar = indicatif::ProgressBar::new(NUM_SUBJECTS as u64);
-        subject_bar.set_style(ProgressStyle::with_template("[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
+        subject_bar.set_style(
+            ProgressStyle::with_template(
+                "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
+            )
             .unwrap()
-            .progress_chars("##-"));
+            .progress_chars("##-"),
+        );
 
         // total_bar.set_message(format!("head: {:?}, {}: {arg:?}", &head, self.name));
         multi_bar.add(subject_bar.clone());
@@ -336,18 +369,16 @@ impl<'a, Args: std::fmt::Debug + Send + Sync> PatternBencher<'a, Args> {
         results
     }
 
-
-    fn construct_variation<R: Rng>(rng: &mut R, pattern: GraphPattern, head: &HeadGenerator) -> (Graph, TailIndex) {
+    fn construct_variation<R: Rng>(
+        rng: &mut R,
+        pattern: GraphPattern,
+        head: &HeadGenerator,
+    ) -> (Graph, TailIndex) {
         let head_size = head.num_scopes();
         let tail_size = rng.random_range(TAIL_LENGTH);
         // let tail_size = 1;
         let tail_branches = rng.random_range(TAIL_TREE_CHILDS);
-        let tail_range = TailIndex::new(
-            tail_branches,
-            head_size,
-            &pattern,
-            tail_size,
-        );
+        let tail_range = TailIndex::new(tail_branches, head_size, &pattern, tail_size);
         let mut pat = head.pattern();
         pat.push(pattern);
         pat.push(GraphPattern::Tree(tail_branches));
@@ -372,11 +403,7 @@ impl GraphParams {
         let label_reg = head.reg();
 
         let matcher = RegexAutomaton::from_regex(label_reg.clone());
-        Self {
-            order,
-            matcher,
-            x,
-        }
+        Self { order, matcher, x }
     }
 }
 
@@ -397,13 +424,16 @@ impl BenchStats {
 
         total = total / len;
 
-        Self { stats: total, num_queries }
+        Self {
+            stats: total,
+            num_queries,
+        }
     }
 
     fn from_map(map: HashMap<usize, Vec<QueryStats>>) -> Vec<Self> {
-        map.into_iter().map(|(n_queries, stats)| {
-            Self::from_stat_iter(n_queries, stats)
-        }).collect()
+        map.into_iter()
+            .map(|(n_queries, stats)| Self::from_stat_iter(n_queries, stats))
+            .collect()
     }
 }
 
@@ -419,7 +449,13 @@ pub(crate) struct VariationBencher<'a, R: Rng> {
 }
 
 impl<'a, R: Rng> VariationBencher<'a, R> {
-    fn new(variation: Graph, name: &'a str, rng: &'a mut R, head: &'a HeadGenerator, tail_idx: TailIndex) -> Self {
+    fn new(
+        variation: Graph,
+        name: &'a str,
+        rng: &'a mut R,
+        head: &'a HeadGenerator,
+        tail_idx: TailIndex,
+    ) -> Self {
         Self {
             variation,
             name,
@@ -451,11 +487,15 @@ impl<'a, R: Rng> VariationBencher<'a, R> {
             }
         }
 
-        (BenchStats::from_map(self.runs), BenchStats::from_map(self.cached_runs))
+        (
+            BenchStats::from_map(self.runs),
+            BenchStats::from_map(self.cached_runs),
+        )
     }
 
     fn perform_n_queries(&mut self, num_queries: usize) -> (QueryStats, QueryStats) {
-        let (mut base_stat_total, mut cached_stat_total) = (QueryStats::default(), QueryStats::default());
+        let (mut base_stat_total, mut cached_stat_total) =
+            (QueryStats::default(), QueryStats::default());
         self.variation.reset_cache();
         for i in 0..num_queries {
             let start_scope = self.get_start_scope();
@@ -468,15 +508,19 @@ impl<'a, R: Rng> VariationBencher<'a, R> {
         (base_stat_total, cached_stat_total)
     }
 
-    fn perform_query(&mut self, start_scope: Scope, params: &GraphParams) -> (QueryStats, QueryStats) {
+    fn perform_query(
+        &mut self,
+        start_scope: Scope,
+        params: &GraphParams,
+    ) -> (QueryStats, QueryStats) {
         let x_wfd: Arc<str> = Arc::from(params.x.as_str());
-        let (base_envs, base_stats)  = self.variation.query_proj_stats(
+        let (base_envs, base_stats) = self.variation.query_proj_stats(
             start_scope,
             &params.matcher,
             &params.order,
             SgProjection::VarName,
             x_wfd.clone(),
-            false
+            false,
         );
 
         let (cached_envs, cached_stats) = self.variation.query_proj_stats(
@@ -485,7 +529,7 @@ impl<'a, R: Rng> VariationBencher<'a, R> {
             &params.order,
             SgProjection::VarName,
             x_wfd,
-            true
+            true,
         );
 
         self.cmp_envs(start_scope, params, base_envs, cached_envs);
@@ -493,7 +537,13 @@ impl<'a, R: Rng> VariationBencher<'a, R> {
         (base_stats, cached_stats)
     }
 
-    fn cmp_envs(&self, start_scope: Scope, params: &GraphParams, base: Vec<QueryResult<SgLabel, SgData>>, cached: Vec<QueryResult<SgLabel, SgData>>) {
+    fn cmp_envs(
+        &self,
+        start_scope: Scope,
+        params: &GraphParams,
+        base: Vec<QueryResult<SgLabel, SgData>>,
+        cached: Vec<QueryResult<SgLabel, SgData>>,
+    ) {
         if UnsortedVec(&base) == UnsortedVec(&cached) {
             return;
         }
@@ -519,14 +569,14 @@ impl<'a, R: Rng> VariationBencher<'a, R> {
             draw_caches: true,
             ..Default::default()
         };
-        self.variation.as_uml_diagram("error graph", &options)
+        self.variation
+            .as_uml_diagram("error graph", &options)
             .render_to_file("output/benches/error_graph.puml")
             .unwrap();
 
         panic!("Base and cached queries returned different results");
     }
 }
-
 
 #[derive(Debug)]
 struct UnsortedVec<'a, T>(&'a [T]);
@@ -544,7 +594,6 @@ impl<T: PartialEq> PartialEq for UnsortedVec<'_, T> {
 
 impl<T: Eq> Eq for UnsortedVec<'_, T> {}
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -552,7 +601,11 @@ mod tests {
     #[test]
     fn test_var() {
         let mut rng = SmallRng::seed_from_u64(0);
-        let (g, t) = PatternBencher::<()>::construct_variation(&mut rng, GraphPattern::Tree(3), &HeadGenerator::linear(5));
+        let (g, t) = PatternBencher::<()>::construct_variation(
+            &mut rng,
+            GraphPattern::Tree(3),
+            &HeadGenerator::linear(5),
+        );
 
         println!("t: {0:?}", t);
         g.as_uml_diagram("var", &GraphRenderOptions::default())
@@ -563,15 +616,22 @@ mod tests {
 
         for _ in 0..1000 {
             let idx = t.sample_branch(&mut rng);
-            assert!(t.range.contains(&idx), "idx {idx} not in range {:?}", t.range);
+            assert!(
+                t.range.contains(&idx),
+                "idx {idx} not in range {:?}",
+                t.range
+            );
         }
 
-        println!("{:?}", (
-            t.sample_branch(&mut rng),
-            t.sample_branch(&mut rng),
-            t.sample_branch(&mut rng),
-            t.sample_branch(&mut rng),
-        ))
+        println!(
+            "{:?}",
+            (
+                t.sample_branch(&mut rng),
+                t.sample_branch(&mut rng),
+                t.sample_branch(&mut rng),
+                t.sample_branch(&mut rng),
+            )
+        )
     }
 
     #[test]

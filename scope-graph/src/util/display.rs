@@ -1,4 +1,3 @@
-
 pub struct DisplayVec<'a, T: std::fmt::Display>(pub &'a [T]);
 
 impl<T: std::fmt::Display> std::fmt::Display for DisplayVec<'_, T> {

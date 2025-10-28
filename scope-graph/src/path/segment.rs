@@ -10,15 +10,28 @@ pub enum PathSegment<'a, Lbl> {
         target: &'a Scope,
         from: &'a Scope,
         len: usize,
-    }
+    },
 }
 
 impl<Lbl: ScopeGraphLabel> std::fmt::Display for PathSegment<'_, Lbl> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Start(s) => write!(f, "{s}"),
-            Self::Step { automaton_idx, label, target, from, .. } => {
-                write!(f, "{} -{}{}-> {}", from, label.char(), automaton_idx, target)
+            Self::Step {
+                automaton_idx,
+                label,
+                target,
+                from,
+                ..
+            } => {
+                write!(
+                    f,
+                    "{} -{}{}-> {}",
+                    from,
+                    label.char(),
+                    automaton_idx,
+                    target
+                )
             }
         }
     }
@@ -29,15 +42,20 @@ impl<'a, Lbl: ScopeGraphLabel> PathSegment<'a, Lbl> {
     fn new(path: &'a Path<Lbl>) -> Self {
         match path {
             Path::Start(s) => Self::Start(s),
-            Path::Step {automaton_idx, label, target, from, len, ..} => {
-                Self::Step {
-                    automaton_idx,
-                    label,
-                    target,
-                    from: from.target_ref(),
-                    len: *len,
-                }
-            }
+            Path::Step {
+                automaton_idx,
+                label,
+                target,
+                from,
+                len,
+                ..
+            } => Self::Step {
+                automaton_idx,
+                label,
+                target,
+                from: from.target_ref(),
+                len: *len,
+            },
         }
     }
 
@@ -46,7 +64,11 @@ impl<'a, Lbl: ScopeGraphLabel> PathSegment<'a, Lbl> {
         path.iter().map(Self::new)
     }
 
-    pub fn from_path_with_offset(path: &'a Path<Lbl>, offset: usize, len: usize) -> impl Iterator<Item = Self> {
+    pub fn from_path_with_offset(
+        path: &'a Path<Lbl>,
+        offset: usize,
+        len: usize,
+    ) -> impl Iterator<Item = Self> {
         path.iter().skip(offset).take(len).map(Self::new)
     }
 
@@ -71,21 +93,30 @@ impl<'a, Lbl: ScopeGraphLabel> PathSegment<'a, Lbl> {
         }
     }
 
-
     pub fn equals(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Start(s1), Self::Start(s2)) => s1 == s2,
-            (Self::Start(s), Self::Step { target: t, ..})
-            | (Self::Step { target: t, ..}, Self::Start(s)) => {
+            (Self::Start(s), Self::Step { target: t, .. })
+            | (Self::Step { target: t, .. }, Self::Start(s)) => {
                 // false
                 s == t
-            },
+            }
             (
-                Self::Step { automaton_idx: a1, label: l1, target: t1, from: f1, .. }, 
-                Self::Step { automaton_idx: a2, label: l2, target: t2, from: f2, .. }
-            ) => {
-                a1 == a2 && t1 == t2 && l1 == l2 && f1 == f2
-            },
+                Self::Step {
+                    automaton_idx: a1,
+                    label: l1,
+                    target: t1,
+                    from: f1,
+                    ..
+                },
+                Self::Step {
+                    automaton_idx: a2,
+                    label: l2,
+                    target: t2,
+                    from: f2,
+                    ..
+                },
+            ) => a1 == a2 && t1 == t2 && l1 == l2 && f1 == f2,
         }
     }
 }
@@ -107,6 +138,5 @@ mod tests {
         for s in s2 {
             println!("s: {}", s);
         }
-
     }
 }

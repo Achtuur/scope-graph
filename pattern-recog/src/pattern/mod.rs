@@ -8,23 +8,19 @@ use indicatif::{ProgressBar, ProgressStyle};
 use crate::{MatchableLabel, Scope, ScopeGraph, stat::Stats};
 
 mod chain;
+mod circle;
 mod diamond;
 mod fanout;
 mod tree;
-mod circle;
 pub use chain::*;
+pub use circle::*;
 pub use diamond::*;
 pub use fanout::*;
 pub use tree::*;
-pub use circle::*;
-
 
 macro_rules! size_stats {
     ($matches:expr) => {
-        $matches
-            .iter()
-            .map(|m| m.size())
-            .collect::<Stats>()
+        $matches.iter().map(|m| m.size()).collect::<Stats>()
     };
 }
 
@@ -82,7 +78,6 @@ impl PatternMatches {
             circle_stats.to_latex_table("Circle"),
         ]
         .join("\n")
-
     }
 }
 

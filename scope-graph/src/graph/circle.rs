@@ -1,9 +1,17 @@
-use std::{cell::RefCell, rc::Rc, sync::{Mutex, OnceLock}};
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    sync::{Mutex, OnceLock},
+};
 
 use hashbrown::HashMap;
 
-use crate::{data::ScopeGraphData, graph::{ScopeGraph, ScopeMap}, label::ScopeGraphLabel, scope::Scope};
-
+use crate::{
+    data::ScopeGraphData,
+    graph::{ScopeGraph, ScopeMap},
+    label::ScopeGraphLabel,
+    scope::Scope,
+};
 
 #[derive(Clone, Debug)]
 pub(crate) struct ChainScope {
@@ -32,7 +40,6 @@ impl<'a> Iterator for ChainScopeIter<'a> {
         Some(&cur.s)
     }
 }
-
 
 #[derive(Clone, Debug)]
 pub struct CircleMatch {
@@ -91,16 +98,24 @@ pub struct CircleMatcher;
 
 impl CircleMatcher {
     pub fn scope_is_in_cycle<Lbl, Data>(map: &ScopeMap<Lbl, Data>, scope: Scope) -> bool
-    where Lbl: ScopeGraphLabel, Data: ScopeGraphData
+    where
+        Lbl: ScopeGraphLabel,
+        Data: ScopeGraphData,
     {
         static QUEUE_ALLOC: OnceLock<Mutex<Vec<CircleMatch>>> = OnceLock::new();
-        let mut queue = QUEUE_ALLOC.get_or_init(|| Mutex::new(Vec::new())).lock().unwrap();
+        let mut queue = QUEUE_ALLOC
+            .get_or_init(|| Mutex::new(Vec::new()))
+            .lock()
+            .unwrap();
         queue.clear();
         // let mut cur_matches = vec![CircleMatch::from_scope(scope)];
         queue.push(CircleMatch::from_scope(scope));
 
         while let Some(m) = queue.pop() {
-            let Some(outgoing_scopes) = map.get(&m.tail()).map(|d| d.outgoing().iter().map(|e| e.target())) else {
+            let Some(outgoing_scopes) = map
+                .get(&m.tail())
+                .map(|d| d.outgoing().iter().map(|e| e.target()))
+            else {
                 continue;
             };
             for s in outgoing_scopes {
@@ -115,8 +130,13 @@ impl CircleMatcher {
         false
     }
 
-    pub fn scopes_in_cycle<Lbl, Data>(map: &ScopeMap<Lbl, Data>, scope: Scope) -> hashbrown::HashSet<Scope>
-    where Lbl: ScopeGraphLabel, Data: ScopeGraphData
+    pub fn scopes_in_cycle<Lbl, Data>(
+        map: &ScopeMap<Lbl, Data>,
+        scope: Scope,
+    ) -> hashbrown::HashSet<Scope>
+    where
+        Lbl: ScopeGraphLabel,
+        Data: ScopeGraphData,
     {
         let mut queue = Vec::new();
         let mut found = hashbrown::HashSet::new();
@@ -125,7 +145,10 @@ impl CircleMatcher {
         queue.push(CircleMatch::from_scope(scope));
 
         while let Some(m) = queue.pop() {
-            let Some(outgoing_scopes) = map.get(&m.tail()).map(|d| d.outgoing().iter().map(|e| e.target())) else {
+            let Some(outgoing_scopes) = map
+                .get(&m.tail())
+                .map(|d| d.outgoing().iter().map(|e| e.target()))
+            else {
                 continue;
             };
             for s in outgoing_scopes {
@@ -145,7 +168,9 @@ impl CircleMatcher {
     /// Returns (nodes_in_cycles, nodes_not_in_cycles)
     /// Tarjan’s algorithm
     /// I (with shame) asked chatgpt for this
-    pub fn find_cycle_nodes<Lbl: ScopeGraphLabel, Data: ScopeGraphData>(graph: &ScopeMap<Lbl, Data>) -> (hashbrown::HashSet<Scope>, hashbrown::HashSet<Scope>) {
+    pub fn find_cycle_nodes<Lbl: ScopeGraphLabel, Data: ScopeGraphData>(
+        graph: &ScopeMap<Lbl, Data>,
+    ) -> (hashbrown::HashSet<Scope>, hashbrown::HashSet<Scope>) {
         let mut index = 0;
         let mut stack = Vec::new();
         let mut on_stack = hashbrown::HashSet::new();
@@ -200,10 +225,10 @@ impl CircleMatcher {
                 // If SCC has > 1 node, or a self-loop, it's a cycle
                 if scc.len() > 1 {
                     cycles.extend(scc);
-                } else if let Some(nd) = graph.get(&scc[0]) {
-                    if nd.outgoing().iter().any(|e| e.target() == scc[0]) {
-                        cycles.insert(scc[0]);
-                    }
+                } else if let Some(nd) = graph.get(&scc[0])
+                    && nd.outgoing().iter().any(|e| e.target() == scc[0])
+                {
+                    cycles.insert(scc[0]);
                 }
             }
         }
@@ -230,15 +255,17 @@ impl CircleMatcher {
     }
 }
 
-
 #[derive(Debug)]
 pub struct CachedCircleMatcher<'sg, Lbl: ScopeGraphLabel, Data: ScopeGraphData> {
     map: &'sg ScopeMap<Lbl, Data>,
     cache: RefCell<&'sg mut hashbrown::HashMap<Scope, bool>>,
 }
 
-impl<'sg, Lbl:ScopeGraphLabel, Data:ScopeGraphData> CachedCircleMatcher<'sg, Lbl, Data> {
-    pub fn new(map: &'sg ScopeMap<Lbl, Data>, cache: &'sg mut hashbrown::HashMap<Scope, bool>) -> Self {
+impl<'sg, Lbl: ScopeGraphLabel, Data: ScopeGraphData> CachedCircleMatcher<'sg, Lbl, Data> {
+    pub fn new(
+        map: &'sg ScopeMap<Lbl, Data>,
+        cache: &'sg mut hashbrown::HashMap<Scope, bool>,
+    ) -> Self {
         Self {
             map,
             cache: RefCell::new(cache),
@@ -285,7 +312,7 @@ impl<'sg, Lbl:ScopeGraphLabel, Data:ScopeGraphData> CachedCircleMatcher<'sg, Lbl
 
 #[cfg(test)]
 mod tests {
-    use crate::{graph::CachedScopeGraph, SgData, SgLabel};
+    use crate::{SgData, SgLabel, graph::CachedScopeGraph};
 
     use super::*;
 
